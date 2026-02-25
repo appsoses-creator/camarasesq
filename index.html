@@ -1,1 +1,101 @@
 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cámaras de Seguridad - Esquel</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        .legend {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+        .legend-item { display: flex; align-items: center; margin-bottom: 5px; font-size: 12px; }
+        .dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <div class="legend">
+        <strong>Referencia</strong>
+        <div class="legend-item"><span class="dot" style="background: #2A7FFF;"></span> Monitoreo</div>
+        <div class="legend-item"><span class="dot" style="background: #FF8C00;"></span> Privadas</div>
+        <div class="legend-item"><span class="dot" style="background: #2AAD27;"></span> Particulares</div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // 1. Configuración de tu conexión
+        const supabaseUrl = 'https://ubdlfcjcgdnzqwjvwsmn.supabase.co';
+        const supabaseAnonKey = 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu';
+        const _supabase = supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+        // 2. Inicializar el mapa en Esquel
+        const map = L.map('map').setView([-42.912, -71.316], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        // Función para iconos de colores
+        const getIcon = (color) => new L.Icon({
+            iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        // 3. Función para cargar las cámaras desde la base de datos
+        async function cargarCamaras() {
+            const { data, error } = await _supabase
+                .from('cameras')
+                .select('*');
+
+            if (error) {
+                console.error('Error cargando datos:', error);
+                return;
+            }
+
+            data.forEach(cam => {
+                // Verificamos que existan las coordenadas generadas por el SQL
+                if (cam.lat && cam.lng) {
+                    let color = 'green'; // Por defecto verdes (Particulares)
+                    const tipo = cam.TIPO ? cam.TIPO.toUpperCase() : '';
+                    
+                    if (tipo.includes('MONITOREO')) color = 'blue';
+                    if (tipo.includes('PRIVADAS')) color = 'orange';
+
+                    L.marker([cam.lat, cam.lng], { icon: getIcon(color) })
+                        .addTo(map)
+                        .bindPopup(`
+                            <div style="font-size: 14px;">
+                                <strong>${cam['LUGAR / TITULAR'] || 'Sin nombre'}</strong><br>
+                                <b>Dirección:</b> ${cam.DIRECCION || 'No especificada'}<br>
+                                <b>Tipo:</b> ${cam.TIPO || 'N/A'}<br>
+                                ${cam['TELÉFONO'] ? `<b>Tel:</b> ${cam['TELÉFONO']}` : ''}
+                            </div>
+                        `);
+                }
+            });
+        }
+
+        cargarCamaras();
+    </script>
+</body>
+</html>

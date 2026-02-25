@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras Esquel 3</title>
+    <title>Cámaras Esquel - Relevamiento Completo</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; font-family: sans-serif; }
+        body { margin: 0; font-family: sans-serif; background: #f0f2f5; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* Instrucción flotante al añadir */
         #instruccion {
             display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             z-index: 2000; background: #2563eb; color: white; padding: 12px 20px;
@@ -28,30 +27,29 @@
             border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        /* Formulario */
         .modal {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             z-index: 2000; background: white; padding: 20px; border-radius: 15px;
-            width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto;
+            width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto;
             box-shadow: 0 0 50px rgba(0,0,0,0.5);
         }
+        .modal h3 { margin: 0 0 15px 0; color: #1e40af; }
         .modal label { font-size: 11px; color: #666; font-weight: bold; display: block; margin-top: 10px; }
         .modal input, .modal select, .modal textarea { 
             width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; 
         }
-        .btn-save { width: 100%; padding: 15px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-save { width: 100%; padding: 15px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; font-size: 16px; }
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1500; }
-        
-        /* Estilo del cursor al añadir */
         .crosshair { cursor: crosshair !important; }
     </style>
 </head>
 <body>
 
-    <div id="instruccion">📍 Tocá en el mapa donde está la cámara</div>
+    <div id="instruccion">📍 Tocá el mapa en la ubicación de la cámara</div>
 
     <div class="search-box">
-        <input type="text" id="q" placeholder="Buscar..." onkeyup="filtrar()">
+        <input type="text" id="q" placeholder="Buscar cámara..." onkeyup="filtrar()">
     </div>
 
     <button class="btn-add" id="main-btn" onclick="activarModoSeleccion()">+ Añadir Cámara</button>
@@ -59,33 +57,54 @@
     <div class="overlay" id="blur" onclick="cerrarTodo()"></div>
     
     <div class="modal" id="form">
-        <h3 style="margin-top:0">Detalles de la Cámara</h3>
+        <h3>Detalles de la Cámara</h3>
         
         <label>Ubicación Seleccionada</label>
-        <input type="text" id="u" readonly style="background: #f0f0f0;">
+        <input type="text" id="u" readonly style="background: #f8fafc; color: #64748b; font-family: monospace;">
         
         <label>Lugar / Titular</label>
-        <input type="text" id="n" placeholder="Ej: Kiosco 'El Centro'">
+        <input type="text" id="n" placeholder="Ej: Kiosco El Centro">
         
-        <label>Dirección aproximada</label>
+        <label>Dirección Aproximada</label>
         <input type="text" id="d" placeholder="Ej: Belgrano 450">
         
-        <label>Tipo</label>
-        <select id="t">
-            <option value="CENTRO DE MONITOREO">Monitoreo</option>
-            <option value="PRIVADAS">Privada</option>
-            <option value="PARTICULARES">Particular</option>
-        </select>
-        
-        <label>Datos Técnicos (Sistema / User / Pass)</label>
-        <div style="display: flex; gap: 5px;">
-            <input type="text" id="sis" placeholder="DVR">
-            <input type="text" id="usu" placeholder="Admin">
-            <input type="text" id="pas" placeholder="1234">
+        <div class="grid-2">
+            <div>
+                <label>Tipo</label>
+                <select id="t">
+                    <option value="CENTRO DE MONITOREO">Monitoreo</option>
+                    <option value="PRIVADAS">Privada</option>
+                    <option value="PARTICULARES">Particular</option>
+                </select>
+            </div>
+            <div>
+                <label>Teléfono</label>
+                <input type="text" id="tel" placeholder="2945...">
+            </div>
         </div>
 
+        <label>Sistema (Marca DVR/NVR)</label>
+        <input type="text" id="sis" placeholder="Hikvision, Dahua, etc.">
+
+        <div class="grid-2">
+            <div>
+                <label>Usuario</label>
+                <input type="text" id="usu" placeholder="admin">
+            </div>
+            <div>
+                <label>Contraseña / Patrón</label>
+                <input type="text" id="pas" placeholder="Clave123">
+            </div>
+        </div>
+
+        <label>Días de Almacenamiento</label>
+        <input type="number" id="alm" placeholder="Cantidad de días">
+
+        <label>Otros Datos</label>
+        <textarea id="ot" rows="3" placeholder="Notas adicionales..."></textarea>
+
         <button class="btn-save" onclick="enviar()">Guardar en Supabase</button>
-        <button onclick="cerrarTodo()" style="width:100%; background:none; border:none; color:red; margin-top:10px; cursor:pointer;">Cancelar</button>
+        <button onclick="cerrarTodo()" style="width:100%; background:none; border:none; color:red; margin-top:10px; cursor:pointer; font-weight:bold;">Cancelar</button>
     </div>
 
     <div id="map"></div>
@@ -102,7 +121,7 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
         let items = [];
-        let seleccionandoUbicacion = false;
+        let seleccionando = false;
         let tempMarker = null;
 
         async function load() {
@@ -124,39 +143,32 @@
             });
         }
 
-        // --- LÓGICA DE SELECCIÓN EN MAPA ---
         function activarModoSeleccion() {
-            seleccionandoUbicacion = true;
+            seleccionando = true;
             document.getElementById('map').classList.add('crosshair');
             document.getElementById('instruccion').style.display = 'block';
             document.getElementById('main-btn').style.display = 'none';
         }
 
         map.on('click', function(e) {
-            if (!seleccionandoUbicacion) return;
-
+            if (!seleccionando) return;
             const { lat, lng } = e.latlng;
             document.getElementById('u').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-            
-            // Poner un marcador temporal donde tocó
             if (tempMarker) map.removeLayer(tempMarker);
             tempMarker = L.marker([lat, lng]).addTo(map);
-
-            abrirForm(true);
+            document.getElementById('form').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+            document.getElementById('instruccion').style.display = 'none';
         });
 
-        function abrirForm(ver) {
-            document.getElementById('form').style.display = ver ? 'block' : 'none';
-            document.getElementById('blur').style.display = ver ? 'block' : 'none';
+        function cerrarTodo() {
+            document.getElementById('form').style.display = 'none';
+            document.getElementById('blur').style.display = 'none';
             document.getElementById('instruccion').style.display = 'none';
             document.getElementById('map').classList.remove('crosshair');
-        }
-
-        function cerrarTodo() {
-            abrirForm(false);
-            seleccionandoUbicacion = false;
             document.getElementById('main-btn').style.display = 'block';
             if (tempMarker) map.removeLayer(tempMarker);
+            seleccionando = false;
         }
 
         async function enviar() {
@@ -165,15 +177,18 @@
                 "DIRECCION": document.getElementById('d').value,
                 "TIPO": document.getElementById('t').value,
                 "UBICACION": document.getElementById('u').value,
+                "TELÉFONO": document.getElementById('tel').value,
                 "SISTEMA CÁMARAS": document.getElementById('sis').value,
                 "USUARIO": document.getElementById('usu').value,
-                "CONTRASEÑA": document.getElementById('pas').value
+                "CONTRASEÑA": document.getElementById('pas').value,
+                "ALMACENAMIENTO (DIAS)": document.getElementById('alm').value,
+                "OTROS DATOS": document.getElementById('ot').value
             };
             
             const { error } = await _client.from('cameras').insert([cam]);
             if (error) alert("Error: " + error.message);
             else { 
-                alert("¡Cámara guardada!"); 
+                alert("¡Cámara guardada con éxito!"); 
                 cerrarTodo(); 
                 load(); 
             }

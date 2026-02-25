@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras Esquel34</title>
+    <title>Cámaras Esquel - Relevamiento Pro</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <style>
@@ -125,6 +125,10 @@
         const _client = supabase.createClient(supabaseUrl, supabaseKey);
 
         // CONFIGURACIÓN DE CAPAS
+        const light = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© CartoDB'
+        });
+
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
             attribution: '© OpenStreetMap' 
         });
@@ -140,11 +144,12 @@
         const map = L.map('map', {
             center: [-42.912, -71.316],
             zoom: 14,
-            layers: [osm] // Capa por defecto
+            layers: [light] // Capa por defecto (Vista Limpia)
         });
 
         const baseMaps = {
-            "Calles": osm,
+            "Vista Limpia": light,
+            "Calles (Color)": osm,
             "Modo Oscuro": dark,
             "Satélite": satellite
         };
@@ -169,7 +174,6 @@
                     if (c.TIPO === 'CENTRO DE MONITOREO') color = 'blue';
                     if (c.TIPO === 'PRIVADAS') color = 'black';
 
-                    // Tamaño de icono reducido a 22px
                     const icon = L.divIcon({
                         className: 'custom-div-icon',
                         html: `<div class="div-icon" style="border-color: ${color}; color: ${color}; width: 22px; height: 22px; font-size: 12px;">
@@ -197,7 +201,6 @@
             });
         }
 
-        // Resto de funciones (buscarLugar, abrirEditar, eliminar, etc. se mantienen igual)
         async function buscarLugar() {
             const query = document.getElementById('q').value.trim();
             if (!query) return;

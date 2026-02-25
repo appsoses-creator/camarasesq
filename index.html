@@ -10,47 +10,42 @@
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* Contenedor Superior Unificado */
+        /* Barra Superior Profesional */
         .nav-container {
             position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000;
             display: flex; align-items: center; background: white; 
             padding: 5px; border-radius: 50px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            width: 90%; max-width: 550px;
+            width: 90%; max-width: 580px;
         }
 
-        /* Grupo de Botones de Ciudad */
         .city-selector {
             display: flex; gap: 5px; padding: 0 10px; border-right: 1px solid #e2e8f0; margin-right: 5px;
         }
 
         .btn-nav {
-            border: none; padding: 8px 15px; border-radius: 50px;
-            font-size: 12px; font-weight: bold; cursor: pointer;
+            border: none; padding: 8px 14px; border-radius: 50px;
+            font-size: 11px; font-weight: bold; cursor: pointer;
             transition: all 0.3s; display: flex; align-items: center; gap: 6px;
-            background: #f8fafc; color: #64748b;
+            background: #f8fafc; color: #64748b; text-transform: uppercase;
         }
 
-        /* Estilo para Esquel (Azul) */
         .btn-esquel:hover { background: #dbeafe; color: #2563eb; }
-        /* Estilo para Trevelin (Rojo/Gris) */
         .btn-trevelin:hover { background: #fee2e2; color: #dc2626; }
 
-        /* Buscador integrado */
         .search-area { flex: 1; display: flex; align-items: center; }
-        .search-area input {
-            width: 100%; border: none; padding: 10px; outline: none; font-size: 14px;
-        }
+        .search-area input { width: 100%; border: none; padding: 10px; outline: none; font-size: 14px; }
+        
         .search-btn {
             background: #2563eb; color: white; border: none; width: 35px; height: 35px;
             border-radius: 50%; cursor: pointer; transition: 0.3s;
         }
         .search-btn:hover { background: #1e40af; transform: scale(1.05); }
 
-        /* Resto de Estilos */
+        /* Otros Estilos */
         #instruccion {
-            display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-            z-index: 2000; background: #1e293b; color: white; padding: 12px 20px;
-            border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: none; position: fixed; top: 85px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; background: #1e293b; color: white; padding: 12px 25px;
+            border-radius: 30px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .btn-add {
@@ -174,7 +169,10 @@
         const supabaseKey = 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu';
         const _client = supabase.createClient(supabaseUrl, supabaseKey);
 
+        // --- CONFIGURACIÓN DE CAPAS RECUPERADA ---
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+        const muted = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' });
+        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' });
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
 
         const map = L.map('map', {
@@ -183,7 +181,13 @@
             layers: [osm]
         });
 
-        const baseMaps = { "Calles": osm, "Satélite": satellite };
+        const baseMaps = {
+            "Calles (Color)": osm,
+            "Gris Suave": muted,
+            "Modo Oscuro": dark,
+            "Satélite": satellite
+        };
+
         L.control.layers(baseMaps).addTo(map);
 
         let items = [];
@@ -191,7 +195,6 @@
         let tempMarker = null;
         let searchMarker = null;
 
-        // Función para volar suavemente a una ciudad
         function irA(coords) {
             map.flyTo(coords, 14, { duration: 1.5 });
         }

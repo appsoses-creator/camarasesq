@@ -1,1 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso - Cámaras Regionales</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #1e293b; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .login-card { background: white; padding: 40px; border-radius: 20px; width: 320px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; }
+        .login-card i { font-size: 50px; color: #2563eb; margin-bottom: 20px; }
+        .login-card h2 { margin: 0 0 20px 0; color: #334155; }
+        .login-card input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        .btn-login { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; transition: 0.3s; }
+        .btn-login:hover { background: #1d4ed8; }
+        #error-msg { color: #ef4444; font-size: 13px; margin-top: 15px; min-height: 18px; }
+    </style>
+</head>
+<body>
 
+    <div class="login-card">
+        <i class="fa-solid fa-shield-halved"></i>
+        <h2>Sistema Cámaras</h2>
+        <input type="text" id="user" placeholder="Usuario">
+        <input type="password" id="pass" placeholder="Contraseña">
+        <button class="btn-login" onclick="intentarLogin()">Entrar</button>
+        <div id="error-msg"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Configuración de Supabase
+        const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+
+        async function intentarLogin() {
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            const errorDiv = document.getElementById('error-msg');
+
+            errorDiv.innerText = "Verificando...";
+
+            const { data, error } = await _client
+                .from('usuarios_app')
+                .select('*')
+                .eq('usuario', u)
+                .eq('clave', p)
+                .single();
+
+            if (data) {
+                // Guardamos la sesión del usuario
+                localStorage.setItem('user_session', JSON.stringify(data));
+                // Redirigimos al mapa principal
+                window.location.href = 'index.html'; 
+            } else {
+                errorDiv.innerText = "Usuario o contraseña incorrectos";
+            }
+        }
+
+        // Si ya está logueado, mandarlo al mapa directamente
+        if(localStorage.getItem('user_session')) {
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

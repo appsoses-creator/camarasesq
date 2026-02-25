@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras Esquel - Relevamiento Pro</title>
+    <title>Cámaras 9</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <style>
@@ -125,12 +125,13 @@
         const _client = supabase.createClient(supabaseUrl, supabaseKey);
 
         // CONFIGURACIÓN DE CAPAS
-        const light = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© CartoDB'
-        });
-
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
             attribution: '© OpenStreetMap' 
+        });
+
+        // Capa Gris Suave (Menos brillo)
+        const muted = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '© CartoDB'
         });
 
         const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
@@ -144,12 +145,12 @@
         const map = L.map('map', {
             center: [-42.912, -71.316],
             zoom: 14,
-            layers: [light] // Capa por defecto (Vista Limpia)
+            layers: [osm] // Ahora inicia con Calles a Color por defecto
         });
 
         const baseMaps = {
-            "Vista Limpia": light,
             "Calles (Color)": osm,
+            "Gris Suave": muted,
             "Modo Oscuro": dark,
             "Satélite": satellite
         };
@@ -165,6 +166,8 @@
             items.forEach(i => map.removeLayer(i.m));
             items = [];
             const { data } = await _client.from('cameras').select('*');
+            if(!data) return;
+
             data.forEach(c => {
                 const lat = parseFloat(c.UBICACION?.split(',')[0]);
                 const lng = parseFloat(c.UBICACION?.split(',')[1]);

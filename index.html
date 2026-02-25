@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras Esquel - Relevamiento Pro</title>
+    <title>Cámaras Esquel3</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { margin: 0; font-family: sans-serif; background: #f0f2f5; }
@@ -134,6 +134,7 @@
         let items = [];
         let seleccionando = false;
         let tempMarker = null;
+        let searchMarker = null; // Para marcar la búsqueda de Google/Nominatim
 
         async function load() {
             items.forEach(i => map.removeLayer(i.m));
@@ -153,7 +154,6 @@
                         })
                     }).addTo(map);
 
-                    // Popup con Calle y acciones
                     const popupDiv = document.createElement('div');
                     popupDiv.innerHTML = `
                         <b>📍 ${c.DIRECCION || 'Sin dirección'}</b><br>
@@ -171,17 +171,37 @@
         }
 
         async function buscarLugar() {
-            const query = document.getElementById('q').value.toLowerCase();
+            const query = document.getElementById('q').value;
             if (!query) return;
 
-            const local = items.find(i => i.info.includes(query));
+            // Limpiar marcador de búsqueda anterior si existe
+            if (searchMarker) map.removeLayer(searchMarker);
+
+            // 1. Buscar en mis cámaras primero
+            const local = items.find(i => i.info.includes(query.toLowerCase()));
             if (local) {
                 map.setView(local.m.getLatLng(), 18);
                 local.m.openPopup();
             } else {
-                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}, Esquel, Chubut`);
-                const results = await resp.json();
-                if (results.length > 0) map.setView([results[0].lat, results[0].lon], 17);
+                // 2. Buscar dirección real en Esquel (Nominatim)
+                try {
+                    const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, Esquel, Chubut, Argentina`);
+                    const results = await resp.json();
+                    
+                    if (results.length > 0) {
+                        const { lat, lon, display_name } = results[0];
+                        map.setView([lat, lon], 17);
+                        
+                        // Poner un pin temporal de color distinto para identificar el lugar buscado
+                        searchMarker = L.marker([lat, lon]).addTo(map)
+                            .bindPopup(`<b>Resultado de búsqueda:</b><br>${query}`)
+                            .openPopup();
+                    } else {
+                        alert("No se encontró la dirección en Esquel.");
+                    }
+                } catch (e) {
+                    console.error("Error en geocodificación", e);
+                }
             }
         }
 
@@ -221,7 +241,7 @@
         map.on('click', function(e) {
             if (!seleccionando) return;
             const { lat, lng } = e.latlng;
-            document.getElementById('edit-id').value = ""; // Es nueva
+            document.getElementById('edit-id').value = "";
             document.getElementById('form-title').innerText = "Nueva Cámara";
             document.getElementById('u').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
             if (tempMarker) map.removeLayer(tempMarker);

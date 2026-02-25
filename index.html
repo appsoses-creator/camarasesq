@@ -63,6 +63,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
+        // Credenciales extraídas de tu configuración
         const supabaseUrl = 'https://ubdlfcjcgdnzqwjvwsmn.supabase.co';
         const supabaseKey = 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu';
         const _client = supabase.createClient(supabaseUrl, supabaseKey);
@@ -83,20 +84,21 @@
             items = [];
             const { data } = await _client.from('cameras').select('*');
             data.forEach(c => {
+                // Se requieren lat y lng calculados por Supabase
                 if (c.lat && c.lng) {
                     let col = 'green';
                     if (c.TIPO?.includes('MONITOREO')) col = 'blue';
                     if (c.TIPO?.includes('PRIVADAS')) col = 'orange';
                     const marker = L.marker([c.lat, c.lng], { icon: getIcon(col) })
                         .addTo(map).bindPopup(`<b>${c['LUGAR / TITULAR']}</b><br>${c.DIRECCION}`);
-                    items.push({ m: marker, info: (c['LUGAR / TITULAR'] + " " + c.DIRECCION).toLowerCase() });
+                    items.push({ m: marker, info: (c['LUGAR / TITULAR'] + " " + (c.DIRECCION || "")).toLowerCase() });
                 }
             });
         }
 
         function filtrar() {
             const val = document.getElementById('q').value.toLowerCase();
-            items.forEach(i => i.m.setOpacity(i.info.includes(val) ? 1 : 0));
+            items.forEach(i => i.info.includes(val) ? i.m.setOpacity(1) : i.m.setOpacity(0));
         }
 
         function abrirForm(s) {
@@ -105,15 +107,23 @@
         }
 
         async function enviar() {
+            // Mapeo exacto a las columnas de tu tabla en Supabase
             const cam = {
                 "LUGAR / TITULAR": document.getElementById('n').value,
                 "DIRECCION": document.getElementById('d').value,
                 "TIPO": document.getElementById('t').value,
                 "UBICACION": document.getElementById('u').value
             };
+            
             const { error } = await _client.from('cameras').insert([cam]);
-            if (error) alert("Error: " + error.message);
-            else { alert("¡Guardado!"); abrirForm(false); load(); }
+            
+            if (error) {
+                alert("Error al guardar: " + error.message);
+            } else {
+                alert("¡Cámara guardada con éxito!");
+                abrirForm(false);
+                load(); // Recarga los pines en el mapa
+            }
         }
         load();
     </script>

@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras DPIE</title>
+    <title>Cámaras Regionales</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* Barra Superior Profesional */
         .nav-container {
             position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000;
             display: flex; align-items: center; background: white; 
             padding: 5px; border-radius: 50px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            width: 90%; max-width: 580px;
+            width: 90%; max-width: 550px;
         }
 
         .city-selector {
@@ -23,14 +22,15 @@
         }
 
         .btn-nav {
-            border: none; padding: 8px 14px; border-radius: 50px;
-            font-size: 11px; font-weight: bold; cursor: pointer;
+            border: none; padding: 8px 15px; border-radius: 50px;
+            font-size: 12px; font-weight: bold; cursor: pointer;
             transition: all 0.3s; display: flex; align-items: center; gap: 6px;
-            background: #f8fafc; color: #64748b; text-transform: uppercase;
+            background: #f8fafc; color: #94a3b8;
         }
 
-        .btn-esquel:hover { background: #dbeafe; color: #2563eb; }
-        .btn-trevelin:hover { background: #fee2e2; color: #dc2626; }
+        /* Estados Activos */
+        .btn-esquel.active { background: #2563eb; color: white; box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4); }
+        .btn-trevelin.active { background: #dc2626; color: white; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4); }
 
         .search-area { flex: 1; display: flex; align-items: center; }
         .search-area input { width: 100%; border: none; padding: 10px; outline: none; font-size: 14px; }
@@ -39,13 +39,11 @@
             background: #2563eb; color: white; border: none; width: 35px; height: 35px;
             border-radius: 50%; cursor: pointer; transition: 0.3s;
         }
-        .search-btn:hover { background: #1e40af; transform: scale(1.05); }
 
-        /* Otros Estilos */
         #instruccion {
-            display: none; position: fixed; top: 85px; left: 50%; transform: translateX(-50%);
-            z-index: 2000; background: #1e293b; color: white; padding: 12px 25px;
-            border-radius: 30px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; background: #1e293b; color: white; padding: 12px 20px;
+            border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
         .btn-add {
@@ -88,10 +86,10 @@
 
     <div class="nav-container">
         <div class="city-selector">
-            <button class="btn-nav btn-esquel" onclick="irA([-42.912, -71.316])">
+            <button id="nav-esquel" class="btn-nav btn-esquel" onclick="irA([-42.912, -71.316])">
                 <i class="fa-solid fa-mountain-city"></i> Esquel
             </button>
-            <button class="btn-nav btn-trevelin" onclick="irA([-43.085, -71.463])">
+            <button id="nav-trevelin" class="btn-nav btn-trevelin" onclick="irA([-43.085, -71.463])">
                 <i class="fa-solid fa-tree"></i> Trevelin
             </button>
         </div>
@@ -108,22 +106,17 @@
     <div class="modal" id="form">
         <h3 id="form-title">Detalles de la Cámara</h3>
         <input type="hidden" id="edit-id">
-        
         <label>Ciudad</label>
         <select id="ciudad_select">
             <option value="Esquel">Esquel</option>
             <option value="Trevelin">Trevelin</option>
         </select>
-
         <label>Ubicación Seleccionada</label>
         <input type="text" id="u" readonly style="background: #f8fafc; color: #64748b; font-family: monospace;">
-        
         <label>Dirección (Calle y N°)</label>
         <input type="text" id="d" placeholder="Ej: Rivadavia 123">
-        
         <label>Lugar / Titular</label>
         <input type="text" id="n" placeholder="Ej: Kiosco El Centro">
-        
         <div class="grid-2">
             <div>
                 <label>Tipo</label>
@@ -138,7 +131,6 @@
                 <input type="text" id="tel" placeholder="2945...">
             </div>
         </div>
-        
         <label>Sistema (Marca DVR/NVR)</label>
         <input type="text" id="sis" placeholder="Hikvision, Dahua, etc.">
         <div class="grid-2">
@@ -169,31 +161,33 @@
         const supabaseKey = 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu';
         const _client = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // --- CONFIGURACIÓN DE CAPAS RECUPERADA ---
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
         const muted = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' });
         const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' });
-        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
 
-        const map = L.map('map', {
-            center: [-42.912, -71.316],
-            zoom: 14,
-            layers: [osm]
-        });
-
-        const baseMaps = {
-            "Calles (Color)": osm,
-            "Gris Suave": muted,
-            "Modo Oscuro": dark,
-            "Satélite": satellite
-        };
-
+        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm] });
+        const baseMaps = { "Calles": osm, "Satélite": satellite, "Gris Suave": muted, "Modo Oscuro": dark };
         L.control.layers(baseMaps).addTo(map);
 
         let items = [];
         let seleccionando = false;
         let tempMarker = null;
         let searchMarker = null;
+
+        // --- LÓGICA DE INTERFAZ INTELIGENTE ---
+        const coordsCiudades = { esquel: [-42.912, -71.316], trevelin: [-43.085, -71.463] };
+
+        function actualizarEstiloBotones() {
+            const centro = map.getCenter();
+            const dE = centro.distanceTo(coordsCiudades.esquel);
+            const dT = centro.distanceTo(coordsCiudades.trevelin);
+            
+            document.getElementById('nav-esquel').classList.toggle('active', dE < dT);
+            document.getElementById('nav-trevelin').classList.toggle('active', dT <= dE);
+        }
+
+        map.on('moveend', actualizarEstiloBotones);
 
         function irA(coords) {
             map.flyTo(coords, 14, { duration: 1.5 });
@@ -204,39 +198,25 @@
             items = [];
             const { data } = await _client.from('cameras').select('*');
             if(!data) return;
-
             data.forEach(c => {
-                const lat = parseFloat(c.UBICACION?.split(',')[0]);
-                const lng = parseFloat(c.UBICACION?.split(',')[1]);
-
-                if (lat && lng) {
-                    let color = 'green';
-                    if (c.TIPO === 'CENTRO DE MONITOREO') color = 'blue';
-                    if (c.TIPO === 'PRIVADAS') color = 'black';
-
+                const latlng = c.UBICACION?.split(',').map(parseFloat);
+                if (latlng && latlng[0]) {
+                    let color = c.TIPO === 'CENTRO DE MONITOREO' ? 'blue' : (c.TIPO === 'PRIVADAS' ? 'black' : 'green');
                     const icon = L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div class="div-icon" style="border-color: ${color}; color: ${color}; width: 22px; height: 22px; font-size: 12px;">
-                                <i class="fa-solid fa-video"></i>
-                               </div>`,
-                        iconSize: [22, 22],
-                        iconAnchor: [11, 11]
+                        html: `<div class="div-icon" style="border-color:${color}; color:${color}; width:22px; height:22px; font-size:12px;"><i class="fa-solid fa-video"></i></div>`,
+                        iconSize: [22, 22], iconAnchor: [11, 11]
                     });
-
-                    const marker = L.marker([lat, lng], { icon }).addTo(map);
-                    const popupDiv = document.createElement('div');
-                    popupDiv.innerHTML = `
-                        <b>📍 ${c.DIRECCION || 'Sin dirección'}</b><br>
-                        <small>${c['LUGAR / TITULAR'] || ''}</small>
+                    const marker = L.marker(latlng, { icon }).addTo(map);
+                    marker.bindPopup(`<b>📍 ${c.DIRECCION || 'Sin dirección'}</b><br><small>${c['LUGAR / TITULAR'] || ''}</small>
                         <div class="popup-actions">
                             <button class="btn-pop btn-edit" onclick="abrirEditar('${c.id}')">Editar</button>
                             <button class="btn-pop btn-delete" onclick="eliminar('${c.id}')">Borrar</button>
-                        </div>
-                    `;
-                    marker.bindPopup(popupDiv);
+                        </div>`);
                     items.push({ id: c.id, m: marker, data: c, info: (c.DIRECCION + " " + (c['LUGAR / TITULAR'] || '')).toLowerCase() });
                 }
             });
+            actualizarEstiloBotones();
         }
 
         async function buscarLugar() {
@@ -244,18 +224,14 @@
             if (!query) return;
             if (searchMarker) map.removeLayer(searchMarker);
             const local = items.find(i => i.info.includes(query.toLowerCase()));
-            if (local) {
-                map.setView(local.m.getLatLng(), 18);
-                local.m.openPopup();
-            } else {
+            if (local) { map.setView(local.m.getLatLng(), 18); local.m.openPopup(); }
+            else {
                 const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, Chubut, Argentina`);
                 const results = await resp.json();
                 if (results.length > 0) {
-                    const lat = results[0].lat; const lon = results[0].lon;
-                    map.setView([lat, lon], 17);
-                    searchMarker = L.marker([lat, lon]).addTo(map)
-                        .bindPopup(`<b>Encontrado:</b><br>${query}`)
-                        .openPopup();
+                    const latlng = [results[0].lat, results[0].lon];
+                    map.setView(latlng, 17);
+                    searchMarker = L.marker(latlng).addTo(map).bindPopup(`<b>Encontrado:</b><br>${query}`).openPopup();
                 }
             }
         }
@@ -279,12 +255,7 @@
             document.getElementById('blur').style.display = 'block';
         }
 
-        async function eliminar(id) {
-            if (confirm("¿Eliminar definitivamente?")) {
-                await _client.from('cameras').delete().eq('id', id);
-                load();
-            }
-        }
+        async function eliminar(id) { if (confirm("¿Eliminar definitivamente?")) { await _client.from('cameras').delete().eq('id', id); load(); } }
 
         function activarModoSeleccion() {
             seleccionando = true;
@@ -296,8 +267,14 @@
         map.on('click', function(e) {
             if (!seleccionando) return;
             const { lat, lng } = e.latlng;
+            const centro = [lat, lng];
+            
+            // Proximidad para el select del formulario
+            const dE = e.latlng.distanceTo(coordsCiudades.esquel);
+            const dT = e.latlng.distanceTo(coordsCiudades.trevelin);
+            document.getElementById('ciudad_select').value = dT < dE ? "Trevelin" : "Esquel";
+
             document.getElementById('edit-id').value = "";
-            document.getElementById('form-title').innerText = "Nueva Cámara";
             document.getElementById('u').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
             if (tempMarker) map.removeLayer(tempMarker);
             tempMarker = L.marker([lat, lng]).addTo(map);

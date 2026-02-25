@@ -3,63 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras Esquel - Búsqueda Inteligente</title>
+    <title>Cámaras Esquel - Gestión</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; font-family: sans-serif; background: #f0f2f5; }
+        body { margin: 0; font-family: sans-serif; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* Instrucción flotante */
-        #instruccion {
-            display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 2000; background: #2563eb; color: white; padding: 12px 20px;
-            border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
+        /* Buscador y Botones */
+        .search-container { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 85%; max-width: 400px; display: flex; background: white; padding: 5px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .search-container input { flex: 1; border: none; padding: 10px 15px; border-radius: 50px; outline: none; }
+        
+        .btn-add { position: fixed; bottom: 30px; left: 30px; z-index: 1000; background: #2563eb; color: white; border: none; padding: 15px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; }
 
-        /* Barra de búsqueda estilo Google */
-        .search-container {
-            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; width: 90%; max-width: 400px;
-            display: flex; gap: 5px; background: white; padding: 5px;
-            border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .search-container input {
-            flex: 1; border: none; padding: 10px 20px; border-radius: 50px; outline: none; font-size: 16px;
-        }
-        .search-btn {
-            background: #2563eb; color: white; border: none; padding: 10px 20px;
-            border-radius: 50px; cursor: pointer; font-weight: bold;
-        }
+        /* Popups del Mapa */
+        .popup-content { min-width: 150px; }
+        .popup-content b { font-size: 14px; color: #1e40af; display: block; margin-bottom: 5px; }
+        .popup-actions { display: flex; gap: 5px; margin-top: 10px; border-top: 1px solid #eee; padding-top: 8px; }
+        .btn-pop { border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; color: white; }
+        .btn-edit { background: #f59e0b; }
+        .btn-delete { background: #ef4444; }
 
-        .btn-add {
-            position: fixed; bottom: 30px; left: 30px; z-index: 1000;
-            background: #2563eb; color: white; border: none; padding: 15px 25px;
-            border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        /* Modal y Formulario */
-        .modal {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 2000; background: white; padding: 20px; border-radius: 15px;
-            width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-        }
-        .modal label { font-size: 11px; color: #666; font-weight: bold; display: block; margin-top: 10px; }
-        .modal input, .modal select, .modal textarea { 
-            width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; 
-        }
-        .btn-save { width: 100%; padding: 15px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+        /* Modal */
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 400px; max-height: 80vh; overflow-y: auto; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
+        .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; margin: 5px 0 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1500; }
         .crosshair { cursor: crosshair !important; }
     </style>
 </head>
 <body>
 
-    <div id="instruccion">📍 Tocá el mapa para ubicar la cámara</div>
-
     <div class="search-container">
         <input type="text" id="q" placeholder="Buscar calle o cámara..." onkeypress="if(event.key==='Enter') buscarLugar()">
-        <button class="search-btn" onclick="buscarLugar()">🔍</button>
     </div>
 
     <button class="btn-add" id="main-btn" onclick="activarModoSeleccion()">+ Añadir Cámara</button>
@@ -67,26 +41,19 @@
     <div class="overlay" id="blur" onclick="cerrarTodo()"></div>
     
     <div class="modal" id="form">
-        <h3>Nueva Cámara</h3>
-        <label>Ubicación (GPS)</label>
-        <input type="text" id="u" readonly style="background:#f0f0f0">
-        <label>Lugar / Titular</label>
-        <input type="text" id="n" placeholder="Nombre">
-        <label>Dirección</label>
-        <input type="text" id="d" placeholder="Calle y N°">
-        <label>Tipo</label>
+        <h3 id="form-title">Nueva Cámara</h3>
+        <input type="hidden" id="edit-id">
+        <label style="font-size: 11px; font-weight: bold;">Ubicación</label>
+        <input type="text" id="u" readonly style="background:#f5f5f5">
+        <input type="text" id="d" placeholder="Dirección (Nombre de la calle)">
+        <input type="text" id="n" placeholder="Lugar / Titular">
         <select id="t">
-            <option value="CENTRO DE MONITOREO">Monitoreo</option>
             <option value="PRIVADAS">Privada</option>
+            <option value="CENTRO DE MONITOREO">Monitoreo</option>
             <option value="PARTICULARES">Particular</option>
         </select>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-            <div><label>Usuario</label><input type="text" id="usu"></div>
-            <div><label>Pass</label><input type="text" id="pas"></div>
-        </div>
-        <label>Otros Datos</label>
-        <textarea id="ot" rows="2"></textarea>
-        <button class="btn-save" onclick="enviar()">Guardar</button>
+        <textarea id="ot" placeholder="Otros datos..."></textarea>
+        <button onclick="enviar()" style="width:100%; padding:15px; background:#10b981; color:white; border:none; border-radius:6px; font-weight:bold;">GUARDAR</button>
         <button onclick="cerrarTodo()" style="width:100%; background:none; border:none; color:red; margin-top:10px; cursor:pointer;">Cancelar</button>
     </div>
 
@@ -110,65 +77,88 @@
             items.forEach(i => map.removeLayer(i.m));
             items = [];
             const { data } = await _client.from('cameras').select('*');
+            
             data.forEach(c => {
                 if (c.lat && c.lng) {
                     let col = c.TIPO?.includes('MONITOREO') ? 'blue' : (c.TIPO?.includes('PRIVADAS') ? 'orange' : 'green');
                     const marker = L.marker([c.lat, c.lng], { 
                         icon: new L.Icon({
                             iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${col}.png`,
-                            iconSize: [25, 41], iconAnchor: [12, 41]
+                            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34]
                         })
-                    }).addTo(map).bindPopup(`<b>${c['LUGAR / TITULAR']}</b>`);
-                    items.push({ m: marker, info: (c['LUGAR / TITULAR'] + " " + (c.DIRECCION || "")).toLowerCase() });
+                    }).addTo(map);
+
+                    // Contenido del Popup: CALLE como principal + Botones
+                    const popupDiv = document.createElement('div');
+                    popupDiv.className = 'popup-content';
+                    popupDiv.innerHTML = `
+                        <b>📍 ${c.DIRECCION || 'Sin dirección'}</b>
+                        <small>Titular: ${c['LUGAR / TITULAR'] || '-'}</small>
+                        <div class="popup-actions">
+                            <button class="btn-pop btn-edit" onclick="abrirEditar('${c.id}')">Editar</button>
+                            <button class="btn-pop btn-delete" onclick="eliminar('${c.id}')">Eliminar</button>
+                        </div>
+                    `;
+                    marker.bindPopup(popupDiv);
+                    
+                    items.push({ id: c.id, m: marker, data: c, info: (c.DIRECCION + " " + c['LUGAR / TITULAR']).toLowerCase() });
                 }
             });
         }
 
-        // --- BÚSQUEDA TIPO GOOGLE MAPS ---
-        async function buscarLugar() {
-            const query = document.getElementById('q').value;
-            if (!query) return;
+        // --- FUNCIONES DE GESTIÓN ---
 
-            // 1. Primero filtramos las cámaras que ya tenemos cargadas
-            const val = query.toLowerCase();
-            let encontrada = false;
-            items.forEach(i => {
-                if (i.info.includes(val)) {
-                    i.m.setOpacity(1);
-                    if (!encontrada) {
-                        map.setView(i.m.getLatLng(), 17);
-                        i.m.openPopup();
-                        encontrada = true;
-                    }
-                } else {
-                    i.m.setOpacity(0.2);
-                }
-            });
-
-            // 2. Si no es una cámara, buscamos la calle en Esquel usando Nominatim
-            if (!encontrada || query.length > 4) {
-                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}, Esquel, Chubut, Argentina`;
-                try {
-                    const resp = await fetch(url);
-                    const results = await resp.json();
-                    if (results.length > 0) {
-                        const { lat, lon } = results[0];
-                        map.setView([lat, lon], 17);
-                        L.popup().setLatLng([lat, lon]).setContent(`📍 ${query}`).openOn(map);
-                    }
-                } catch (e) { console.error("Error buscando dirección"); }
+        async function eliminar(id) {
+            if (confirm("¿Estás seguro de eliminar esta cámara?")) {
+                const { error } = await _client.from('cameras').delete().eq('id', id);
+                if (error) alert("Error al borrar");
+                else load();
             }
         }
+
+        function abrirEditar(id) {
+            const cam = items.find(i => i.id == id).data;
+            document.getElementById('edit-id').value = cam.id;
+            document.getElementById('u').value = cam.UBICACION;
+            document.getElementById('d').value = cam.DIRECCION;
+            document.getElementById('n').value = cam['LUGAR / TITULAR'];
+            document.getElementById('t').value = cam.TIPO;
+            document.getElementById('ot').value = cam['OTROS DATOS'];
+            document.getElementById('form-title').innerText = "Editar Cámara";
+            document.getElementById('form').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+        }
+
+        async function enviar() {
+            const id = document.getElementById('edit-id').value;
+            const cam = {
+                "LUGAR / TITULAR": document.getElementById('n').value,
+                "DIRECCION": document.getElementById('d').value,
+                "TIPO": document.getElementById('t').value,
+                "UBICACION": document.getElementById('u').value,
+                "OTROS DATOS": document.getElementById('ot').value
+            };
+
+            let res;
+            if (id) res = await _client.from('cameras').update(cam).eq('id', id);
+            else res = await _client.from('cameras').insert([cam]);
+
+            if (res.error) alert("Error");
+            else { cerrarTodo(); load(); }
+        }
+
+        // --- LÓGICA DE MAPA ---
 
         function activarModoSeleccion() {
             seleccionando = true;
             document.getElementById('map').classList.add('crosshair');
-            document.getElementById('instruccion').style.display = 'block';
             document.getElementById('main-btn').style.display = 'none';
         }
 
         map.on('click', function(e) {
             if (!seleccionando) return;
+            document.getElementById('edit-id').value = ""; // Es nueva
+            document.getElementById('form-title').innerText = "Nueva Cámara";
             document.getElementById('u').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
@@ -177,24 +167,20 @@
         function cerrarTodo() {
             document.getElementById('form').style.display = 'none';
             document.getElementById('blur').style.display = 'none';
-            document.getElementById('instruccion').style.display = 'none';
             document.getElementById('map').classList.remove('crosshair');
             document.getElementById('main-btn').style.display = 'block';
             seleccionando = false;
         }
 
-        async function enviar() {
-            const cam = {
-                "LUGAR / TITULAR": document.getElementById('n').value,
-                "DIRECCION": document.getElementById('d').value,
-                "TIPO": document.getElementById('t').value,
-                "UBICACION": document.getElementById('u').value,
-                "USUARIO": document.getElementById('usu').value,
-                "CONTRASEÑA": document.getElementById('pas').value,
-                "OTROS DATOS": document.getElementById('ot').value
-            };
-            const { error } = await _client.from('cameras').insert([cam]);
-            if (error) alert("Error"); else { cerrarTodo(); load(); }
+        async function buscarLugar() {
+            const query = document.getElementById('q').value.toLowerCase();
+            const found = items.find(i => i.info.includes(query));
+            if (found) { map.setView(found.m.getLatLng(), 18); found.m.openPopup(); }
+            else {
+                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}, Esquel`);
+                const results = await resp.json();
+                if (results.length > 0) map.setView([results[0].lat, results[0].lon], 17);
+            }
         }
 
         load();

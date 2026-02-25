@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras 9</title>
+    <title>Cámaras Regionales</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <style>
@@ -16,6 +16,7 @@
             border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
+        /* Buscador y selectores de ciudad */
         .search-box {
             position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000;
             background: white; padding: 5px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
@@ -23,6 +24,17 @@
         }
         .search-box input { flex: 1; border: none; padding: 10px 15px; border-radius: 50px; outline: none; }
         .search-btn { background: #2563eb; color: white; border: none; padding: 8px 15px; border-radius: 50px; cursor: pointer; margin-left: 5px; }
+
+        .city-switcher {
+            position: fixed; top: 75px; left: 50%; transform: translateX(-50%); z-index: 1000;
+            display: flex; gap: 8px;
+        }
+        .btn-city {
+            background: white; border: none; padding: 8px 16px; border-radius: 20px;
+            font-size: 12px; font-weight: bold; cursor: pointer; color: #1e40af;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: 0.2s;
+        }
+        .btn-city:hover { background: #f8fafc; transform: scale(1.05); }
 
         .btn-add {
             position: fixed; bottom: 30px; left: 30px; z-index: 1000;
@@ -63,8 +75,13 @@
     <div id="instruccion">📍 Tocá el mapa en la ubicación de la cámara</div>
 
     <div class="search-box">
-        <input type="text" id="q" placeholder="Ej: Rivadavia 448 o nombre..." onkeypress="if(event.key==='Enter') buscarLugar()">
+        <input type="text" id="q" placeholder="Buscar dirección o nombre..." onkeypress="if(event.key==='Enter') buscarLugar()">
         <button class="search-btn" onclick="buscarLugar()">🔍</button>
+    </div>
+
+    <div class="city-switcher">
+        <button class="btn-city" onclick="irA([-42.912, -71.316])"><i class="fa-solid fa-location-dot"></i> Esquel</button>
+        <button class="btn-city" onclick="irA([-43.085, -71.463])"><i class="fa-solid fa-location-dot"></i> Trevelin</button>
     </div>
 
     <button class="btn-add" id="main-btn" onclick="activarModoSeleccion()">+ Añadir Cámara</button>
@@ -74,12 +91,22 @@
     <div class="modal" id="form">
         <h3 id="form-title">Detalles de la Cámara</h3>
         <input type="hidden" id="edit-id">
-        <label>Ubicación Seleccionada</label>
+        
+        <label>Ciudad</label>
+        <select id="ciudad_select">
+            <option value="Esquel">Esquel</option>
+            <option value="Trevelin">Trevelin</option>
+        </select>
+
+        <label>Ubicación (GPS)</label>
         <input type="text" id="u" readonly style="background: #f8fafc; color: #64748b; font-family: monospace;">
+        
         <label>Dirección (Calle y N°)</label>
         <input type="text" id="d" placeholder="Ej: Rivadavia 123">
+        
         <label>Lugar / Titular</label>
         <input type="text" id="n" placeholder="Ej: Kiosco El Centro">
+        
         <div class="grid-2">
             <div>
                 <label>Tipo</label>
@@ -94,8 +121,10 @@
                 <input type="text" id="tel" placeholder="2945...">
             </div>
         </div>
+
         <label>Sistema (Marca DVR/NVR)</label>
         <input type="text" id="sis" placeholder="Hikvision, Dahua, etc.">
+        
         <div class="grid-2">
             <div>
                 <label>Usuario</label>
@@ -106,10 +135,13 @@
                 <input type="text" id="pas" placeholder="Clave123">
             </div>
         </div>
+        
         <label>Días de Almacenamiento</label>
         <input type="number" id="alm" placeholder="Cantidad de días">
+        
         <label>Otros Datos</label>
         <textarea id="ot" rows="3" placeholder="Notas adicionales..."></textarea>
+        
         <button class="btn-save" onclick="enviar()">Guardar Cambios</button>
         <button onclick="cerrarTodo()" style="width:100%; background:none; border:none; color:red; margin-top:10px; cursor:pointer; font-weight:bold;">Cancelar</button>
     </div>
@@ -124,28 +156,15 @@
         const supabaseKey = 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu';
         const _client = supabase.createClient(supabaseUrl, supabaseKey);
 
-        // CONFIGURACIÓN DE CAPAS
-        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-            attribution: '© OpenStreetMap' 
-        });
-
-        // Capa Gris Suave (Menos brillo)
-        const muted = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '© CartoDB'
-        });
-
-        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '© CartoDB'
-        });
-
-        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-            attribution: '© Esri'
-        });
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+        const muted = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' });
+        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' });
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
 
         const map = L.map('map', {
             center: [-42.912, -71.316],
             zoom: 14,
-            layers: [osm] // Ahora inicia con Calles a Color por defecto
+            layers: [osm]
         });
 
         const baseMaps = {
@@ -162,6 +181,10 @@
         let tempMarker = null;
         let searchMarker = null;
 
+        function irA(coords) {
+            map.flyTo(coords, 14, { duration: 1.5 });
+        }
+
         async function load() {
             items.forEach(i => map.removeLayer(i.m));
             items = [];
@@ -169,10 +192,11 @@
             if(!data) return;
 
             data.forEach(c => {
-                const lat = parseFloat(c.UBICACION?.split(',')[0]);
-                const lng = parseFloat(c.UBICACION?.split(',')[1]);
+                const coords = c.UBICACION?.split(',');
+                if (coords && coords.length === 2) {
+                    const lat = parseFloat(coords[0]);
+                    const lng = parseFloat(coords[1]);
 
-                if (lat && lng) {
                     let color = 'green';
                     if (c.TIPO === 'CENTRO DE MONITOREO') color = 'blue';
                     if (c.TIPO === 'PRIVADAS') color = 'black';
@@ -187,7 +211,6 @@
                     });
 
                     const marker = L.marker([lat, lng], { icon }).addTo(map);
-
                     const popupDiv = document.createElement('div');
                     popupDiv.innerHTML = `
                         <b>📍 ${c.DIRECCION || 'Sin dirección'}</b><br>
@@ -198,7 +221,6 @@
                         </div>
                     `;
                     marker.bindPopup(popupDiv);
-
                     items.push({ id: c.id, m: marker, data: c, info: (c.DIRECCION + " " + (c['LUGAR / TITULAR'] || '')).toLowerCase() });
                 }
             });
@@ -213,15 +235,16 @@
                 map.setView(local.m.getLatLng(), 18);
                 local.m.openPopup();
             } else {
-                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, Esquel, Chubut`);
+                // Busca en la zona general de Esquel/Trevelin
+                const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, Chubut, Argentina`);
                 const results = await resp.json();
                 if (results.length > 0) {
                     const lat = results[0].lat; const lon = results[0].lon;
                     map.setView([lat, lon], 17);
                     searchMarker = L.marker([lat, lon]).addTo(map)
-                        .bindPopup(`<b>Punto encontrado:</b><br>${query}<br><br><small>Clic para añadir cámara</small>`)
+                        .bindPopup(`<b>Punto encontrado:</b><br>${query}`)
                         .openPopup();
-                } else { alert("No se encontró esa dirección en Esquel."); }
+                } else { alert("No se encontró la dirección."); }
             }
         }
 
@@ -238,6 +261,7 @@
             document.getElementById('pas').value = cam.CONTRASEÑA || '';
             document.getElementById('alm').value = cam['ALMACENAMIENTO (DIAS)'] || '';
             document.getElementById('ot').value = cam['OTROS DATOS'] || '';
+            document.getElementById('ciudad_select').value = cam.ciudad || 'Esquel';
             document.getElementById('form-title').innerText = "Editar Cámara";
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
@@ -292,7 +316,8 @@
                 "USUARIO": document.getElementById('usu').value,
                 "CONTRASEÑA": document.getElementById('pas').value,
                 "ALMACENAMIENTO (DIAS)": document.getElementById('alm').value,
-                "OTROS DATOS": document.getElementById('ot').value
+                "OTROS DATOS": document.getElementById('ot').value,
+                "ciudad": document.getElementById('ciudad_select').value
             };
             let res;
             if (id) res = await _client.from('cameras').update(cam).eq('id', id);

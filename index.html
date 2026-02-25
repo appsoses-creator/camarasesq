@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras Esquel - 3</title>
+    <title>Cámaras Esquel34</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <style>
@@ -30,14 +30,9 @@
             border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        /* Estilo de los iconos personalizados - TAMAÑO REDUCIDO */
         .div-icon {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: white;
-            border-radius: 50%;
-            border: 2px solid;
+            display: flex; align-items: center; justify-content: center;
+            background: white; border-radius: 50%; border: 2px solid;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
@@ -79,16 +74,12 @@
     <div class="modal" id="form">
         <h3 id="form-title">Detalles de la Cámara</h3>
         <input type="hidden" id="edit-id">
-        
         <label>Ubicación Seleccionada</label>
         <input type="text" id="u" readonly style="background: #f8fafc; color: #64748b; font-family: monospace;">
-        
         <label>Dirección (Calle y N°)</label>
         <input type="text" id="d" placeholder="Ej: Rivadavia 123">
-
         <label>Lugar / Titular</label>
         <input type="text" id="n" placeholder="Ej: Kiosco El Centro">
-        
         <div class="grid-2">
             <div>
                 <label>Tipo</label>
@@ -103,10 +94,8 @@
                 <input type="text" id="tel" placeholder="2945...">
             </div>
         </div>
-
         <label>Sistema (Marca DVR/NVR)</label>
         <input type="text" id="sis" placeholder="Hikvision, Dahua, etc.">
-
         <div class="grid-2">
             <div>
                 <label>Usuario</label>
@@ -117,13 +106,10 @@
                 <input type="text" id="pas" placeholder="Clave123">
             </div>
         </div>
-
         <label>Días de Almacenamiento</label>
         <input type="number" id="alm" placeholder="Cantidad de días">
-
         <label>Otros Datos</label>
         <textarea id="ot" rows="3" placeholder="Notas adicionales..."></textarea>
-
         <button class="btn-save" onclick="enviar()">Guardar Cambios</button>
         <button onclick="cerrarTodo()" style="width:100%; background:none; border:none; color:red; margin-top:10px; cursor:pointer; font-weight:bold;">Cancelar</button>
     </div>
@@ -138,8 +124,32 @@
         const supabaseKey = 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu';
         const _client = supabase.createClient(supabaseUrl, supabaseKey);
 
-        const map = L.map('map').setView([-42.912, -71.316], 14);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        // CONFIGURACIÓN DE CAPAS
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+            attribution: '© OpenStreetMap' 
+        });
+
+        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© CartoDB'
+        });
+
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: '© Esri'
+        });
+
+        const map = L.map('map', {
+            center: [-42.912, -71.316],
+            zoom: 14,
+            layers: [osm] // Capa por defecto
+        });
+
+        const baseMaps = {
+            "Calles": osm,
+            "Modo Oscuro": dark,
+            "Satélite": satellite
+        };
+
+        L.control.layers(baseMaps).addTo(map);
 
         let items = [];
         let seleccionando = false;
@@ -159,7 +169,7 @@
                     if (c.TIPO === 'CENTRO DE MONITOREO') color = 'blue';
                     if (c.TIPO === 'PRIVADAS') color = 'black';
 
-                    // Tamaño reducido: 22x22px y fuente de 12px
+                    // Tamaño de icono reducido a 22px
                     const icon = L.divIcon({
                         className: 'custom-div-icon',
                         html: `<div class="div-icon" style="border-color: ${color}; color: ${color}; width: 22px; height: 22px; font-size: 12px;">
@@ -187,11 +197,11 @@
             });
         }
 
+        // Resto de funciones (buscarLugar, abrirEditar, eliminar, etc. se mantienen igual)
         async function buscarLugar() {
             const query = document.getElementById('q').value.trim();
             if (!query) return;
             if (searchMarker) map.removeLayer(searchMarker);
-
             const local = items.find(i => i.info.includes(query.toLowerCase()));
             if (local) {
                 map.setView(local.m.getLatLng(), 18);
@@ -200,15 +210,12 @@
                 const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, Esquel, Chubut`);
                 const results = await resp.json();
                 if (results.length > 0) {
-                    const lat = results[0].lat;
-                    const lon = results[0].lon;
+                    const lat = results[0].lat; const lon = results[0].lon;
                     map.setView([lat, lon], 17);
                     searchMarker = L.marker([lat, lon]).addTo(map)
                         .bindPopup(`<b>Punto encontrado:</b><br>${query}<br><br><small>Clic para añadir cámara</small>`)
                         .openPopup();
-                } else {
-                    alert("No se encontró esa dirección en Esquel.");
-                }
+                } else { alert("No se encontró esa dirección en Esquel."); }
             }
         }
 

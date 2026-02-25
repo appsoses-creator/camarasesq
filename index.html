@@ -30,7 +30,7 @@
             border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        /* Estilo de los iconos personalizados */
+        /* Estilo de los iconos personalizados - TAMAÑO REDUCIDO */
         .div-icon {
             display: flex;
             align-items: center;
@@ -155,18 +155,18 @@
                 const lng = parseFloat(c.UBICACION?.split(',')[1]);
 
                 if (lat && lng) {
-                    // Lógica de colores según el pedido
                     let color = 'green';
                     if (c.TIPO === 'CENTRO DE MONITOREO') color = 'blue';
                     if (c.TIPO === 'PRIVADAS') color = 'black';
 
+                    // Tamaño reducido: 22x22px y fuente de 12px
                     const icon = L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div class="div-icon" style="border-color: ${color}; color: ${color}; width: 30px; height: 30px; font-size: 16px;">
+                        html: `<div class="div-icon" style="border-color: ${color}; color: ${color}; width: 22px; height: 22px; font-size: 12px;">
                                 <i class="fa-solid fa-video"></i>
                                </div>`,
-                        iconSize: [30, 30],
-                        iconAnchor: [15, 15]
+                        iconSize: [22, 22],
+                        iconAnchor: [11, 11]
                     });
 
                     const marker = L.marker([lat, lng], { icon }).addTo(map);
@@ -182,7 +182,7 @@
                     `;
                     marker.bindPopup(popupDiv);
 
-                    items.push({ id: c.id, m: marker, data: c, info: (c.DIRECCION + " " + c['LUGAR / TITULAR']).toLowerCase() });
+                    items.push({ id: c.id, m: marker, data: c, info: (c.DIRECCION + " " + (c['LUGAR / TITULAR'] || '')).toLowerCase() });
                 }
             });
         }
@@ -190,26 +190,21 @@
         async function buscarLugar() {
             const query = document.getElementById('q').value.trim();
             if (!query) return;
-
             if (searchMarker) map.removeLayer(searchMarker);
 
-            // 1. Primero buscamos en los datos locales de Supabase
             const local = items.find(i => i.info.includes(query.toLowerCase()));
             if (local) {
                 map.setView(local.m.getLatLng(), 18);
                 local.m.openPopup();
             } else {
-                // 2. Si no está en la base, buscamos la dirección real en Esquel
                 const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}, Esquel, Chubut`);
                 const results = await resp.json();
-                
                 if (results.length > 0) {
                     const lat = results[0].lat;
                     const lon = results[0].lon;
                     map.setView([lat, lon], 17);
-                    
                     searchMarker = L.marker([lat, lon]).addTo(map)
-                        .bindPopup(`<b>Punto encontrado:</b><br>${query}<br><br><small>Clic aquí para añadir cámara</small>`)
+                        .bindPopup(`<b>Punto encontrado:</b><br>${query}<br><br><small>Clic para añadir cámara</small>`)
                         .openPopup();
                 } else {
                     alert("No se encontró esa dirección en Esquel.");
@@ -230,7 +225,6 @@
             document.getElementById('pas').value = cam.CONTRASEÑA || '';
             document.getElementById('alm').value = cam['ALMACENAMIENTO (DIAS)'] || '';
             document.getElementById('ot').value = cam['OTROS DATOS'] || '';
-            
             document.getElementById('form-title').innerText = "Editar Cámara";
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
@@ -256,10 +250,8 @@
             document.getElementById('edit-id').value = "";
             document.getElementById('form-title').innerText = "Nueva Cámara";
             document.getElementById('u').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-            
             if (tempMarker) map.removeLayer(tempMarker);
             tempMarker = L.marker([lat, lng]).addTo(map);
-            
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
             document.getElementById('instruccion').style.display = 'none';
@@ -289,11 +281,9 @@
                 "ALMACENAMIENTO (DIAS)": document.getElementById('alm').value,
                 "OTROS DATOS": document.getElementById('ot').value
             };
-            
             let res;
             if (id) res = await _client.from('cameras').update(cam).eq('id', id);
             else res = await _client.from('cameras').insert([cam]);
-
             if (res.error) alert("Error: " + res.error.message);
             else { cerrarTodo(); load(); }
         }

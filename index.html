@@ -3,122 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras Esquel 2</title>
+    <title>Cámaras Esquel 1</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; font-family: sans-serif; background: #f0f2f5; }
-        #map { height: 400px; width: 100%; }
-        .container { padding: 15px; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn-save { background: #10b981; color: white; border: none; padding: 15px; width: 100%; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; background: white; font-size: 12px; }
-        th, td { padding: 10px; border: 1px solid #eee; text-align: left; }
-        th { background: #2563eb; color: white; }
-        .badge { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        body { margin: 0; font-family: sans-serif; }
+        #map { height: 100vh; width: 100%; z-index: 1; }
+        
+        /* Buscador */
+        .search-box {
+            position: fixed; top: 15px; left: 60px; z-index: 1000;
+            background: white; padding: 8px; border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); width: 220px;
+        }
+        .search-box input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+
+        /* EL BOTÓN DE AÑADIR */
+        .btn-add {
+            position: fixed; bottom: 30px; left: 30px; z-index: 1000;
+            background: #2563eb; color: white; border: none; padding: 15px 25px;
+            border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-size: 16px;
+        }
+
+        /* Formulario con todas las columnas */
+        .modal {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 2000; background: white; padding: 20px; border-radius: 15px;
+            width: 90%; max-width: 400px; max-height: 85vh; overflow-y: auto;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+        }
+        .modal h3 { margin-top: 0; color: #1e40af; }
+        .modal label { font-size: 12px; color: #666; font-weight: bold; }
+        .modal input, .modal select, .modal textarea { 
+            width: 100%; padding: 10px; margin: 5px 0 12px 0; 
+            border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; 
+        }
+        .btn-save { width: 100%; padding: 12px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1500; }
     </style>
 </head>
 <body>
 
-<div id="map"></div>
+    <div class="search-box">
+        <input type="text" id="q" placeholder="Buscar cámara..." onkeyup="filtrar()">
+    </div>
 
-<div class="container">
-    <div class="card">
-        <h3>Añadir / Completar Datos</h3>
-        <input type="text" id="lugar" placeholder="Lugar / Titular (Ej: Panadería Don Pepone)">
-        <input type="text" id="dir" placeholder="Dirección (Ej: Av. Ameghino 123)">
+    <button class="btn-add" onclick="abrirForm(true)">+ Añadir Cámara</button>
+
+    <div class="overlay" id="blur" onclick="abrirForm(false)"></div>
+    <div class="modal" id="form">
+        <h3>Nueva Cámara</h3>
         
-        <select id="tipo">
-            <option value="PRIVADAS">Privada</option>
+        <label>Lugar / Titular</label>
+        <input type="text" id="n" placeholder="Nombre del comercio o dueño">
+        
+        <label>Dirección</label>
+        <input type="text" id="d" placeholder="Calle y número">
+        
+        <label>Tipo</label>
+        <select id="t">
             <option value="CENTRO DE MONITOREO">Monitoreo</option>
+            <option value="PRIVADAS">Privada</option>
             <option value="PARTICULARES">Particular</option>
         </select>
-
-        <input type="text" id="gps" placeholder="Coordenadas (Lat, Lng)">
-        <input type="text" id="tel" placeholder="Teléfono de contacto">
         
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="sistema" placeholder="Sistema (Hikvision/Dahua)">
-            <input type="number" id="dias" placeholder="Días Almacenamiento">
+        <label>Coordenadas (Lat, Lng)</label>
+        <input type="text" id="u" placeholder="-42.91, -71.31">
+        
+        <label>Teléfono</label>
+        <input type="text" id="tel" placeholder="Contacto">
+
+        <label>Sistema / Usuario / Pass</label>
+        <div style="display: flex; gap: 5px;">
+            <input type="text" id="sis" placeholder="Sistema">
+            <input type="text" id="usu" placeholder="User">
+            <input type="text" id="pas" placeholder="Pass">
         </div>
 
-        <div style="display: flex; gap: 10px;">
-            <input type="text" id="user" placeholder="Usuario">
-            <input type="text" id="pass" placeholder="Contraseña / Patrón">
-        </div>
+        <label>Días Almacenamiento</label>
+        <input type="number" id="alm" placeholder="Ej: 30">
 
-        <textarea id="otros" placeholder="Otros datos (Ej: Llevar monitor, requiere oficio...)"></textarea>
-        
-        <button class="btn-save" onclick="guardar()">Guardar en Supabase</button>
+        <label>Otros Datos</label>
+        <textarea id="ot" rows="2" placeholder="Notas adicionales..."></textarea>
+
+        <button class="btn-save" onclick="enviar()">Guardar en Supabase</button>
+        <button onclick="abrirForm(false)" style="width:100%; background:none; border:none; color:red; margin-top:10px; cursor:pointer;">Cancelar</button>
     </div>
 
-    <h3>Listado de Cámaras</h3>
-    <div style="overflow-x: auto;">
-        <table>
-            <thead>
-                <tr>
-                    <th>Lugar</th>
-                    <th>Tipo</th>
-                    <th>Usuario/Pass</th>
-                    <th>Notas</th>
-                </tr>
-            </thead>
-            <tbody id="tabla"></tbody>
-        </table>
-    </div>
-</div>
+    <div id="map"></div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-    const sUrl = 'https://ubdlfcjcgdnzqwjvwsmn.supabase.co';
-    const sKey = 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu';
-    const _s = supabase.createClient(sUrl, sKey);
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    const map = L.map('map').setView([-42.912, -71.316], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    <script>
+        const supabaseUrl = 'https://ubdlfcjcgdnzqwjvwsmn.supabase.co';
+        const supabaseKey = 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu';
+        const _client = supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function cargar() {
-        const { data } = await _s.from('cameras').select('*');
-        const lista = document.getElementById('tabla');
-        lista.innerHTML = '';
-        
-        data.forEach(c => {
-            // Llenar tabla
-            lista.innerHTML += `<tr>
-                <td><b>${c['LUGAR / TITULAR'] || '-'}</b><br>${c.DIRECCION || ''}</td>
-                <td>${c.TIPO || ''}</td>
-                <td>U: ${c.USUARIO || '-'}<br>P: ${c.CONTRASEÑA || '-'}</td>
-                <td>${c['OTROS DATOS'] || ''}</td>
-            </tr>`;
+        const map = L.map('map').setView([-42.912, -71.316], 14);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-            // Poner en mapa
-            if (c.lat && c.lng) {
-                L.marker([c.lat, c.lng]).addTo(map).bindPopup(`<b>${c['LUGAR / TITULAR']}</b>`);
-            }
-        });
-    }
+        let items = [];
 
-    async function guardar() {
-        const nuevaCamara = {
-            "LUGAR / TITULAR": document.getElementById('lugar').value,
-            "DIRECCION": document.getElementById('dir').value,
-            "TIPO": document.getElementById('tipo').value,
-            "UBICACION": document.getElementById('gps').value,
-            "TELÉFONO": document.getElementById('tel').value,
-            "SISTEMA CÁMARAS": document.getElementById('sistema').value,
-            "USUARIO": document.getElementById('user').value,
-            "CONTRASEÑA": document.getElementById('pass').value,
-            "ALMACENAMIENTO (DIAS)": document.getElementById('dias').value,
-            "OTROS DATOS": document.getElementById('otros').value
-        };
+        async function load() {
+            items.forEach(i => map.removeLayer(i.m));
+            items = [];
+            const { data } = await _client.from('cameras').select('*');
+            data.forEach(c => {
+                if (c.lat && c.lng) {
+                    let col = 'green';
+                    if (c.TIPO?.includes('MONITOREO')) col = 'blue';
+                    if (c.TIPO?.includes('PRIVADAS')) col = 'orange';
+                    const marker = L.marker([c.lat, c.lng], { 
+                        icon: new L.Icon({
+                            iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${col}.png`,
+                            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+                        })
+                    }).addTo(map).bindPopup(`<b>${c['LUGAR / TITULAR']}</b><br>${c.DIRECCION}`);
+                    items.push({ m: marker, info: (c['LUGAR / TITULAR'] + " " + (c.DIRECCION || "")).toLowerCase() });
+                }
+            });
+        }
 
-        const { error } = await _s.from('cameras').insert([nuevaCamara]);
-        if (error) alert("Error: " + error.message);
-        else { alert("¡Datos guardados!"); location.reload(); }
-    }
+        function filtrar() {
+            const val = document.getElementById('q').value.toLowerCase();
+            items.forEach(i => i.info.includes(val) ? i.m.setOpacity(1) : i.m.setOpacity(0));
+        }
 
-    cargar();
-</script>
+        function abrirForm(s) {
+            document.getElementById('form').style.display = s ? 'block' : 'none';
+            document.getElementById('blur').style.display = s ? 'block' : 'none';
+        }
+
+        async function enviar() {
+            const cam = {
+                "LUGAR / TITULAR": document.getElementById('n').value,
+                "DIRECCION": document.getElementById('d').value,
+                "TIPO": document.getElementById('t').value,
+                "UBICACION": document.getElementById('u').value,
+                "TELÉFONO": document.getElementById('tel').value,
+                "SISTEMA CÁMARAS": document.getElementById('sis').value,
+                "USUARIO": document.getElementById('usu').value,
+                "CONTRASEÑA": document.getElementById('pas').value,
+                "ALMACENAMIENTO (DIAS)": document.getElementById('alm').value,
+                "OTROS DATOS": document.getElementById('ot').value
+            };
+            
+            const { error } = await _client.from('cameras').insert([cam]);
+            if (error) alert("Error: " + error.message);
+            else { alert("¡Guardado!"); abrirForm(false); load(); }
+        }
+        load();
+    </script>
 </body>
 </html>

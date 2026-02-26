@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras </title>
+    <title>Cámaras 4</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <style>
@@ -80,10 +80,24 @@
 
     <script>
         (function() {
-            const session = localStorage.getItem('user_session');
-            if (!session || session === "undefined" || session === "null") {
+            const rawSession = localStorage.getItem('user_session');
+            let sessionValida = false;
+
+            try {
+                if (rawSession && rawSession !== "undefined" && rawSession !== "null") {
+                    const parsed = JSON.parse(rawSession);
+                    if (parsed && parsed.usuario) {
+                        sessionValida = true;
+                    }
+                }
+            } catch (e) {
+                sessionValida = false;
+            }
+
+            if (!sessionValida) {
+                localStorage.removeItem('user_session'); // Limpia si era basura
                 window.location.replace('login.html');
-                document.body.style.display = 'none';
+                document.documentElement.style.display = 'none'; // Oculta todo
             }
         })();
     </script>
@@ -158,13 +172,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // 1. CARGA DE DATOS DE USUARIO
+        // CARGA SUPABASE (Solo si pasó el bloqueo de arriba)
         const userLogueado = JSON.parse(localStorage.getItem('user_session'));
-
-        // 2. CONFIGURACIÓN SUPABASE
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        // Mostrar pestaña admin si corresponde
         if (userLogueado && userLogueado.rol === 'admin') {
             document.getElementById('admin-tab').style.display = 'block';
         }
@@ -172,14 +183,6 @@
         function logout() {
             localStorage.clear();
             window.location.replace('login.html');
-        }
-
-        // --- GESTIÓN DE USUARIOS ---
-        function toggleUsuarios() {
-            const sec = document.getElementById('users-section');
-            const isVisible = sec.style.display === 'block';
-            sec.style.display = isVisible ? 'none' : 'block';
-            if (!isVisible) cargarListaUsuarios();
         }
 
         async function crearUsuario() {
@@ -214,6 +217,13 @@
                 await _client.from('usuarios_app').delete().eq('id', id);
                 cargarListaUsuarios();
             }
+        }
+
+        function toggleUsuarios() {
+            const sec = document.getElementById('users-section');
+            const isVisible = sec.style.display === 'block';
+            sec.style.display = isVisible ? 'none' : 'block';
+            if (!isVisible) cargarListaUsuarios();
         }
 
         // --- MAPA ---
@@ -255,6 +265,12 @@
             document.getElementById('n').value = cam['LUGAR / TITULAR'] || '';
             document.getElementById('t').value = cam.TIPO || 'CENTRO DE MONITOREO';
             document.getElementById('ciudad_select').value = cam.ciudad || 'Esquel';
+            document.getElementById('tel').value = cam.TELÉFONO || '';
+            document.getElementById('sis').value = cam['SISTEMA CÁMARAS'] || '';
+            document.getElementById('usu').value = cam.USUARIO || '';
+            document.getElementById('pas').value = cam.CONTRASEÑA || '';
+            document.getElementById('alm').value = cam['ALMACENAMIENTO (DIAS)'] || '';
+            document.getElementById('ot').value = cam['OTROS DATOS'] || '';
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
         }

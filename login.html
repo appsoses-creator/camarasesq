@@ -52,6 +52,7 @@
             max-width: 420px; 
             text-align: center;
             animation: fadeIn 0.8s ease-out;
+            box-sizing: border-box; /* Asegura que el padding no rompa el ancho */
         }
 
         @keyframes fadeIn {
@@ -170,6 +171,30 @@
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-8px); }
             75% { transform: translateX(8px); }
+        }
+
+        /* AJUSTES PARA CELULAR (Sin modificar la estructura original) */
+        @media (max-width: 480px) {
+            body {
+                padding: 20px;
+            }
+            .login-card {
+                padding: 35px 25px; /* Menos espacio interno en móvil */
+                border-radius: 20px;
+            }
+            h2 {
+                font-size: 19px; /* Texto un poco más pequeño para que no se rompa */
+            }
+            p {
+                font-size: 14px;
+                margin-bottom: 25px;
+            }
+            .logo-area {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
         }
     </style>
 </head>

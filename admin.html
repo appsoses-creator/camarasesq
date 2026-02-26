@@ -185,19 +185,29 @@
         }
 
         async function verCargasUsuario(userName) {
-            document.getElementById('detail-user-name').innerText = userName;
+            // Limpieza profunda del nombre
+            const cleanName = userName.trim();
+            document.getElementById('detail-user-name').innerText = cleanName;
             const container = document.getElementById('detail-content');
             container.innerHTML = '<p style="font-size:12px;">Buscando registros...</p>';
             toggleDetail(true);
 
-            // CORRECCIÓN: Usamos .ilike para ignorar mayúsculas y minúsculas
+            // CORRECCIÓN FINAL: Búsqueda flexible con ilike y comodines
             const { data: cams, error } = await _client
                 .from('cameras')
                 .select('*')
-                .ilike('usuario', userName);
+                .ilike('usuario', `%${cleanName}%`);
             
+            if (error) {
+                container.innerHTML = `<p style="font-size:12px; color:var(--danger);">Error: ${error.message}</p>`;
+                return;
+            }
+
             if(!cams || cams.length === 0) {
-                container.innerHTML = '<p style="font-size:12px; color:var(--text-dim);">No se encontraron cámaras vinculadas a este nombre.</p>';
+                container.innerHTML = `
+                    <p style="font-size:12px; color:var(--text-dim);">No se encontraron cámaras vinculadas a "${cleanName}".</p>
+                    <p style="font-size:10px; color:var(--accent); margin-top:10px;">Verifica que la columna en la tabla 'cameras' se llame exactamente 'usuario'.</p>
+                `;
             } else {
                 container.innerHTML = cams.map(c => `
                     <div style="background:#1a2233; padding:12px; border-radius:10px; border:1px solid #334155;">

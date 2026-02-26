@@ -13,8 +13,8 @@
             --input-blue: #3b82f6;
             --btn-grad: linear-gradient(90deg, #7e22ce, #db2777);
             --text-neon: #4ade80;
-            --danger: #e11d48; /* Rojo para atraso */
-            --success: #22c55e; /* Verde para adelanto */
+            --danger: #e11d48;
+            --success: #22c55e;
         }
 
         body {
@@ -26,33 +26,18 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            padding: 20px 0;
         }
 
-        .container {
-            width: 95%;
-            max-width: 480px;
-            text-align: center;
-        }
-
-        h1 { font-size: 24px; margin-bottom: 30px; }
-
+        .container { width: 95%; max-width: 480px; text-align: center; }
+        
         .card {
             background: var(--card-blue);
             border-radius: 25px;
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-
-        .card-title {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: #e2e8f0;
+            transition: 0.3s;
         }
 
         #reloj-actual {
@@ -66,7 +51,7 @@
             background: var(--input-blue);
             border-radius: 15px;
             padding: 12px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -78,11 +63,12 @@
             border: none;
             color: white;
             width: 100%;
-            font-size: 16px;
+            font-size: 15px;
             outline: none;
+            font-family: 'Inter', sans-serif;
         }
 
-        input::-webkit-calendar-picker-indicator { filter: invert(1); }
+        input::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
 
         .btn-main {
             width: 100%;
@@ -97,55 +83,59 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            margin-bottom: 10px;
+            transition: 0.2s;
         }
 
-        .btn-calc { background: var(--btn-grad); }
-        .btn-back { background: #161b3d; text-decoration: none; font-size: 14px; }
+        .btn-main:active { transform: scale(0.98); }
 
-        /* ESTILO RESULTADO (COMO EN LA IMAGEN) */
+        .btn-calc { background: var(--btn-grad); margin-bottom: 10px; }
+        .btn-download { background: #2563eb; margin-top: 10px; }
+        .btn-reset { background: #475569; margin-top: 15px; font-size: 13px; opacity: 0.8; }
+        .btn-back { background: #161b3d; text-decoration: none; font-size: 14px; margin-top: 20px; }
+
         .result-card {
             display: none;
             border-radius: 25px;
             padding: 20px;
             margin-top: 20px;
             text-align: left;
-            position: relative;
-        }
-
-        .result-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 15px;
         }
 
         .result-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 8px;
-            margin-bottom: 20px;
+            margin: 15px 0;
         }
 
         .time-box {
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.2);
             padding: 10px 5px;
             border-radius: 12px;
             text-align: center;
         }
 
-        .time-label { font-size: 10px; font-weight: 700; text-transform: uppercase; opacity: 0.9; }
-        .time-value { font-size: 20px; font-weight: 800; }
+        .time-value { font-size: 18px; font-weight: 800; }
+        .time-label { font-size: 9px; font-weight: 700; text-transform: uppercase; }
 
-        .footer-times {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
+        #seccion-descarga { display: none; background: #1e293b; border: 1px solid rgba(255,255,255,0.1); }
+
+        .download-result {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid var(--text-neon);
+            display: none;
+        }
+
+        .dvr-time-output {
+            color: var(--text-neon);
             font-family: monospace;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            padding-top: 10px;
+            font-size: 17px;
+            font-weight: 700;
+            display: block;
+            margin-top: 3px;
         }
     </style>
 </head>
@@ -155,93 +145,145 @@
         <h1>Calculadora DPIE</h1>
 
         <div class="card">
-            <div class="card-title"><i class="fa-regular fa-clock"></i> Hora Actual</div>
+            <div style="font-size: 12px; opacity: 0.8; margin-bottom: 10px;">HORA ACTUAL (CELULAR/SISTEMA)</div>
             <div id="reloj-actual">--/--/----, --:--:--</div>
         </div>
 
         <div class="card">
-            <div class="card-title"><i class="fa-solid fa-rocket"></i> Hora del DVR</div>
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 15px;"><i class="fa-solid fa-1"></i> SINCRONIZAR CON DVR</div>
             <div class="input-wrapper">
-                <i class="fa-regular fa-calendar"></i>
+                <i class="fa-regular fa-clock"></i>
                 <input type="datetime-local" id="hora-dvr" step="1">
             </div>
-
-            <button class="btn-main btn-calc" onclick="calcular()">
-                <i class="fa-solid fa-rocket"></i> Calcular Desfasaje
+            <button class="btn-main btn-calc" onclick="calcularDesfase()">
+                <i class="fa-solid fa-sync"></i> Calcular Desfasaje
             </button>
-            <a href="index.html" class="btn-main btn-back">Volver al Mapa</a>
         </div>
 
         <div id="resultado" class="result-card">
-            <div class="result-header">
+            <div id="res-header" style="display: flex; align-items: center; gap: 10px; font-weight: 800;">
                 <i id="res-icon" class="fa-solid"></i>
-                <span id="res-title">¡Desfase Detectado!</span>
+                <span id="res-title"></span>
+            </div>
+            <div class="result-grid">
+                <div class="time-box"><div id="v-dias" class="time-value">0</div><div class="time-label">Días</div></div>
+                <div class="time-box"><div id="v-horas" class="time-value">0</div><div class="time-label">Horas</div></div>
+                <div class="time-box"><div id="v-minutos" class="time-value">0</div><div class="time-label">Mins</div></div>
+                <div class="time-box"><div id="v-segundos" class="time-value">0</div><div class="time-label">Segs</div></div>
+            </div>
+        </div>
+
+        <div id="seccion-descarga" class="card">
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 15px;"><i class="fa-solid fa-2"></i> RANGO REAL DEL EVENTO</div>
+            <div class="input-wrapper">
+                <input type="datetime-local" id="real-start" step="1">
+            </div>
+            <div class="input-wrapper">
+                <input type="datetime-local" id="real-end" step="1">
+            </div>
+            <button class="btn-main btn-download" onclick="obtenerHorasDVR()">
+                <i class="fa-solid fa-magnifying-glass-chart"></i> Calcular Búsqueda en DVR
+            </button>
+
+            <div id="res-descarga" class="download-result">
+                <div style="text-align: left;">
+                    <div style="margin-bottom: 10px;">
+                        <span style="font-size: 11px; opacity: 0.7; font-weight: 700;">INICIO EN DVR (BUSCAR):</span>
+                        <span id="out-start" class="dvr-time-output"></span>
+                    </div>
+                    <div>
+                        <span style="font-size: 11px; opacity: 0.7; font-weight: 700;">FIN EN DVR (BUSCAR):</span>
+                        <span id="out-end" class="dvr-time-output"></span>
+                    </div>
+                </div>
             </div>
             
-            <p id="res-desc" style="font-size: 13px; margin-bottom: 15px;"></p>
-
-            <div class="result-grid">
-                <div class="time-box"><div class="time-label">Días</div><div id="v-dias" class="time-value">0</div></div>
-                <div class="time-box"><div class="time-label">Horas</div><div id="v-horas" class="time-value">0</div></div>
-                <div class="time-box"><div class="time-label">Minutos</div><div id="v-minutos" class="time-value">0</div></div>
-                <div class="time-box"><div class="time-label">Segundos</div><div id="v-segundos" class="time-value">0</div></div>
-            </div>
-
-            <div class="footer-times">
-                <div>HORA ACTUAL<br><span id="foot-actual"></span></div>
-                <div style="text-align: right;">HORA DVR<br><span id="foot-dvr"></span></div>
-            </div>
-            <div style="font-size: 10px; text-align: center; margin-top: 10px; opacity: 0.5;">Desarrollado por Oses Lisandro</div>
+            <button class="btn-main btn-reset" onclick="resetAll()">
+                <i class="fa-solid fa-trash-can"></i> Reiniciar Cálculos
+            </button>
         </div>
+
+        <a href="index.html" class="btn-main btn-back">
+            <i class="fa-solid fa-map-location-dot"></i> Volver al Mapa
+        </a>
+        <p style="font-size: 10px; opacity: 0.4; margin-top: 15px;">Desarrollado por Oses Lisandro</p>
     </div>
 
     <script>
+        let offsetMs = 0;
+
+        // Reloj en tiempo real
         function actualizarReloj() {
             const ahora = new Date();
-            const fmt = ahora.toLocaleString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).replace(',', '');
-            document.getElementById('reloj-actual').innerText = fmt;
+            document.getElementById('reloj-actual').innerText = ahora.toLocaleString('es-AR', { hour12: false }).replace(',', '');
         }
         setInterval(actualizarReloj, 1000);
         actualizarReloj();
 
-        function calcular() {
-            const input = document.getElementById('hora-dvr').value;
-            if(!input) return alert("Selecciona la hora del DVR");
+        function calcularDesfase() {
+            const valDVR = document.getElementById('hora-dvr').value;
+            if(!valDVR) return alert("Por favor, ingresa la hora que muestra el DVR.");
 
             const ahora = new Date();
-            const dvr = new Date(input);
-            const diffMs = ahora - dvr;
-            const absDiff = Math.abs(diffMs);
-
-            // Cálculos
-            const dias = Math.floor(absDiff / (1000 * 60 * 60 * 24));
-            const horas = Math.floor((absDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutos = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
-            const segundos = Math.floor((absDiff % (1000 * 60)) / 1000);
-
-            // UI
-            const resCard = document.getElementById('resultado');
-            const resIcon = document.getElementById('res-icon');
+            const dvr = new Date(valDVR);
             
-            resCard.style.display = 'block';
-            
-            if(diffMs > 0) { // Atrasado
-                resCard.style.background = 'linear-gradient(135deg, #e11d48, #9f1239)';
-                resIcon.className = "fa-solid fa-circle-exclamation";
-                document.getElementById('res-desc').innerText = "La hora del DVR está Atrasada respecto a la actual.";
-            } else { // Adelantado
-                resCard.style.background = 'linear-gradient(135deg, #22c55e, #15803d)';
-                resIcon.className = "fa-solid fa-circle-check";
-                document.getElementById('res-desc').innerText = "La hora del DVR está Adelantada respecto a la actual.";
+            // DIFERENCIA ABSOLUTA EN MILISEGUNDOS
+            // dvr.getTime() nos da el valor numérico exacto de ese instante en la historia
+            offsetMs = dvr.getTime() - ahora.getTime();
+
+            const absDiff = Math.abs(offsetMs);
+            document.getElementById('v-dias').innerText = Math.floor(absDiff / 86400000);
+            document.getElementById('v-horas').innerText = Math.floor((absDiff % 86400000) / 3600000);
+            document.getElementById('v-minutos').innerText = Math.floor((absDiff % 3600000) / 60000);
+            document.getElementById('v-segundos').innerText = Math.floor((absDiff % 60000) / 1000);
+
+            const res = document.getElementById('resultado');
+            res.style.display = 'block';
+            document.getElementById('seccion-descarga').style.display = 'block';
+
+            if(offsetMs < 0) {
+                res.style.background = 'linear-gradient(135deg, #e11d48, #9f1239)';
+                document.getElementById('res-title').innerText = "DVR ATRASADO";
+                document.getElementById('res-icon').className = "fa-solid fa-circle-exclamation";
+            } else {
+                res.style.background = 'linear-gradient(135deg, #22c55e, #15803d)';
+                document.getElementById('res-title').innerText = "DVR ADELANTADO";
+                document.getElementById('res-icon').className = "fa-solid fa-circle-check";
             }
+            
+            // Auto-scroll al paso 2
+            setTimeout(() => {
+                document.getElementById('seccion-descarga').scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        }
 
-            document.getElementById('v-dias').innerText = dias;
-            document.getElementById('v-horas').innerText = horas;
-            document.getElementById('v-minutos').innerText = minutos;
-            document.getElementById('v-segundos').innerText = segundos;
+        function obtenerHorasDVR() {
+            const s = document.getElementById('real-start').value;
+            const e = document.getElementById('real-end').value;
+            if(!s || !e) return alert("Ingresa el rango horario real del evento.");
 
-            document.getElementById('foot-actual').innerText = ahora.toLocaleString('es-AR').replace(',', '');
-            document.getElementById('foot-dvr').innerText = dvr.toLocaleString('es-AR').replace(',', '');
+            // SUMA MATEMÁTICA DEL OFFSET (Ajusta día/mes/año automáticamente si es necesario)
+            const dvrStart = new Date(new Date(s).getTime() + offsetMs);
+            const dvrEnd = new Date(new Date(e).getTime() + offsetMs);
+
+            const fmt = (d) => d.toLocaleString('es-AR', { hour12: false }).replace(',', '');
+            
+            document.getElementById('out-start').innerText = fmt(dvrStart);
+            document.getElementById('out-end').innerText = fmt(dvrEnd);
+            document.getElementById('res-descarga').style.display = 'block';
+        }
+
+        function resetAll() {
+            if(confirm("¿Quieres borrar los cálculos actuales?")) {
+                document.getElementById('hora-dvr').value = "";
+                document.getElementById('real-start').value = "";
+                document.getElementById('real-end').value = "";
+                document.getElementById('resultado').style.display = 'none';
+                document.getElementById('seccion-descarga').style.display = 'none';
+                document.getElementById('res-descarga').style.display = 'none';
+                offsetMs = 0;
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         }
     </script>
 </body>

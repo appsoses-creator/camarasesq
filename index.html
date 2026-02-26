@@ -106,14 +106,13 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
         }
 
-        /* BOTTOM BAR (Solo móvil) */
+        /* BOTTOM BAR */
         .bottom-nav {
             display: none;
             position: fixed; bottom: 0; left: 0; right: 0;
             background: white;
             z-index: 1001;
             padding: 10px 5px;
-            display: none; /* Se activa en media query */
             justify-content: space-around;
             border-top: 1px solid #e2e8f0;
             box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
@@ -127,33 +126,14 @@
         .nav-item i { font-size: 18px; }
         .nav-item.active { color: var(--primary); }
 
-        /* VISTA MOVIL */
         @media (max-width: 768px) {
-            .actions-group { display: none; } /* Oculta botones arriba */
+            .actions-group { display: none; }
             .top-bar { top: 10px; width: 95%; padding: 8px 15px; }
-            .bottom-nav { display: flex; } /* Muestra barra abajo */
+            .bottom-nav { display: flex; }
             .btn-add-main { bottom: 85px; right: 20px; padding: 12px 20px; font-size: 14px; }
             #map { height: calc(100vh - 70px); }
         }
 
-        /* POPUPS */
-        .leaflet-popup-content-wrapper { border-radius: 16px; padding: 0; overflow: hidden; }
-        .leaflet-popup-content { margin: 0; width: 280px !important; }
-        .pop-card { display: flex; flex-direction: column; }
-        .pop-header { background: #f8fafc; padding: 15px; border-bottom: 1px solid #e2e8f0; }
-        .pop-title { display: block; font-size: 16px; color: var(--dark-bg); }
-        .pop-subtitle { display: block; font-size: 12px; color: #64748b; margin-top: 2px; }
-        .pop-body { padding: 15px; display: flex; flex-direction: column; gap: 8px; }
-        .pop-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #475569; }
-        .pop-info i { width: 16px; color: #94a3b8; font-size: 14px; }
-        .pop-footer { padding: 10px; background: #f8fafc; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .pop-btn { 
-            border: none; background: white; padding: 8px; border-radius: 8px; 
-            font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid #e2e8f0;
-            display: flex; align-items: center; justify-content: center; gap: 5px;
-        }
-
-        /* MODALES Y OTROS */
         .modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             z-index: 2001; background: white; width: 90%; max-width: 440px; 
@@ -266,6 +246,7 @@
             <div>
                 <label>Tipo de Sistema</label>
                 <select id="t">
+                    <option value=""></option>
                     <option value="CENTRO DE MONITOREO">Monitoreo</option>
                     <option value="PRIVADAS">Privada</option>
                     <option value="PARTICULARES">Particular</option>
@@ -331,12 +312,10 @@
             if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
             map.flyTo(coords, 15); 
             
-            // Actualizar botones arriba
             document.querySelectorAll('.btn-city').forEach(p => p.classList.remove('active'));
             const btn = document.getElementById(btnId);
             if(btn) btn.classList.add('active');
 
-            // Actualizar botones abajo (móvil)
             document.querySelectorAll('.nav-item').forEach(p => p.classList.remove('active'));
             const mBtnId = btnId === 'btn-esquel' ? 'm-btn-esquel' : 'm-btn-trevelin';
             const mBtn = document.getElementById(mBtnId);
@@ -435,7 +414,7 @@
             document.getElementById('d').value = cam.DIRECCION;
             document.getElementById('u').value = cam.UBICACION;
             document.getElementById('n').value = cam['LUGAR / TITULAR'];
-            document.getElementById('t').value = cam.TIPO;
+            document.getElementById('t').value = cam.TIPO || "";
             document.getElementById('ciudad_select').value = cam.ciudad || "Esquel";
             document.getElementById('tel').value = cam.telefono || "";
             document.getElementById('sis').value = cam.sistema || "";
@@ -505,6 +484,7 @@
             document.getElementById('edit-id').value = "";
             document.getElementById('d').value = "";
             document.getElementById('n').value = "";
+            document.getElementById('t').value = ""; // Resetea a vacío
             document.getElementById('tel').value = "";
             document.getElementById('sis').value = "";
             document.getElementById('usu').value = "";

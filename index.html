@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CÁMARAS 37</title>
+    <title>CÁMARAS DPIE</title>
     
     <script>
         (function() {
@@ -157,8 +157,8 @@
         <label>Sistema / DVR</label>
         <input type="text" id="sis">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-            <div><label>Usuario</label><input type="text" id="usu"></div>
-            <div><label>Clave</label><input type="text" id="pas"></div>
+            <div><label>Usuario DVR</label><input type="text" id="usu"></div>
+            <div><label>Clave DVR</label><input type="text" id="pas"></div>
         </div>
         <label>Días Almacenamiento</label>
         <input type="number" id="alm" value="7">
@@ -217,7 +217,6 @@
             }
         }
 
-        // --- FUNCIONES DE CLAVE ---
         function abrirModalClave() {
             document.getElementById('pass-nueva').value = '';
             document.getElementById('pass-confirma').value = '';
@@ -286,8 +285,8 @@
                             <div class="pop-body">
                                 <div class="pop-section-title">Información de Acceso</div>
                                 <div class="pop-info"><i class="fa-solid fa-desktop"></i> <b>Sistema:</b> ${c.sistema || '-'}</div>
-                                <div class="pop-info"><i class="fa-solid fa-user"></i> <b>User:</b> ${c.usuario || '-'}</div>
-                                <div class="pop-info"><i class="fa-solid fa-lock"></i> <b>Clave:</b> ${c.clave || '-'}</div>
+                                <div class="pop-info"><i class="fa-solid fa-user"></i> <b>DVR User:</b> ${c.usuario_cam || c.usuario || '-'}</div>
+                                <div class="pop-info"><i class="fa-solid fa-lock"></i> <b>DVR Clave:</b> ${c.clave || '-'}</div>
                                 
                                 <div class="pop-section-title" style="margin-top:5px">Contacto y Almacenamiento</div>
                                 <div class="pop-info"><i class="fa-solid fa-phone"></i> ${c.telefono || '-'}</div>
@@ -340,7 +339,7 @@
             const id = document.getElementById('edit-id').value;
             const btnSave = document.querySelector('.btn-save');
             const userSession = JSON.parse(localStorage.getItem('user_session'));
-            const nombreUsuario = userSession ? userSession.usuario : 'Desconocido';
+            const nombreUsuarioLogueado = userSession ? userSession.usuario : 'Desconocido';
 
             const cam = { 
                 "DIRECCION": document.getElementById('d').value, 
@@ -350,10 +349,11 @@
                 "ciudad": document.getElementById('ciudad_select').value,
                 "telefono": document.getElementById('tel').value,
                 "sistema": document.getElementById('sis').value,
-                "usuario": document.getElementById('usu').value,
+                "usuario_cam": document.getElementById('usu').value, // Usuario del DVR
                 "clave": document.getElementById('pas').value,
                 "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 7,
-                "otros_datos": document.getElementById('ot').value
+                "otros_datos": document.getElementById('ot').value,
+                "usuario": nombreUsuarioLogueado // Quien sube la cámara (para el Admin Panel)
             };
 
             try {
@@ -362,13 +362,11 @@
                 let result;
                 
                 if (id) {
-                    cam.actualizado_por = nombreUsuario;
                     result = await _client.from('cameras').update(cam).eq('id', id);
-                    if (!result.error) await registrarLog(nombreUsuario, 'EDITO CAMARA', `Modificó cámara en ${cam.DIRECCION}`);
+                    if (!result.error) await registrarLog(nombreUsuarioLogueado, 'EDITO CAMARA', `Modificó cámara en ${cam.DIRECCION}`);
                 } else {
-                    cam.creado_por = nombreUsuario;
                     result = await _client.from('cameras').insert([cam]);
-                    if (!result.error) await registrarLog(nombreUsuario, 'CREO CAMARA', `Nueva cámara en ${cam.DIRECCION}`);
+                    if (!result.error) await registrarLog(nombreUsuarioLogueado, 'CREO CAMARA', `Nueva cámara en ${cam.DIRECCION}`);
                 }
                 
                 if (result.error) throw result.error;
@@ -411,7 +409,7 @@
             document.getElementById('ciudad_select').value = item.ciudad || "Esquel";
             document.getElementById('tel').value = item.telefono;
             document.getElementById('sis').value = item.sistema;
-            document.getElementById('usu').value = item.usuario;
+            document.getElementById('usu').value = item.usuario_cam || item.usuario;
             document.getElementById('pas').value = item.clave || "";
             document.getElementById('alm').value = item.dias_almacenamiento;
             document.getElementById('ot').value = item.otros_datos;

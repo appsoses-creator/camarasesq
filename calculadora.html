@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora DPIE - CÁMARAS 10</title>
+    <title>Calculadora DPIE </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-dark: #0f1138;
             --card-blue: #1e40af;
-            --accent-purple: #9333ea;
-            --accent-pink: #db2777;
-            --text-green: #22c55e;
+            --btn-start: #7e22ce;
+            --btn-end: #db2777;
+            --text-green: #4ade80;
             --glass: rgba(255, 255, 255, 0.1);
+            --pill-gray: #161b3d;
         }
 
         body {
@@ -35,41 +36,11 @@
 
         h1 {
             font-size: 24px;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             letter-spacing: 1px;
         }
 
-        /* Tabs Superiores */
-        .tabs {
-            display: flex;
-            background: #161b3d;
-            padding: 5px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            justify-content: space-between;
-        }
-
-        .tab {
-            flex: 1;
-            padding: 12px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            color: #94a3b8;
-            transition: 0.3s;
-        }
-
-        .tab.active {
-            background: linear-gradient(90deg, #9333ea, #db2777);
-            color: white;
-        }
-
-        /* Tarjetas Estilo Imagen */
+        /* Contenedores Principales */
         .card {
             background: #1d4ed8;
             border-radius: 25px;
@@ -93,11 +64,11 @@
             font-family: 'Courier New', monospace;
             font-size: 26px;
             font-weight: 700;
-            color: #4ade80; /* Verde neón de la imagen */
+            color: var(--text-green);
             margin: 10px 0;
         }
 
-        /* Input y Botón */
+        /* Inputs y Campos de Selección */
         .input-wrapper {
             background: #3b82f6;
             border-radius: 15px;
@@ -105,8 +76,9 @@
             margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             border: 1px solid #60a5fa;
+            color: #cbd5e1;
         }
 
         input[type="datetime-local"] {
@@ -116,20 +88,20 @@
             width: 100%;
             font-size: 16px;
             outline: none;
+            font-family: inherit;
         }
 
-        /* Eliminar icono default de calendario en algunos navegadores para que luzca como la imagen */
         input::-webkit-calendar-picker-indicator {
             filter: invert(1);
             cursor: pointer;
         }
 
-        .btn-calcular {
+        /* Botones Principales */
+        .action-button {
             width: 100%;
             padding: 16px;
             border-radius: 15px;
             border: none;
-            background: linear-gradient(90deg, #7e22ce, #db2777);
             color: white;
             font-weight: 700;
             font-size: 16px;
@@ -138,28 +110,44 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            transition: transform 0.2s;
+            transition: transform 0.2s, background 0.3s;
+            box-sizing: border-box;
         }
 
-        .btn-calcular:active {
+        .action-button:active {
             transform: scale(0.98);
         }
 
-        /* Resultado */
-        .result-display {
-            margin-top: 15px;
-            padding: 15px;
-            border-radius: 15px;
-            background: rgba(0,0,0,0.2);
-            display: none;
+        /* Estilo para el botón de calcular (gradiente) */
+        .btn-calcular {
+            background: linear-gradient(90deg, var(--btn-start), var(--btn-end));
+            margin-bottom: 15px; /* Espacio con el botón de volver */
         }
 
+        .btn-calcular:hover {
+            opacity: 0.9;
+        }
+
+        /* Estilo para el botón de volver (color sólido de la interfaz) */
         .btn-volver {
+            background: #161b3d; /* Color gris oscuro pill para contrastar */
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e2e8f0;
+            text-decoration: none; /* Eliminar subrayado de enlace */
+        }
+
+        .btn-volver:hover {
+            background: #1e293b;
+        }
+
+        /* Área de Resultado */
+        .result-display {
             margin-top: 20px;
-            display: inline-block;
-            color: #94a3b8;
-            text-decoration: none;
-            font-size: 13px;
+            padding: 18px;
+            border-radius: 15px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            display: none;
         }
     </style>
 </head>
@@ -167,12 +155,6 @@
 
     <div class="container">
         <h1>Calculadora DPIE</h1>
-
-        <div class="tabs">
-            <div class="tab active"><i class="fa-regular fa-clock"></i> Desfase</div>
-            <div class="tab"><i class="fa-solid fa-download"></i> Descargas</div>
-            <div class="tab"><i class="fa-solid fa-history"></i> Historial</div>
-        </div>
 
         <div class="card">
             <div class="card-title">
@@ -191,21 +173,23 @@
                 <input type="datetime-local" id="hora-dvr">
             </div>
 
-            <button class="btn-calcular" onclick="calcularDesfase()">
+            <button class="action-button btn-calcular" onclick="calcularDesfase()">
                 <i class="fa-solid fa-rocket"></i> Calcular Desfasaje
             </button>
 
+            <a href="index.html" class="action-button btn-volver">
+                <i class="fa-solid fa-arrow-left"></i> Volver al Mapa
+            </a>
+
             <div class="result-display" id="area-resultado">
-                <div id="texto-resultado" style="font-weight: 700; font-size: 18px;"></div>
-                <div id="detalle-resultado" style="font-size: 13px; margin-top: 5px; color: #cbd5e1;"></div>
+                <div id="texto-resultado" style="font-weight: 700; font-size: 18px; margin-bottom: 5px;"></div>
+                <div id="detalle-resultado" style="font-size: 13px; color: #cbd5e1; line-height: 1.4;"></div>
             </div>
         </div>
-
-        <a href="index.html" class="btn-volver"><i class="fa-solid fa-arrow-left"></i> Volver al Mapa</a>
     </div>
 
     <script>
-        // Reloj Automático
+        // --- RELOJ AUTOMÁTICO EN TIEMPO REAL ---
         function actualizarReloj() {
             const ahora = new Date();
             const opciones = { 
@@ -217,24 +201,30 @@
                 second: '2-digit',
                 hour12: false 
             };
+            // Formatear la fecha y hora para que coincida con la imagen (dd/mm/aaaa, hh:mm:ss)
             const stringFecha = ahora.toLocaleString('es-AR', opciones).replace(',', '');
             document.getElementById('reloj-actual').innerText = stringFecha;
         }
 
+        // Actualizar cada segundo y al cargar
         setInterval(actualizarReloj, 1000);
         actualizarReloj();
 
-        // Lógica de Cálculo
+
+        // --- LÓGICA DE CÁLCULO DE DESFASE ---
         function calcularDesfase() {
             const inputDVR = document.getElementById('hora-dvr').value;
-            if (!inputDVR) return alert("Por favor, selecciona la fecha y hora del DVR");
+            if (!inputDVR) return alert("Por favor, selecciona la fecha y hora que muestra el DVR.");
 
             const fechaActual = new Date();
             const fechaDVR = new Date(inputDVR);
 
+            // Calcular diferencia en milisegundos
             const diffMs = fechaActual - fechaDVR;
+            // Convertir a segundos absolutos para el desglose
             const diffSegundosTotal = Math.floor(Math.abs(diffMs) / 1000);
 
+            // Desglosar en horas, minutos y segundos
             const horas = Math.floor(diffSegundosTotal / 3600);
             const minutos = Math.floor((diffSegundosTotal % 3600) / 60);
             const segundos = diffSegundosTotal % 60;
@@ -243,16 +233,20 @@
             const resTexto = document.getElementById('texto-resultado');
             const resDetalle = document.getElementById('detalle-resultado');
 
+            // Mostrar el panel de resultados
             resDiv.style.display = 'block';
             
+            // Formatear el tiempo
             const tiempoFormateado = `${horas}h ${minutos}m ${segundos}s`;
             
             if (diffMs > 0) {
-                resTexto.innerHTML = `<span style="color: #fbbf24;">Atrasado: ${tiempoFormateado}</span>`;
-                resDetalle.innerText = "El DVR está por detrás de la hora real.";
+                // Hora Actual > Hora DVR -> El DVR va retrasado
+                resTexto.innerHTML = `<i class="fa-solid fa-warning" style="color: #fbbf24;"></i> <span style="color: #fbbf24;">Retraso: ${tiempoFormateado}</span>`;
+                resDetalle.innerText = "El reloj del grabador está por detrás de la hora real. Para buscar un evento, debes restar este tiempo a la hora real.";
             } else {
-                resTexto.innerHTML = `<span style="color: #60a5fa;">Adelantado: ${tiempoFormateado}</span>`;
-                resDetalle.innerText = "El DVR está por delante de la hora real.";
+                // Hora Actual < Hora DVR -> El DVR va adelantado
+                resTexto.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #60a5fa;"></i> <span style="color: #60a5fa;">Adelanto: ${tiempoFormateado}</span>`;
+                resDetalle.innerText = "El reloj del grabador está por delante de la hora real. Para buscar un evento, debes sumar este tiempo a la hora real.";
             }
         }
     </script>

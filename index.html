@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMCee - 35</title>
+    <title>CÁMARAS DE SEGURIDAD DPIE 3</title>
     
     <script>
         (function() {
@@ -49,9 +49,14 @@
         }
         .search-group { flex: 1; display: flex; align-items: center; background: #f1f5f9; border-radius: 50px; padding: 0 18px; }
         .search-group input { width: 100%; border: none; padding: 12px; outline: none; background: transparent; font-size: 15px; color: var(--dark); }
-        .city-pills { display: flex; gap: 8px; border-left: 1px solid #e2e8f0; padding-left: 12px; }
+        .city-pills { display: flex; gap: 8px; border-left: 1px solid #e2e8f0; padding-left: 12px; align-items: center; }
         .pill { border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; background: transparent; color: #64748b; }
         .pill.active { background: var(--primary); color: white; }
+        
+        /* Estilo para el botón de Panel */
+        .btn-panel { background: #f1f5f9; color: var(--dark); border-radius: 12px; padding: 10px 15px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-panel:hover { background: #e2e8f0; }
+
         .btn-logout { background: #fee2e2; color: var(--danger); border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-add-main { position: fixed; bottom: 30px; left: 30px; z-index: 1000; background: var(--dark); color: white; border: none; padding: 16px 24px; border-radius: 50px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         .div-icon { display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 3px solid; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
@@ -99,6 +104,10 @@
         <div class="city-pills">
             <button class="pill active" id="btn-esquel" onclick="irA([-42.912, -71.316], 'btn-esquel')">Esquel</button>
             <button class="pill" id="btn-trevelin" onclick="irA([-43.085, -71.463], 'btn-trevelin')">Trevelin</button>
+            
+            <button class="btn-panel" onclick="window.location.href='admin.html'">
+                <i class="fa-solid fa-user-gear"></i> Panel
+            </button>
         </div>
         <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
     </div>
@@ -320,7 +329,6 @@
             document.getElementById('ot').value = "";
             document.getElementById('form-title').innerText = "Detalles de la Cámara";
 
-            // CIUDAD POR DEFECTO SEGÚN PILL ACTIVA
             const esTrevelin = document.getElementById('btn-trevelin').classList.contains('active');
             document.getElementById('ciudad_select').value = esTrevelin ? "Trevelin" : "Esquel";
         }

@@ -206,11 +206,11 @@
             container.innerHTML = '<p style="font-size:12px; color:var(--accent);">Buscando registros...</p>';
             toggleDetail(true);
 
-            // CORRECCIÓN CLAVE: Usamos la columna 'usuario' (según tu Supabase)
+            // CORRECCIÓN: Buscamos exactamente por el nombre del usuario en la columna 'usuario'
             const { data: cams, error } = await _client
                 .from('cameras')
                 .select('*')
-                .ilike('usuario', `%${cleanName}%`);
+                .eq('usuario', cleanName);
             
             if (error) {
                 container.innerHTML = `<p style="color:var(--danger); font-size:12px;">Error: ${error.message}</p>`;

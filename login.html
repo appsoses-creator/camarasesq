@@ -3,190 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC - Acceso</title>
+    <title>SMC - Acceso Seguro</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root {
             --primary: #2563eb;
-            --primary-dark: #1d4ed8;
-            --bg: #0f172a; 
-            --card-bg: rgba(255, 255, 255, 0.95);
+            --primary-hover: #1d4ed8;
+            --bg-dark: #0f172a;
+            --text-main: #f8fafc;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
         }
 
         body { 
             margin: 0; 
             font-family: 'Inter', sans-serif; 
-            background: var(--bg);
-            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
-            background-size: 32px 32px;
+            background: var(--bg-dark);
+            /* Fondo animado sutil */
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
             display: flex; 
             align-items: center; 
             justify-content: center; 
             height: 100vh; 
+            overflow: hidden;
         }
 
+        /* Círculos decorativos de fondo */
+        .shape {
+            position: absolute;
+            filter: blur(80px);
+            z-index: -1;
+            border-radius: 50%;
+        }
+        .shape-1 { width: 300px; height: 300px; background: rgba(37, 99, 235, 0.2); top: -100px; right: -50px; }
+        .shape-2 { width: 250px; height: 250px; background: rgba(99, 102, 241, 0.15); bottom: -50px; left: -50px; }
+
         .login-card { 
-            background: var(--card-bg); 
-            padding: 40px; 
-            border-radius: 24px; 
+            background: rgba(255, 255, 255, 0.05); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 50px 40px; 
+            border-radius: 28px; 
+            border: 1px solid var(--glass-border);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
             width: 90%; 
             max-width: 400px; 
             text-align: center;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .logo-area {
             background: var(--primary);
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
+            margin: 0 auto 25px;
             color: white;
-            font-size: 24px;
-            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+            font-size: 28px;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
+            transition: 0.5s;
         }
+        .login-card:hover .logo-area { transform: rotateY(180deg); }
 
         h2 { 
-            color: #0f172a; 
-            margin: 0 0 8px 0; 
-            font-size: 24px;
+            color: white; 
+            margin: 0 0 10px 0; 
+            font-size: 28px;
             font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
         p {
-            color: #64748b;
-            font-size: 14px;
-            margin-bottom: 30px;
+            color: #94a3b8;
+            font-size: 15px;
+            margin-bottom: 35px;
         }
 
         .input-group {
             position: relative;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             text-align: left;
         }
 
         .input-group i {
             position: absolute;
-            left: 15px;
+            left: 18px;
             top: 50%;
             transform: translateY(-50%);
-            color: #94a3b8;
+            color: #64748b;
             transition: 0.3s;
+            font-size: 18px;
         }
 
         input { 
             width: 100%; 
-            padding: 14px 14px 14px 45px; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 12px; 
+            padding: 16px 16px 16px 52px; 
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 14px; 
             box-sizing: border-box; 
             outline: none; 
             font-size: 15px;
+            color: white;
             transition: all 0.3s;
-            background: #f8fafc;
         }
+
+        input::placeholder { color: #64748b; }
 
         input:focus {
+            background: rgba(255, 255, 255, 0.08);
             border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
         }
 
-        input:focus + i {
-            color: var(--primary);
-        }
+        input:focus + i { color: var(--primary); }
 
         button { 
             width: 100%; 
-            padding: 14px; 
+            padding: 16px; 
             background: var(--primary); 
             color: white; 
             border: none; 
-            border-radius: 12px; 
+            border-radius: 14px; 
             font-weight: 700; 
             font-size: 16px;
             cursor: pointer; 
-            transition: 0.3s; 
-            margin-top: 10px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            margin-top: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
         }
 
         button:hover { 
-            background: var(--primary-dark); 
-            transform: translateY(-1px);
+            background: var(--primary-hover); 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
         }
 
+        button:active { transform: translateY(0); }
+
         button:disabled {
-            background: #94a3b8;
+            background: #334155;
+            color: #64748b;
             cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
 
         #error-msg { 
-            color: #dc2626; 
-            font-size: 13px; 
-            margin-top: 15px; 
-            font-weight: 600;
-            min-height: 20px; 
+            color: #fb7185; 
+            font-size: 14px; 
+            margin-top: 20px; 
+            font-weight: 500;
+            min-height: 20px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            background: rgba(251, 113, 133, 0.1);
         }
 
         .footer-text {
-            margin-top: 25px;
-            font-size: 12px;
-            color: #94a3b8;
+            margin-top: 35px;
+            font-size: 11px;
+            color: #475569;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
 
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+
     <div class="login-card">
         <div class="logo-area">
             <i class="fa-solid fa-shield-halved"></i>
         </div>
-        <h2>Bienvenido</h2>
-        <p>Sistema de Gestión de Cámaras</p>
+        <h2>SMC</h2>
+        <p>Centro de Monitoreo Urbano</p>
 
         <div class="input-group">
-            <input type="text" id="user" placeholder="Nombre de usuario">
-            <i class="fa-solid fa-user"></i>
+            <input type="text" id="user" placeholder="Nombre de usuario" autocomplete="off">
+            <i class="fa-solid fa-user-ninja"></i>
         </div>
 
         <div class="input-group">
             <input type="password" id="pass" placeholder="Contraseña">
-            <i class="fa-solid fa-lock"></i>
+            <i class="fa-solid fa-key"></i>
         </div>
 
         <button id="login-btn" onclick="intentarLogin()">
-            Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            Acceder al Panel <i class="fa-solid fa-chevron-right"></i>
         </button>
 
         <div id="error-msg"></div>
 
-        <div class="footer-text">Acceso Restringido</div>
+        <div class="footer-text">Security Management Cloud</div>
     </div>
 
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        // Verificación inicial de sesión: Redirigir SIEMPRE al mapa si ya hay sesión
         (function() {
             const session = localStorage.getItem('user_session');
             try {
                 if (session) {
                     const parsed = JSON.parse(session);
                     if (parsed && parsed.usuario) {
-                        // Cambiado: Ahora siempre va a index.html
                         window.location.replace('index.html');
                     }
                 }
@@ -202,13 +242,13 @@
             const errorDiv = document.getElementById('error-msg');
 
             if (!u || !p) {
-                errorDiv.innerText = "⚠️ Completa todos los campos";
+                showError("⚠️ Complete los campos requeridos");
                 return;
             }
 
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verificando...';
-            errorDiv.innerText = "";
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Autenticando...';
+            errorDiv.style.display = "none";
 
             try {
                 const { data, error } = await _client
@@ -219,9 +259,9 @@
                     .single();
 
                 if (error || !data) {
-                    errorDiv.innerText = "❌ Credenciales no válidas";
+                    showError("❌ Credenciales incorrectas");
                     btn.disabled = false;
-                    btn.innerHTML = 'Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>';
+                    btn.innerHTML = 'Acceder al Panel <i class="fa-solid fa-chevron-right"></i>';
                 } else {
                     const now = new Date().toISOString();
                     await _client
@@ -237,16 +277,36 @@
                         last_login: now 
                     };
                     localStorage.setItem('user_session', JSON.stringify(sessionData));
-                    
-                    // Cambiado: Redirección directa al mapa sin importar el rol
                     window.location.replace('index.html');
                 }
             } catch (err) {
-                errorDiv.innerText = "📡 Error de conexión con el servidor";
+                showError("📡 Error de conexión con la base de datos");
                 btn.disabled = false;
-                btn.innerHTML = 'Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>';
+                btn.innerHTML = 'Acceder al Panel <i class="fa-solid fa-chevron-right"></i>';
             }
         }
+
+        function showError(msg) {
+            const errorDiv = document.getElementById('error-msg');
+            errorDiv.innerText = msg;
+            errorDiv.style.display = "block";
+            // Vibración visual de error
+            const card = document.querySelector('.login-card');
+            card.style.animation = 'none';
+            void card.offsetWidth; 
+            card.style.animation = 'shake 0.4s';
+        }
+
+        // Agregar animación de shake al CSS dinámicamente
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-8px); }
+                75% { transform: translateX(8px); }
+            }
+        `;
+        document.head.appendChild(style);
 
         document.querySelectorAll('input').forEach(input => {
             input.addEventListener('keypress', (e) => {

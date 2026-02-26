@@ -28,13 +28,11 @@
             min-height: 100vh;
         }
 
-        /* Sidebar */
         .sidebar { width: 280px; background: #020617; border-right: 1px solid #334155; padding: 30px; display: flex; flex-direction: column; }
         .logo-area { font-size: 20px; font-weight: 800; letter-spacing: -1px; margin-bottom: 40px; color: var(--accent); }
         .nav-link { text-decoration: none; color: var(--text-dim); padding: 12px; border-radius: 10px; display: flex; align-items: center; gap: 12px; transition: 0.3s; margin-bottom: 10px; }
         .nav-link:hover, .nav-link.active { background: var(--accent); color: white; }
 
-        /* Contenido Principal */
         .main-content { flex: 1; padding: 40px; overflow-y: auto; }
         
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
@@ -50,17 +48,17 @@
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .card-title { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
 
-        /* Tabla */
+        /* Estilos de Estado */
+        .status-indicator { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .dot-online { background: var(--success); box-shadow: 0 0 8px var(--success); }
+        .dot-offline { background: #64748b; }
+
         .table-wrap { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
         .table-wrap th { text-align: left; padding: 15px; color: var(--text-dim); font-size: 11px; text-transform: uppercase; }
         .table-wrap tr td { background: #1a2233; padding: 15px; border-top: 1px solid #334155; border-bottom: 1px solid #334155; }
         .table-wrap tr td:first-child { border-left: 1px solid #334155; border-radius: 15px 0 0 15px; }
         .table-wrap tr td:last-child { border-right: 1px solid #334155; border-radius: 0 15px 15px 0; }
-
-        /* Status Dot */
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
-        .status-online { background: var(--success); box-shadow: 0 0 10px var(--success); }
-        .status-offline { background: #64748b; }
 
         .form-dark input, .form-dark select { 
             background: #0f172a; border: 1px solid #334155; color: white; padding: 14px; 
@@ -114,7 +112,7 @@
             </div>
             <div class="stat-box">
                 <i class="fa-solid fa-bolt"></i>
-                <span class="stat-label">Acciones Totales</span>
+                <span class="stat-label">Acciones Hoy</span>
                 <span class="stat-val" id="stat-logs">-</span>
             </div>
         </div>
@@ -128,9 +126,9 @@
                     <thead>
                         <tr>
                             <th>Usuario</th>
-                            <th>Estado / Acceso</th>
+                            <th>Estado / Último Acceso</th>
                             <th>Rango</th>
-                            <th>Clave</th>
+                            <th>Contraseña</th>
                             <th></th>
                         </tr>
                     </thead>
@@ -153,7 +151,7 @@
                 </div>
 
                 <div class="glass-card">
-                    <h3 class="card-title" style="margin-bottom:20px"><i class="fa-solid fa-list-ul"></i> Auditoría Reciente</h3>
+                    <h3 class="card-title" style="margin-bottom:20px"><i class="fa-solid fa-list-ul"></i> Auditoría</h3>
                     <div id="log-list"></div>
                 </div>
             </div>
@@ -167,20 +165,8 @@
         const session = JSON.parse(localStorage.getItem('user_session'));
         if (!session || session.rol !== 'admin') window.location.replace('index.html');
 
-        function calcularEstado(fechaActividad) {
-            if (!fechaActividad) return { label: 'Nunca', online: false };
-            const last = new Date(fechaActividad);
-            const now = new Date();
-            const diffMin = (now - last) / 1000 / 60;
-            // Si tuvo actividad en los últimos 5 minutos, está online
-            return {
-                label: diffMin < 5 ? 'En línea' : `Hace ${Math.floor(diffMin)} min`,
-                online: diffMin < 5,
-                fullDate: last.toLocaleString()
-            };
-        }
-
         async function cargarData() {
+            // Stats
             const { count: cC } = await _client.from('cameras').select('*', { count: 'exact', head: true });
             const { count: uC } = await _client.from('usuarios').select('*', { count: 'exact', head: true });
             const { count: lC } = await _client.from('logs_actividad').select('*', { count: 'exact', head: true });
@@ -189,36 +175,34 @@
             document.getElementById('stat-users').innerText = uC || 0;
             document.getElementById('stat-logs').innerText = lC || 0;
 
+            // Usuarios (Usando tus columnas: is_online y last_login)
             const { data: users } = await _client.from('usuarios').select('*').order('usuario');
             const tbody = document.getElementById('lista-usuarios');
             tbody.innerHTML = '';
             
             users?.forEach(u => {
-                const status = calcularEstado(u.ultimo_ingreso);
                 const bClass = u.rol === 'admin' ? 'badge-admin' : 'badge-user';
-                
+                const statusDot = u.is_online ? 'dot-online' : 'dot-offline';
+                const statusText = u.is_online ? 'En línea' : 'Desconectado';
+                const fechaLimpia = u.last_login ? new Date(u.last_login).toLocaleString() : 'Sin registros';
+
                 tbody.innerHTML += `
                     <tr>
                         <td><b>${u.usuario}</b></td>
                         <td>
-                            <div style="display:flex; flex-direction:column; gap:2px">
-                                <span style="font-size:12px; color:${status.online ? 'var(--success)' : 'var(--text-dim)'}">
-                                    <span class="status-dot ${status.online ? 'status-online' : 'status-offline'}"></span>
-                                    ${status.label}
-                                </span>
-                                <span style="font-size:10px; color:var(--text-dim)">Visto: ${u.ultimo_ingreso ? new Date(u.ultimo_ingreso).toLocaleDateString() : 'N/A'}</span>
+                            <div class="status-indicator">
+                                <span class="dot ${statusDot}"></span>
+                                <span style="color:${u.is_online ? 'var(--success)' : 'var(--text-dim)'}">${statusText}</span>
                             </div>
+                            <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">${fechaLimpia}</div>
                         </td>
                         <td><span class="${bClass}">${u.rol?.toUpperCase()}</span></td>
                         <td><code style="color:var(--text-dim)">${u.clave}</code></td>
-                        <td>
-                            <button style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="eliminarUsuario('${u.id}', '${u.usuario}')">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </td>
+                        <td><button style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="eliminarUsuario('${u.id}', '${u.usuario}')"><i class="fa-solid fa-trash"></i></button></td>
                     </tr>`;
             });
 
+            // Logs
             const { data: logs } = await _client.from('logs_actividad').select('*').order('fecha', {ascending: false}).limit(6);
             const lContainer = document.getElementById('log-list');
             lContainer.innerHTML = '';
@@ -237,7 +221,8 @@
             const p = document.getElementById('new-pass').value;
             const r = document.getElementById('new-rol').value;
             if(!u || !p) return alert("Completa los datos");
-            const { error } = await _client.from('usuarios').insert([{ usuario: u, clave: p, rol: r }]);
+            // Se inserta con is_online false por defecto
+            const { error } = await _client.from('usuarios').insert([{ usuario: u, clave: p, rol: r, is_online: false }]);
             if(error) alert(error.message); else { 
                 document.getElementById('new-user').value=''; 
                 document.getElementById('new-pass').value=''; 
@@ -253,8 +238,8 @@
             }
         }
 
+        // Carga inicial y auto-actualización cada 30 segundos
         cargarData();
-        // Actualizar estados cada 30 segundos
         setInterval(cargarData, 30000);
     </script>
 </body>

@@ -13,7 +13,7 @@
         :root {
             --primary: #2563eb;
             --primary-dark: #1d4ed8;
-            --bg: #0f172a; /* Fondo oscuro tipo panel de control */
+            --bg: #0f172a; 
             --card-bg: rgba(255, 255, 255, 0.95);
         }
 
@@ -21,7 +21,6 @@
             margin: 0; 
             font-family: 'Inter', sans-serif; 
             background: var(--bg);
-            /* Fondo con un sutil gradiente y patrón de malla */
             background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
             background-size: 32px 32px;
             display: flex; 
@@ -180,6 +179,7 @@
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
+        // Verificación inicial de sesión
         (function() {
             const session = localStorage.getItem('user_session');
             try {
@@ -195,8 +195,8 @@
         })();
 
         async function intentarLogin() {
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
+            const u = document.getElementById('user').value.trim();
+            const p = document.getElementById('pass').value.trim();
             const btn = document.getElementById('login-btn');
             const errorDiv = document.getElementById('error-msg');
 
@@ -210,8 +210,9 @@
             errorDiv.innerText = "";
 
             try {
+                // He cambiado 'usuarios_app' por 'usuarios' para unificar con el panel admin
                 const { data, error } = await _client
-                    .from('usuarios_app')
+                    .from('usuarios') 
                     .select('*')
                     .eq('usuario', u)
                     .eq('clave', p)
@@ -222,6 +223,7 @@
                     btn.disabled = false;
                     btn.innerHTML = 'Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>';
                 } else {
+                    // AQUÍ ESTÁ LA MAGIA: Guardamos TODO el objeto (incluyendo el ROL)
                     localStorage.setItem('user_session', JSON.stringify(data));
                     window.location.replace('index.html');
                 }
@@ -232,6 +234,7 @@
             }
         }
 
+        // Permitir login con la tecla Enter
         document.querySelectorAll('input').forEach(input => {
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') intentarLogin();

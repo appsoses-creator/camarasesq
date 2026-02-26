@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CÁMARAS7</title>
+    <title>CÁMARAS 10</title>
     
     <script>
         (function() {
@@ -42,7 +42,7 @@
 
         .top-bar {
             position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; width: 95%; max-width: 1050px;
+            z-index: 1000; width: 95%; max-width: 1150px;
             display: flex; align-items: center; gap: 12px;
             background: white; padding: 8px 12px; border-radius: 50px;
             box-shadow: var(--shadow);
@@ -53,10 +53,10 @@
         .pill { border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; background: transparent; color: #64748b; }
         .pill.active { background: var(--primary); color: white; }
         
-        .btn-top-action { background: #f1f5f9; color: var(--dark); border-radius: 12px; padding: 10px 15px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn-top-action { background: #f1f5f9; color: var(--dark); border-radius: 12px; padding: 10px 15px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; white-space: nowrap; }
         .btn-top-action:hover { background: #e2e8f0; }
 
-        .btn-logout { background: #fee2e2; color: var(--danger); border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-logout { background: #fee2e2; color: var(--danger); border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .btn-add-main { position: fixed; bottom: 30px; left: 30px; z-index: 1000; background: var(--dark); color: white; border: none; padding: 16px 24px; border-radius: 50px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         .div-icon { display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 3px solid; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
 
@@ -108,6 +108,10 @@
 
             <button id="btn-admin-panel" class="btn-top-action" onclick="window.location.href='admin.html'">
                 <i class="fa-solid fa-user-gear"></i> Panel
+            </button>
+
+            <button class="btn-top-action" onclick="window.location.href='calculadora.html'">
+                <i class="fa-solid fa-clock"></i> Calcular desfasaje horario
             </button>
         </div>
         <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
@@ -262,7 +266,6 @@
                             <i class="fa-solid fa-trash"></i> Borrar
                         </button>` : '';
 
-                    // Extraer usuario DVR para mostrar en popup si existe en otros_datos
                     let dvrUserDisplay = '-';
                     if (c.otros_datos && c.otros_datos.includes('User DVR:')) {
                         const partes = c.otros_datos.split('|');
@@ -333,7 +336,6 @@
             const userSession = JSON.parse(localStorage.getItem('user_session'));
             const nombreOperador = userSession ? userSession.usuario : 'Desconocido';
 
-            // El nombre del operador va a "usuario", el usuario del DVR va a "otros_datos"
             const cam = { 
                 "DIRECCION": document.getElementById('d').value, 
                 "UBICACION": document.getElementById('u').value,
@@ -342,7 +344,7 @@
                 "ciudad": document.getElementById('ciudad_select').value,
                 "telefono": document.getElementById('tel').value,
                 "sistema": document.getElementById('sis').value,
-                "usuario": nombreOperador, // PARA EL PANEL DE ADMIN
+                "usuario": nombreOperador,
                 "clave": document.getElementById('pas').value,
                 "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 7,
                 "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
@@ -395,7 +397,6 @@
             document.getElementById('tel').value = item.telefono;
             document.getElementById('sis').value = item.sistema;
             
-            // Extraer datos técnicos
             let dvrUser = "";
             let observacionesPuras = item.otros_datos || "";
             if (item.otros_datos && item.otros_datos.includes('User DVR:')) {

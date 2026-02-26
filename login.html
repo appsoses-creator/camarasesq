@@ -3,33 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Sistema de Cámaras</title>
+    <title>SMC - Acceso</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
-        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; align-items: center; justify-content: center; height: 100vh; }
-        .login-card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 350px; text-align: center; }
-        h2 { color: #1e293b; margin-bottom: 20px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; outline: none; }
-        button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 10px; }
-        button:hover { background: #1d4ed8; }
-        #error-msg { color: #dc2626; font-size: 14px; margin-top: 10px; min-height: 20px; }
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #0f172a; /* Fondo oscuro tipo panel de control */
+            --card-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        body { 
+            margin: 0; 
+            font-family: 'Inter', sans-serif; 
+            background: var(--bg);
+            /* Fondo con un sutil gradiente y patrón de malla */
+            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0);
+            background-size: 32px 32px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+        }
+
+        .login-card { 
+            background: var(--card-bg); 
+            padding: 40px; 
+            border-radius: 24px; 
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
+            width: 90%; 
+            max-width: 400px; 
+            text-align: center;
+        }
+
+        .logo-area {
+            background: var(--primary);
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 24px;
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+        }
+
+        h2 { 
+            color: #0f172a; 
+            margin: 0 0 8px 0; 
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        p {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            transition: 0.3s;
+        }
+
+        input { 
+            width: 100%; 
+            padding: 14px 14px 14px 45px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            outline: none; 
+            font-size: 15px;
+            transition: all 0.3s;
+            background: #f8fafc;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        input:focus + i {
+            color: var(--primary);
+        }
+
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            font-weight: 700; 
+            font-size: 16px;
+            cursor: pointer; 
+            transition: 0.3s; 
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        button:hover { 
+            background: var(--primary-dark); 
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        #error-msg { 
+            color: #dc2626; 
+            font-size: 13px; 
+            margin-top: 15px; 
+            font-weight: 600;
+            min-height: 20px; 
+        }
+
+        .footer-text {
+            margin-top: 25px;
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
 
     <div class="login-card">
-        <h2>Iniciar Sesión</h2>
-        <input type="text" id="user" placeholder="Usuario">
-        <input type="password" id="pass" placeholder="Contraseña">
-        <button id="login-btn" onclick="intentarLogin()">Ingresar</button>
+        <div class="logo-area">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h2>Bienvenido</h2>
+        <p>Sistema de Gestión de Cámaras</p>
+
+        <div class="input-group">
+            <input type="text" id="user" placeholder="Nombre de usuario">
+            <i class="fa-solid fa-user"></i>
+        </div>
+
+        <div class="input-group">
+            <input type="password" id="pass" placeholder="Contraseña">
+            <i class="fa-solid fa-lock"></i>
+        </div>
+
+        <button id="login-btn" onclick="intentarLogin()">
+            Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>
+        </button>
+
         <div id="error-msg"></div>
+
+        <div class="footer-text">Acceso Restringido</div>
     </div>
 
     <script>
-        // 1. CONFIGURACIÓN SUPABASE
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        // 2. ROMPER EL BUCLE: Si ya hay sesión VÁLIDA, ir al index. Si no, limpiar.
         (function() {
             const session = localStorage.getItem('user_session');
             try {
@@ -44,7 +194,6 @@
             }
         })();
 
-        // 3. FUNCIÓN DE LOGIN
         async function intentarLogin() {
             const u = document.getElementById('user').value;
             const p = document.getElementById('pass').value;
@@ -52,12 +201,12 @@
             const errorDiv = document.getElementById('error-msg');
 
             if (!u || !p) {
-                errorDiv.innerText = "Completa todos los campos";
+                errorDiv.innerText = "⚠️ Completa todos los campos";
                 return;
             }
 
             btn.disabled = true;
-            btn.innerText = "Cargando...";
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verificando...';
             errorDiv.innerText = "";
 
             try {
@@ -69,23 +218,20 @@
                     .single();
 
                 if (error || !data) {
-                    errorDiv.innerText = "Usuario o contraseña incorrectos";
+                    errorDiv.innerText = "❌ Credenciales no válidas";
                     btn.disabled = false;
-                    btn.innerText = "Ingresar";
+                    btn.innerHTML = 'Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>';
                 } else {
-                    // GUARDADO CORRECTO (JSON)
                     localStorage.setItem('user_session', JSON.stringify(data));
-                    // REDIRECCIÓN LIMPIA
                     window.location.replace('index.html');
                 }
             } catch (err) {
-                errorDiv.innerText = "Error de conexión";
+                errorDiv.innerText = "📡 Error de conexión con el servidor";
                 btn.disabled = false;
-                btn.innerText = "Ingresar";
+                btn.innerHTML = 'Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>';
             }
         }
 
-        // Permitir "Enter" para entrar
         document.querySelectorAll('input').forEach(input => {
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') intentarLogin();

@@ -136,7 +136,24 @@
             #map { height: calc(100vh - 70px); }
         }
 
-        /* MODALES Y OTROS (Mantener igual) */
+        /* POPUPS */
+        .leaflet-popup-content-wrapper { border-radius: 16px; padding: 0; overflow: hidden; }
+        .leaflet-popup-content { margin: 0; width: 280px !important; }
+        .pop-card { display: flex; flex-direction: column; }
+        .pop-header { background: #f8fafc; padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        .pop-title { display: block; font-size: 16px; color: var(--dark-bg); }
+        .pop-subtitle { display: block; font-size: 12px; color: #64748b; margin-top: 2px; }
+        .pop-body { padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .pop-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: #475569; }
+        .pop-info i { width: 16px; color: #94a3b8; font-size: 14px; }
+        .pop-footer { padding: 10px; background: #f8fafc; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .pop-btn { 
+            border: none; background: white; padding: 8px; border-radius: 8px; 
+            font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid #e2e8f0;
+            display: flex; align-items: center; justify-content: center; gap: 5px;
+        }
+
+        /* MODALES Y OTROS */
         .modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             z-index: 2001; background: white; width: 90%; max-width: 440px; 
@@ -326,7 +343,6 @@
             if(mBtn) mBtn.classList.add('active');
         }
 
-        // ... (resto de funciones registrarLog, abrirModalClave, load, etc. sin cambios) ...
         async function registrarLog(usuario, accion, detalle) {
             try { await _client.from('logs_actividad').insert([{ usuario, accion, detalle }]); } catch (e) {}
         }

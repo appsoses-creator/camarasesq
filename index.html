@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CÁMARAS 34</title>
+    <title>CÁMARAS 7</title>
     
     <script>
         (function() {
@@ -157,7 +157,6 @@
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        // --- LÓGICA DE PRIVILEGIOS ---
         function verificarPrivilegios() {
             const session = localStorage.getItem('user_session');
             if (session) {
@@ -166,7 +165,7 @@
                 if (userData.rol !== 'admin' && btnPanel) {
                     btnPanel.remove();
                 }
-                return userData.rol;
+                return userData;
             }
             return null;
         }
@@ -201,7 +200,8 @@
         }
 
         async function load() {
-            const rolUsuario = verificarPrivilegios();
+            const user = verificarPrivilegios();
+            const rolUsuario = user?.rol;
             items.forEach(i => map.removeLayer(i.m));
             items = [];
             const { data, error } = await _client.from('cameras').select('*');
@@ -218,7 +218,6 @@
                     });
                     const marker = L.marker(latlng, { icon }).addTo(map);
                     
-                    // Solo incluimos el botón de borrar si es admin
                     const btnEliminarHtml = rolUsuario === 'admin' ? `
                         <button class="pop-btn pop-btn-del" onclick="eliminar('${c.id}')">
                             <i class="fa-solid fa-trash"></i> Borrar
@@ -277,9 +276,19 @@
             document.getElementById('blur').style.display = 'block';
         });
 
+        // --- FUNCIÓN REGISTRAR LOG (AUDITORÍA) ---
+        async function registrarLog(usuario, accion, detalle) {
+            try {
+                await _client.from('logs_actividad').insert([{ usuario, accion, detalle }]);
+            } catch (e) { console.error("Error log:", e); }
+        }
+
         async function enviar() {
             const id = document.getElementById('edit-id').value;
             const btnSave = document.querySelector('.btn-save');
+            const userSession = JSON.parse(localStorage.getItem('user_session'));
+            const nombreUsuario = userSession ? userSession.usuario : 'Desconocido';
+
             const cam = { 
                 "DIRECCION": document.getElementById('d').value, 
                 "UBICACION": document.getElementById('u').value,
@@ -298,11 +307,17 @@
                 btnSave.disabled = true;
                 btnSave.innerText = "Guardando...";
                 let result;
+                
                 if (id) {
+                    cam.actualizado_por = nombreUsuario;
                     result = await _client.from('cameras').update(cam).eq('id', id);
+                    if (!result.error) await registrarLog(nombreUsuario, 'EDITO CAMARA', `Modificó cámara en ${cam.DIRECCION}`);
                 } else {
+                    cam.creado_por = nombreUsuario;
                     result = await _client.from('cameras').insert([cam]);
+                    if (!result.error) await registrarLog(nombreUsuario, 'CREO CAMARA', `Nueva cámara en ${cam.DIRECCION}`);
                 }
+                
                 if (result.error) throw result.error;
                 alert("✅ Registro guardado correctamente");
                 cerrarTodo(); 
@@ -314,6 +329,23 @@
                 btnSave.disabled = false;
                 btnSave.innerText = "Guardar Registro";
             }
+        }
+
+        async function eliminar(id) { 
+            if(confirm("¿Estás seguro de que deseas borrar este registro?")) { 
+                const userSession = JSON.parse(localStorage.getItem('user_session'));
+                const nombreUsuario = userSession ? userSession.usuario : 'Desconocido';
+                const item = items.find(i => i.id == id);
+                const direccion = item ? item.data.DIRECCION : id;
+
+                const { error } = await _client.from('cameras').delete().eq('id', id); 
+                if (error) {
+                    alert("Error al borrar: " + error.message);
+                } else {
+                    await registrarLog(nombreUsuario, 'ELIMINO CAMARA', `Eliminó cámara de ${direccion}`);
+                    load(); 
+                }
+            } 
         }
 
         function abrirEditar(id) {
@@ -359,14 +391,6 @@
             tempMarker = null;
             seleccionando = false;
             document.getElementById('instruccion').style.display = 'none';
-        }
-
-        async function eliminar(id) { 
-            if(confirm("¿Estás seguro de que deseas borrar este registro?")) { 
-                const { error } = await _client.from('cameras').delete().eq('id', id); 
-                if (error) alert("Error al borrar: " + error.message);
-                else load(); 
-            } 
         }
         
         load();

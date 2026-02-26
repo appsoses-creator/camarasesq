@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC - Mapa de Cámaras</title>
+    <title>SMC - 3</title>
     
     <script>
         (function() {
@@ -32,7 +32,7 @@
             --primary: #2563eb;
             --accent: #6366f1;
             --dark-bg: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-bg: rgba(255, 255, 255, 0.9);
             --glass-border: rgba(255, 255, 255, 0.3);
             --danger: #ef4444;
             --success: #10b981;
@@ -40,15 +40,22 @@
         }
 
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--dark-bg); overflow: hidden; color: #1e293b; }
-        #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
+        
+        /* MODO OSCURO PARA EL MAPA */
+        #map { 
+            height: 100vh; 
+            width: 100%; 
+            z-index: 1; 
+            background: #0b0e14;
+        }
 
         .top-bar {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; width: 92%; max-width: 1200px;
-            display: flex; align-items: center; gap: 15px;
+            z-index: 1000; width: 92%; max-width: 1250px;
+            display: flex; align-items: center; gap: 12px;
             background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
             padding: 10px 20px; border-radius: 20px; border: 1px solid var(--glass-border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
 
         .search-group { 
@@ -64,9 +71,11 @@
             background: white; color: #475569; border: 1px solid #e2e8f0;
             padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13px;
             cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;
+            white-space: nowrap;
         }
         .btn-nav:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
         .btn-calc { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
+        
         .btn-city { border: none; background: transparent; color: #64748b; font-weight: 700; cursor: pointer; padding: 8px 12px; border-radius: 8px; transition: 0.3s;}
         .btn-city.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
         #btn-trevelin.active { background: var(--warning); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); }
@@ -74,13 +83,25 @@
         .btn-logout { background: #fee2e2; color: var(--danger); border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-logout:hover { background: var(--danger); color: white; }
 
-        .btn-add-main { position: fixed; bottom: 30px; right: 30px; z-index: 1000; background: var(--dark-bg); color: white; border: none; padding: 16px 28px; border-radius: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s; }
+        .btn-add-main { position: fixed; bottom: 30px; right: 30px; z-index: 1000; background: #1e293b; color: white; border: none; padding: 16px 28px; border-radius: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 15px 35px rgba(0,0,0,0.4); transition: 0.3s; }
+        .btn-add-main:hover { background: #0f172a; transform: translateY(-2px); }
+
+        /* Estilos de las Tarjetas (Popup) */
+        .pop-card { min-width: 220px; font-family: 'Inter', sans-serif; }
+        .pop-header { margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+        .pop-title { font-size: 14px; color: var(--dark-bg); display: block; }
+        .pop-subtitle { color: #64748b; font-size: 11px; font-weight: 500; text-transform: uppercase; }
+        .pop-body { display: flex; flex-direction: column; gap: 6px; }
+        .pop-info { font-size: 12px; display: flex; align-items: center; gap: 8px; color: #475569; }
+        .pop-info i { width: 14px; color: #94a3b8; }
+        .pop-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; }
+        .pop-btn { background: none; border: none; font-weight: 700; font-size: 12px; cursor: pointer; padding: 4px 0; display: flex; align-items: center; gap: 4px; }
 
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2001; background: white; width: 90%; max-width: 440px; border-radius: 24px; padding: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); max-height: 85vh; overflow-y: auto; }
         .modal h3 { font-weight: 800; color: var(--dark-bg); font-size: 20px; margin-bottom: 20px; }
         .btn-save { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2); }
 
-        .overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); z-index: 2000; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(6px); z-index: 2000; }
         #instruccion { display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); z-index: 2000; background: var(--primary); color: white; padding: 12px 25px; border-radius: 50px; font-weight: 700; box-shadow: 0 10px 20px rgba(0,0,0,0.2); animation: bounce 2s infinite; }
         @keyframes bounce { 0%, 100% { top: 100px; } 50% { top: 110px; } }
         .crosshair { cursor: crosshair !important; }
@@ -101,7 +122,7 @@
             <button class="btn-city" id="btn-trevelin" onclick="irA([-43.085, -71.463], 'btn-trevelin')">Trevelin</button>
             
             <button class="btn-nav btn-calc" onclick="window.location.href='calculadora.html'">
-                <i class="fa-solid fa-calculator"></i> Calculadora
+                <i class="fa-solid fa-clock-rotate-left"></i> Calcular desfasaje
             </button>
 
             <button class="btn-nav" onclick="abrirModalClave()">
@@ -124,10 +145,10 @@
     
     <div class="modal" id="modal-clave">
         <h3>Actualizar Contraseña</h3>
-        <label>Nueva Contraseña</label>
-        <input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres">
-        <label>Confirmar Contraseña</label>
-        <input type="password" id="pass-confirma" placeholder="Repite la contraseña">
+        <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Nueva Contraseña</label>
+        <input type="password" id="pass-nueva" style="width:100%; padding:12px; margin:8px 0; border:1px solid #e2e8f0; border-radius:10px" placeholder="Mínimo 4 caracteres">
+        <label style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Confirmar Contraseña</label>
+        <input type="password" id="pass-confirma" style="width:100%; padding:12px; margin:8px 0; border:1px solid #e2e8f0; border-radius:10px" placeholder="Repite la contraseña">
         <button class="btn-save" id="btn-confirmar-clave" onclick="actualizarMiClave()">Guardar Cambios</button>
         <button style="width:100%; background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer; font-weight:600" onclick="cerrarTodo()">Cancelar</button>
     </div>
@@ -137,39 +158,39 @@
         <input type="hidden" id="edit-id">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
             <div>
-                <label>Ciudad</label>
-                <select id="ciudad_select">
+                <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">Ciudad</label>
+                <select id="ciudad_select" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px">
                     <option value="Esquel">Esquel</option>
                     <option value="Trevelin">Trevelin</option>
                 </select>
             </div>
             <div>
-                <label>Tipo de Sistema</label>
-                <select id="t">
+                <label style="font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">Sistema</label>
+                <select id="t" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px">
                     <option value="CENTRO DE MONITOREO">Monitoreo</option>
                     <option value="PRIVADAS">Privada</option>
                     <option value="PARTICULARES">Particular</option>
                 </select>
             </div>
         </div>
-        <label>Ubicación Geográfica</label>
-        <input type="text" id="u" readonly style="background:#f8fafc; color:#64748b">
-        <label>Dirección Exacta</label>
-        <input type="text" id="d" placeholder="Ej: Av. Alvear 1234">
-        <label>Titular / Comercio</label>
-        <input type="text" id="n" placeholder="Nombre del responsable">
+        <label style="display:block; margin-top:12px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">Ubicación</label>
+        <input type="text" id="u" readonly style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px; background:#f8fafc; color:#64748b">
+        <label style="display:block; margin-top:12px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">Dirección</label>
+        <input type="text" id="d" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px">
+        <label style="display:block; margin-top:12px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">Titular</label>
+        <input type="text" id="n" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
-            <div><label>Teléfono</label><input type="text" id="tel"></div>
-            <div><label>Modelo DVR</label><input type="text" id="sis" placeholder="Hikvision, Dahua..."></div>
+            <div><label style="display:block; margin-top:12px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">Teléfono</label><input type="text" id="tel" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px"></div>
+            <div><label style="display:block; margin-top:12px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">Modelo</label><input type="text" id="sis" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px"></div>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
-            <div><label>Usuario DVR</label><input type="text" id="usu"></div>
-            <div><label>Clave DVR</label><input type="text" id="pas"></div>
+            <div><label style="display:block; margin-top:12px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">User DVR</label><input type="text" id="usu" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px"></div>
+            <div><label style="display:block; margin-top:12px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">Pass DVR</label><input type="text" id="pas" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px"></div>
         </div>
-        <label>Días de Grabación</label>
-        <input type="number" id="alm" value="7">
-        <label>Observaciones</label>
-        <textarea id="ot" rows="2" placeholder="Notas sobre la instalación..."></textarea>
+        <label style="display:block; margin-top:12px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">Días de Grabación</label>
+        <input type="number" id="alm" value="7" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px">
+        <label style="display:block; margin-top:12px; font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase">Observaciones</label>
+        <textarea id="ot" rows="2" style="width:100%; padding:12px; border:1px solid #e2e8f0; border-radius:10px"></textarea>
         <button class="btn-save" id="btn-submit-camera" onclick="enviar()">Guardar en Base de Datos</button>
     </div>
 
@@ -192,27 +213,28 @@
             return null;
         }
 
-        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+        // VISTA OSCURA: Usando CartoDB Dark Matter
+        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap &copy; CARTO'
+        });
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm], zoomControl: false });
+        
+        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [dark], zoomControl: false });
+        
         L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.control.layers({ "Calles": osm, "Satélite": satellite }, null, { position: 'bottomright' }).addTo(map);
+        L.control.layers({ "Vista Oscura": dark, "Satélite": satellite }, null, { position: 'bottomright' }).addTo(map);
 
         let items = [], seleccionando = false, tempMarker = null;
 
         async function buscarLugar() {
             const query = document.getElementById('q').value;
             if (query.length < 3) return;
-
-            // Búsqueda local primero
             const localMatch = items.find(i => i.info.includes(query.toLowerCase()));
             if (localMatch) {
                 map.flyTo(localMatch.m.getLatLng(), 18);
                 localMatch.m.openPopup();
                 return;
             }
-
-            // Geocoding externo
             try {
                 const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}, Chubut, Argentina`);
                 const results = await response.json();
@@ -242,7 +264,6 @@
             const user = verificarPrivilegios();
             if (!n1 || n1.length < 4) return alert("Mínimo 4 caracteres.");
             if (n1 !== n2) return alert("No coinciden.");
-            
             const btn = document.getElementById('btn-confirmar-clave');
             btn.disabled = true; btn.innerText = "Actualizando...";
             const { error } = await _client.from('usuarios').update({ clave: n1 }).eq('usuario', user.usuario);
@@ -266,7 +287,7 @@
                     let color = c.TIPO === 'CENTRO DE MONITOREO' ? '#2563eb' : (c.TIPO === 'PRIVADAS' ? '#0f172a' : '#10b981');
                     const icon = L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`,
+                        html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.5)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`,
                         iconSize: [30, 30], iconAnchor: [15, 15]
                     });
 
@@ -275,7 +296,10 @@
 
                     marker.bindPopup(`
                         <div class="pop-card">
-                            <div class="pop-header"><b class="pop-title">${c.DIRECCION}</b><span class="pop-subtitle">${c['LUGAR / TITULAR'] || '-'}</span></div>
+                            <div class="pop-header">
+                                <b class="pop-title">${c.DIRECCION}</b>
+                                <span class="pop-subtitle">${c['LUGAR / TITULAR'] || 'SIN TITULAR'}</span>
+                            </div>
                             <div class="pop-body">
                                 <div class="pop-info"><i class="fa-solid fa-microchip"></i> <span><b>Sistema:</b> ${c.sistema || '-'}</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-user-shield"></i> <span><b>Usuario:</b> ${dvrUser}</span></div>
@@ -290,6 +314,27 @@
                     items.push({ id: c.id, m: marker, data: c, info: `${c.DIRECCION} ${c['LUGAR / TITULAR']}`.toLowerCase() });
                 }
             });
+        }
+
+        async function abrirEditar(id) {
+            const cam = items.find(i => i.id == id).data;
+            document.getElementById('edit-id').value = cam.id;
+            document.getElementById('d').value = cam.DIRECCION;
+            document.getElementById('u').value = cam.UBICACION;
+            document.getElementById('n').value = cam['LUGAR / TITULAR'];
+            document.getElementById('t').value = cam.TIPO;
+            document.getElementById('ciudad_select').value = cam.ciudad;
+            document.getElementById('tel').value = cam.telefono;
+            document.getElementById('sis').value = cam.sistema;
+            document.getElementById('pas').value = cam.clave;
+            document.getElementById('alm').value = cam.dias_almacenamiento;
+            
+            const otros = cam.otros_datos?.split('|') || [];
+            document.getElementById('usu').value = otros[0]?.replace('User DVR: ', '').trim() || '';
+            document.getElementById('ot').value = otros[1]?.trim() || '';
+
+            document.getElementById('form').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
         }
 
         async function enviar() {
@@ -308,7 +353,13 @@
         }
 
         async function eliminar(id) {
-            if(confirm("¿Eliminar cámara?")) { await _client.from('cameras').delete().eq('id', id); load(); }
+            if(confirm("¿Eliminar cámara?")) { 
+                const cam = items.find(i => i.id == id).data;
+                const user = JSON.parse(localStorage.getItem('user_session'));
+                await _client.from('cameras').delete().eq('id', id); 
+                await registrarLog(user.usuario, 'ELIMINO', cam.DIRECCION);
+                load(); 
+            }
         }
 
         function irA(coords, btnId) {
@@ -328,6 +379,8 @@
             if (!seleccionando) return;
             document.getElementById('edit-id').value = "";
             document.getElementById('u').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+            document.getElementById('d').value = "";
+            document.getElementById('n').value = "";
             if (tempMarker) map.removeLayer(tempMarker);
             tempMarker = L.marker(e.latlng).addTo(map);
             document.getElementById('form').style.display = 'block';

@@ -53,6 +53,7 @@
 
         .city-pills { display: flex; gap: 5px; border-left: 1px solid #e2e8f0; padding-left: 10px; }
         .pill { border: none; padding: 8px 15px; border-radius: 8px; font-weight: 600; font-size: 12px; cursor: pointer; transition: 0.2s; background: transparent; color: #64748b; display: flex; align-items: center; gap: 6px; }
+        .pill:hover { background: rgba(0,0,0,0.05); }
         
         .btn-logout { background: #fee2e2; color: var(--danger); border: none; width: 38px; height: 38px; border-radius: 10px; cursor: pointer; }
 
@@ -60,7 +61,6 @@
 
         .div-icon { display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 3px solid; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
 
-        /* Estilos de la Tarjeta (Popup) */
         .card-popup { min-width: 220px; padding: 5px; }
         .card-header { border-bottom: 1px solid #eee; margin-bottom: 8px; padding-bottom: 5px; }
         .card-body div { font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; color: #475569; }
@@ -89,7 +89,7 @@
     <div class="top-bar">
         <div class="search-group">
             <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
-            <input type="text" id="q" placeholder="Buscar dirección o titular..." onkeypress="if(event.key==='Enter') buscarLugar()">
+            <input type="text" id="q" placeholder="Buscar dirección o titular..." onkeyup="if(event.key==='Enter') buscarLugar()">
         </div>
         <div class="city-pills">
             <button class="pill" onclick="irA([-42.912, -71.316])">Esquel</button>
@@ -152,6 +152,21 @@
         function logout() { localStorage.removeItem('user_session'); window.location.replace('login.html'); }
         function irA(coords) { map.flyTo(coords, 15); }
 
+        // --- FUNCIÓN DE BÚSQUEDA AÑADIDA ---
+        function buscarLugar() {
+            const query = document.getElementById('q').value.toLowerCase().trim();
+            if (!query) return;
+
+            const encontrado = items.find(i => i.info.includes(query));
+
+            if (encontrado) {
+                map.flyTo(encontrado.m.getLatLng(), 18);
+                encontrado.m.openPopup();
+            } else {
+                alert("No se encontró ninguna cámara con ese nombre o dirección.");
+            }
+        }
+
         function limpiarFormulario() {
             document.getElementById('edit-id').value = "";
             document.getElementById('d').value = "";
@@ -162,6 +177,7 @@
             document.getElementById('pas').value = "";
             document.getElementById('alm').value = "7";
             document.getElementById('ot').value = "";
+            document.getElementById('form-title').innerText = "Detalles de la Cámara";
         }
 
         async function load() {
@@ -179,11 +195,10 @@
                     });
                     const marker = L.marker(latlng, { icon }).addTo(map);
                     
-                    // TARJETA DE INFORMACIÓN COMPLETA
                     marker.bindPopup(`
                         <div class="card-popup">
                             <div class="card-header">
-                                <b>${c.DIRECCION}</b><br>
+                                <b>${c.DIRECCION || 'Sin dirección'}</b><br>
                                 <small>${c['LUGAR / TITULAR'] || 'Sin Titular'}</small>
                             </div>
                             <div class="card-body">
@@ -199,7 +214,9 @@
                             </div>
                         </div>
                     `);
-                    items.push({ id: c.id, m: marker, data: c, info: (c.DIRECCION + " " + (c['LUGAR / TITULAR'] || '')).toLowerCase() });
+                    // Almacenamos info combinada para la búsqueda fácil
+                    const infoBusqueda = `${c.DIRECCION} ${c['LUGAR / TITULAR']} ${c.ciudad}`.toLowerCase();
+                    items.push({ id: c.id, m: marker, data: c, info: infoBusqueda });
                 }
             });
         }
@@ -251,18 +268,24 @@
         }
 
         function abrirEditar(id) {
-            const item = items.find(i => i.id == id).data;
+            const found = items.find(i => i.id == id);
+            if(!found) return;
+            const item = found.data;
+            
             document.getElementById('edit-id').value = id;
             document.getElementById('u').value = item.UBICACION;
             document.getElementById('d').value = item.DIRECCION;
             document.getElementById('n').value = item['LUGAR / TITULAR'];
             document.getElementById('t').value = item.TIPO;
+            document.getElementById('ciudad_select').value = item.ciudad || "Esquel";
             document.getElementById('tel').value = item.telefono;
             document.getElementById('sis').value = item.sistema;
             document.getElementById('usu').value = item.usuario;
             document.getElementById('pas').value = item.clave;
             document.getElementById('alm').value = item.dias_almacenamiento;
             document.getElementById('ot').value = item.otros_datos;
+            
+            document.getElementById('form-title').innerText = "Editar Cámara";
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
         }
@@ -273,11 +296,18 @@
             document.getElementById('main-btn').style.display = 'flex';
             document.getElementById('map').classList.remove('crosshair');
             if (tempMarker) map.removeLayer(tempMarker);
+            tempMarker = null;
             seleccionando = false;
             document.getElementById('instruccion').style.display = 'none';
         }
 
-        async function eliminar(id) { if(confirm("¿Borrar?")) { await _client.from('cameras').delete().eq('id', id); load(); } }
+        async function eliminar(id) { 
+            if(confirm("¿Estás seguro de que deseas borrar este registro?")) { 
+                await _client.from('cameras').delete().eq('id', id); 
+                load(); 
+            } 
+        }
+
         load();
     </script>
 </body>

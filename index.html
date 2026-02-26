@@ -23,6 +23,7 @@
         })();
     </script>
 
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
@@ -38,23 +39,14 @@
             --warning: #f59e0b;
         }
 
-        body { 
-            margin: 0; 
-            font-family: 'Inter', sans-serif; 
-            background: var(--dark-bg); 
-            overflow: hidden; 
-            color: #1e293b;
-        }
-
-        #map { height: 100vh; width: 100%; z-index: 1; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--dark-bg); overflow: hidden; color: #1e293b; }
+        #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
 
         .top-bar {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             z-index: 1000; width: 92%; max-width: 1200px;
             display: flex; align-items: center; gap: 15px;
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            background: var(--glass-bg); backdrop-filter: blur(12px);
             padding: 10px 20px; border-radius: 20px;
             border: 1px solid var(--glass-border);
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
@@ -62,48 +54,40 @@
 
         .search-group { 
             flex: 1; display: flex; align-items: center; 
-            background: rgba(0,0,0,0.05); border-radius: 12px; 
-            padding: 0 15px; border: 1px solid rgba(0,0,0,0.05);
-            transition: 0.3s;
+            background: rgba(0,0,0,0.05); border-radius: 12px; padding: 0 15px;
         }
-        .search-group:focus-within { background: white; border-color: var(--primary); }
         .search-group input { 
             width: 100%; border: none; padding: 12px; outline: none; 
             background: transparent; font-size: 14px; font-weight: 500;
         }
 
         .actions-group { display: flex; align-items: center; gap: 8px; }
-
         .btn-nav {
             background: white; color: #475569; border: 1px solid #e2e8f0;
             padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13px;
-            cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;
+            cursor: pointer; display: flex; align-items: center; gap: 8px;
         }
-        .btn-nav:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
+
+        .btn-city { border: none; background: transparent; color: #64748b; font-weight: 700; cursor: pointer; padding: 8px 12px; border-radius: 8px; }
+        .btn-city.active { background: var(--primary); color: white; }
+        #btn-trevelin.active { background: var(--warning); }
+
+        .btn-logout { background: #fee2e2; color: var(--danger); border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         
-        .btn-calc { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
-        .btn-calc:hover { background: var(--accent); color: white; }
-
-        .btn-city { border: none; background: transparent; color: #64748b; font-weight: 700; cursor: pointer; padding: 8px 12px; border-radius: 8px; transition: 0.3s;}
-        .btn-city.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
-        
-        #btn-trevelin.active { background: var(--warning); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); }
-
-        .btn-logout { 
-            background: #fee2e2; color: var(--danger); border: none; 
-            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; transition: 0.2s;
-        }
-        .btn-logout:hover { background: var(--danger); color: white; }
-
         .btn-add-main { 
             position: fixed; bottom: 30px; right: 30px; z-index: 1000; 
             background: var(--dark-bg); color: white; border: none; 
-            padding: 16px 28px; border-radius: 16px; font-weight: 700; 
-            cursor: pointer; display: flex; align-items: center; gap: 10px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
+            padding: 16px 28px; border-radius: 16px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
         }
-        .btn-add-main:hover { transform: scale(1.05); background: #1e293b; }
+
+        /* Popups Estilizados */
+        .pop-card { min-width: 220px; padding: 5px; }
+        .pop-title { font-size: 14px; color: var(--dark-bg); display: block; margin-bottom: 2px; }
+        .pop-subtitle { font-size: 12px; color: #64748b; margin-bottom: 10px; display: block; }
+        .pop-info { font-size: 12px; margin: 4px 0; display: flex; gap: 8px; align-items: center; }
+        .pop-footer { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; display: flex; gap: 10px; }
+        .pop-btn { background: none; border: none; font-weight: 700; font-size: 12px; cursor: pointer; padding: 0; }
 
         .modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
@@ -111,38 +95,14 @@
             border-radius: 24px; padding: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
             max-height: 85vh; overflow-y: auto;
         }
-        .modal h3 { font-weight: 800; color: var(--dark-bg); font-size: 20px; margin-bottom: 20px; }
-        .btn-save { 
-            width: 100%; padding: 15px; background: var(--primary); color: white; 
-            border: none; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; 
-            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
-        }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); z-index: 2000; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; font-family: inherit; }
+        label { display: block; margin-top: 10px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+        .btn-save { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; }
 
-        .overlay { 
-            display: none; position: fixed; inset: 0; 
-            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); z-index: 2000; 
-        }
-
-        #instruccion { 
-            display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); 
-            z-index: 2000; background: var(--primary); color: white; padding: 12px 25px; 
-            border-radius: 50px; font-weight: 700; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            animation: bounce 2s infinite;
-        }
-        @keyframes bounce { 0%, 100% { top: 100px; } 50% { top: 110px; } }
+        #instruccion { display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); z-index: 2000; background: var(--primary); color: white; padding: 12px 25px; border-radius: 50px; font-weight: 700; }
         .crosshair { cursor: crosshair !important; }
-        
-        label { display: block; margin-top: 10px; font-size: 12px; font-weight: 700; color: #64748b; }
-        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #e2e8f0; border-radius: 8px; box-sizing: border-box; }
-        
-        /* Estilos Popup Google */
-        .gm-style-iw { padding: 0 !important; border-radius: 12px !important; }
-        .pop-card { padding: 15px; min-width: 220px; font-family: 'Inter', sans-serif; }
-        .pop-title { font-size: 16px; color: var(--dark-bg); display: block; }
-        .pop-subtitle { font-size: 13px; color: #64748b; }
-        .pop-info { margin-top: 8px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
-        .pop-footer { margin-top: 12px; border-top: 1px solid #f1f5f9; padding-top: 10px; display: flex; gap: 10px; }
-        .pop-btn { background: none; border: none; cursor: pointer; font-weight: 700; font-size: 12px; padding: 0; }
+        .pac-container { border-radius: 12px; margin-top: 5px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); border: none; z-index: 9999; }
     </style>
 </head>
 <body>
@@ -152,25 +112,13 @@
     <div class="top-bar">
         <div class="search-group">
             <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
-            <input type="text" id="q" placeholder="Buscar dirección en esta zona..." onkeyup="if(event.key==='Enter') buscarLugar()">
+            <input type="text" id="q" placeholder="Buscar dirección en Esquel/Trevelin...">
         </div>
-
         <div class="actions-group">
-            <button class="btn-city active" id="btn-esquel" onclick="irA({lat: -42.912, lng: -71.316}, 'btn-esquel')">Esquel</button>
-            <button class="btn-city" id="btn-trevelin" onclick="irA({lat: -43.085, lng: -71.463}, 'btn-trevelin')">Trevelin</button>
-            
-            <button class="btn-nav btn-calc" onclick="window.location.href='calculadora.html'">
-                <i class="fa-solid fa-calculator"></i> Calculadora
-            </button>
-
-            <button class="btn-nav" onclick="abrirModalClave()">
-                <i class="fa-solid fa-key"></i> Cambiar clave
-            </button>
-
-            <button id="btn-admin-panel" class="btn-nav" style="background: #f1f5f9; border: none; display: none;" onclick="window.location.href='admin.html'">
-                <i class="fa-solid fa-user-gear"></i> Panel
-            </button>
-
+            <button class="btn-city active" id="btn-esquel" onclick="irA([-42.912, -71.316], 'btn-esquel')">Esquel</button>
+            <button class="btn-city" id="btn-trevelin" onclick="irA([-43.085, -71.463], 'btn-trevelin')">Trevelin</button>
+            <button class="btn-nav" onclick="window.location.href='calculadora.html'"><i class="fa-solid fa-calculator"></i></button>
+            <button id="btn-admin-panel" class="btn-nav" style="display: none;" onclick="window.location.href='admin.html'"><i class="fa-solid fa-user-gear"></i></button>
             <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
         </div>
     </div>
@@ -181,176 +129,151 @@
 
     <div class="overlay" id="blur" onclick="cerrarTodo()"></div>
     
-    <div class="modal" id="modal-clave">
-        <h3>Actualizar Contraseña</h3>
-        <label>Nueva Contraseña</label>
-        <input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres">
-        <label>Confirmar Contraseña</label>
-        <input type="password" id="pass-confirma" placeholder="Repite la contraseña">
-        <button class="btn-save" id="btn-confirmar-clave" onclick="actualizarMiClave()">Guardar Cambios</button>
-        <button style="width:100%; background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer; font-weight:600" onclick="cerrarTodo()">Cancelar</button>
-    </div>
-
     <div class="modal" id="form">
         <h3 id="form-title">Detalles Técnicos</h3>
         <input type="hidden" id="edit-id">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
-            <div>
-                <label>Ciudad</label>
-                <select id="ciudad_select">
-                    <option value="Esquel">Esquel</option>
-                    <option value="Trevelin">Trevelin</option>
-                </select>
-            </div>
-            <div>
-                <label>Tipo de Sistema</label>
-                <select id="t">
-                    <option value="CENTRO DE MONITOREO">Monitoreo</option>
-                    <option value="PRIVADAS">Privada</option>
-                    <option value="PARTICULARES">Particular</option>
-                </select>
-            </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+            <div><label>Ciudad</label><select id="ciudad_select"><option>Esquel</option><option>Trevelin</option></select></div>
+            <div><label>Tipo</label><select id="t">
+                <option value="CENTRO DE MONITOREO">Monitoreo</option>
+                <option value="PRIVADAS">Privada</option>
+                <option value="PARTICULARES">Particular</option>
+            </select></div>
         </div>
-        <label>Ubicación Geográfica</label>
-        <input type="text" id="u" readonly style="background:#f8fafc; color:#64748b">
+        <label>Ubicación</label>
+        <input type="text" id="u" readonly>
         <label>Dirección Exacta</label>
-        <input type="text" id="d" placeholder="Ej: Av. Alvear 1234">
+        <input type="text" id="d">
         <label>Titular / Comercio</label>
-        <input type="text" id="n" placeholder="Nombre del responsable">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
+        <input type="text" id="n">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
             <div><label>Teléfono</label><input type="text" id="tel"></div>
-            <div><label>Modelo DVR</label><input type="text" id="sis" placeholder="Hikvision, Dahua..."></div>
+            <div><label>DVR/NVR</label><input type="text" id="sis"></div>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
-            <div><label>Usuario DVR</label><input type="text" id="usu"></div>
-            <div><label>Clave DVR</label><input type="text" id="pas"></div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+            <div><label>Usuario</label><input type="text" id="usu"></div>
+            <div><label>Clave</label><input type="text" id="pas"></div>
         </div>
         <label>Días de Grabación</label>
         <input type="number" id="alm" value="7">
         <label>Observaciones</label>
-        <textarea id="ot" rows="2" placeholder="Notas sobre la instalación..."></textarea>
-        <button class="btn-save" id="btn-submit-camera" onclick="enviar()">Guardar en Base de Datos</button>
+        <textarea id="ot" rows="2"></textarea>
+        <button class="btn-save" id="btn-submit" onclick="enviar()">Guardar Cámara</button>
     </div>
 
     <div id="map"></div>
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY&libraries=places"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI&libraries=places"></script>
 
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
-        
-        let map, markers = [], seleccionando = false, tempMarker = null;
-        let searchService;
+        let items = [], seleccionando = false, tempMarker = null;
 
-        function initMap() {
-            map = new google.maps.Map(document.getElementById('map'), {
-                center: {lat: -42.912, lng: -71.316},
-                zoom: 14,
-                mapId: 'bf9b93557e004e2d', // Opcional: ID de estilo de Google
-                disableDefaultUI: true,
-                zoomControl: true,
-                zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_BOTTOM }
+        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, zoomControl: false });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // BUSCADOR RESTRINGIDO
+        function initAutocomplete() {
+            const input = document.getElementById('q');
+            const bounds = new google.maps.LatLngBounds(
+                new google.maps.LatLng(-43.15, -71.55), // Límite sur/oeste
+                new google.maps.LatLng(-42.85, -71.20)  // Límite norte/este
+            );
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                bounds: bounds,
+                strictBounds: true,
+                componentRestrictions: { country: "ar" }
             });
-
-            searchService = new google.maps.places.PlacesService(map);
-
-            map.addListener('click', (e) => {
-                if (!seleccionando) return;
-                const lat = e.latLng.lat();
-                const lng = e.latLng.lng();
-                
-                document.getElementById('edit-id').value = "";
-                document.getElementById('u').value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-                
-                if (tempMarker) tempMarker.setMap(null);
-                tempMarker = new google.maps.Marker({ position: e.latLng, map: map });
-                
-                document.getElementById('form').style.display = 'block';
-                document.getElementById('blur').style.display = 'block';
+            autocomplete.addListener('place_changed', () => {
+                const place = autocomplete.getPlace();
+                if (place.geometry) {
+                    map.flyTo([place.geometry.location.lat(), place.geometry.location.lng()], 17);
+                }
             });
-
-            load();
         }
 
         async function load() {
-            const user = verificarPrivilegios();
-            const rolUsuario = user?.rol;
-            
-            // Limpiar markers anteriores
-            markers.forEach(m => m.setMap(null));
-            markers = [];
-
-            const { data, error } = await _client.from('cameras').select('*');
-            if (error) return;
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            const { data } = await _client.from('cameras').select('*');
+            items.forEach(i => map.removeLayer(i.m));
+            items = [];
 
             data?.forEach(c => {
-                const coords = c.UBICACION?.split(',').map(parseFloat);
-                if (coords && coords.length === 2) {
-                    let color = c.TIPO === 'CENTRO DE MONITOREO' ? '#2563eb' : (c.TIPO === 'PRIVADAS' ? '#0f172a' : '#10b981');
-                    
-                    const marker = new google.maps.Marker({
-                        position: {lat: coords[0], lng: coords[1]},
-                        map: map,
-                        icon: {
-                            path: google.maps.SymbolPath.CIRCLE,
-                            fillColor: color,
-                            fillOpacity: 1,
-                            strokeColor: '#FFFFFF',
-                            strokeWeight: 2,
-                            scale: 10
-                        }
-                    });
+                const latlng = c.UBICACION?.split(',').map(parseFloat);
+                if (!latlng || isNaN(latlng[0])) return;
 
-                    let dvrUserDisplay = '-';
-                    if (c.otros_datos && c.otros_datos.includes('User DVR:')) {
-                        dvrUserDisplay = c.otros_datos.split('|')[0].replace('User DVR: ', '').trim();
-                    }
+                let color = c.TIPO === 'CENTRO DE MONITOREO' ? '#2563eb' : (c.TIPO === 'PRIVADAS' ? '#0f172a' : '#10b981');
+                const icon = L.divIcon({
+                    className: 'custom-icon',
+                    html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`,
+                    iconSize: [30, 30], iconAnchor: [15, 15]
+                });
 
-                    const infowindow = new google.maps.InfoWindow({
-                        content: `
-                            <div class="pop-card">
-                                <b class="pop-title">${c.DIRECCION || 'Sin dirección'}</b>
-                                <span class="pop-subtitle">${c['LUGAR / TITULAR'] || '-'}</span>
-                                <div class="pop-info"><i class="fa-solid fa-microchip"></i> <b>Sis:</b> ${c.sistema || '-'}</div>
-                                <div class="pop-info"><i class="fa-solid fa-key"></i> <b>Pass:</b> ${c.clave || '-'}</div>
-                                <div class="pop-footer">
-                                    <button class="pop-btn" style="color:var(--primary)" onclick="abrirEditar('${c.id}')">Editar</button>
-                                    ${rolUsuario === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}')">Eliminar</button>` : ''}
-                                </div>
-                            </div>`
-                    });
+                const marker = L.marker(latlng, { icon }).addTo(map);
+                const userDVR = c.otros_datos?.includes('User DVR:') ? c.otros_datos.split('|')[0].replace('User DVR:', '').trim() : '-';
 
-                    marker.addListener('click', () => {
-                        infowindow.open(map, marker);
-                    });
-
-                    markers.push(marker);
-                }
+                marker.bindPopup(`
+                    <div class="pop-card">
+                        <b class="pop-title">${c.DIRECCION}</b>
+                        <span class="pop-subtitle">${c['LUGAR / TITULAR']}</span>
+                        <div class="pop-info"><i class="fa-solid fa-microchip"></i> <b>Sistema:</b> ${c.sistema || '-'}</div>
+                        <div class="pop-info"><i class="fa-solid fa-key"></i> <b>Clave:</b> ${c.clave || '-'}</div>
+                        <div class="pop-footer">
+                            <button class="pop-btn" style="color:var(--primary)" onclick="abrirEditar('${c.id}')">Editar</button>
+                            ${user.rol === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}')">Eliminar</button>` : ''}
+                        </div>
+                    </div>
+                `);
+                items.push({ id: c.id, m: marker, data: c });
             });
         }
 
-        function buscarLugar() {
-            const input = document.getElementById('q').value;
-            if (!input) return;
+        function abrirEditar(id) {
+            const cam = items.find(i => i.id == id).data;
+            document.getElementById('edit-id').value = cam.id;
+            document.getElementById('d').value = cam.DIRECCION;
+            document.getElementById('u').value = cam.UBICACION;
+            document.getElementById('n').value = cam['LUGAR / TITULAR'];
+            document.getElementById('t').value = cam.TIPO;
+            document.getElementById('ciudad_select').value = cam.ciudad || 'Esquel';
+            document.getElementById('form').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+            map.closePopup();
+        }
 
-            const request = {
-                query: input,
-                bounds: map.getBounds(), // BUSCA SOLO EN LO QUE SE VE EN EL MAPA (Esquel o Trevelin)
+        async function enviar() {
+            const id = document.getElementById('edit-id').value;
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            const payload = {
+                DIRECCION: document.getElementById('d').value,
+                UBICACION: document.getElementById('u').value,
+                "LUGAR / TITULAR": document.getElementById('n').value,
+                TIPO: document.getElementById('t').value,
+                ciudad: document.getElementById('ciudad_select').value,
+                sistema: document.getElementById('sis').value,
+                clave: document.getElementById('pas').value,
+                usuario: user.usuario,
+                otros_datos: `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
             };
 
-            searchService.textSearch(request, (results, status) => {
-                if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
-                    map.setCenter(results[0].geometry.location);
-                    map.setZoom(17);
-                }
-            });
+            const { error } = id 
+                ? await _client.from('cameras').update(payload).eq('id', id)
+                : await _client.from('cameras').insert([payload]);
+
+            if (!error) { cerrarTodo(); load(); } else { alert("Error al guardar"); }
         }
 
-        function irA(coords, btnId) { 
-            map.panTo(coords);
-            map.setZoom(15);
-            document.querySelectorAll('.btn-city').forEach(p => p.classList.remove('active'));
+        async function eliminar(id) {
+            if (!confirm("¿Eliminar cámara?")) return;
+            const { error } = await _client.from('cameras').delete().eq('id', id);
+            if (!error) load();
+        }
+
+        function irA(coords, btnId) {
+            map.flyTo(coords, 15);
+            document.querySelectorAll('.btn-city').forEach(b => b.classList.remove('active'));
             document.getElementById(btnId).classList.add('active');
         }
 
@@ -361,53 +284,33 @@
             document.getElementById('main-btn').style.display = 'none';
         }
 
+        map.on('click', (e) => {
+            if (!seleccionando) return;
+            document.getElementById('edit-id').value = "";
+            document.getElementById('u').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+            if (tempMarker) map.removeLayer(tempMarker);
+            tempMarker = L.marker(e.latlng).addTo(map);
+            document.getElementById('form').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+        });
+
         function cerrarTodo() {
             document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
             document.getElementById('blur').style.display = 'none';
             document.getElementById('main-btn').style.display = 'flex';
             document.getElementById('instruccion').style.display = 'none';
-            document.getElementById('map').classList.remove('crosshair');
-            if (tempMarker) tempMarker.setMap(null);
+            if (tempMarker) map.removeLayer(tempMarker);
             seleccionando = false;
-        }
-
-        async function enviar() {
-            const id = document.getElementById('edit-id').value;
-            const userSession = JSON.parse(localStorage.getItem('user_session'));
-            const cam = { 
-                "DIRECCION": document.getElementById('d').value, 
-                "UBICACION": document.getElementById('u').value,
-                "LUGAR / TITULAR": document.getElementById('n').value,
-                "TIPO": document.getElementById('t').value,
-                "ciudad": document.getElementById('ciudad_select').value,
-                "telefono": document.getElementById('tel').value,
-                "sistema": document.getElementById('sis').value,
-                "usuario": userSession.usuario,
-                "clave": document.getElementById('pas').value,
-                "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 7,
-                "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
-            };
-
-            const { error } = id ? await _client.from('cameras').update(cam).eq('id', id) : await _client.from('cameras').insert([cam]);
-            if (!error) { 
-                cerrarTodo(); load(); 
-            }
-        }
-
-        function verificarPrivilegios() {
-            const session = localStorage.getItem('user_session');
-            if (session) {
-                const userData = JSON.parse(session);
-                const btnPanel = document.getElementById('btn-admin-panel');
-                if (userData.rol === 'admin') btnPanel.style.display = 'flex';
-                return userData;
-            }
-            return null;
         }
 
         function logout() { localStorage.removeItem('user_session'); window.location.replace('login.html'); }
 
-        window.onload = initMap;
+        window.onload = () => {
+            initAutocomplete();
+            load();
+            const user = JSON.parse(localStorage.getItem('user_session'));
+            if (user?.rol === 'admin') document.getElementById('btn-admin-panel').style.display = 'flex';
+        };
     </script>
 </body>
 </html>

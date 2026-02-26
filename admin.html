@@ -3,7 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel</title>
+    <title>SMCee ADMIN - Gestión</title>
+    
+    <script>
+        (function() {
+            const session = localStorage.getItem('user_session');
+            let esValida = false;
+            try {
+                if (session) {
+                    const parsed = JSON.parse(session);
+                    if (parsed && parsed.usuario) esValida = true;
+                }
+            } catch (e) { esValida = false; }
+
+            if (!esValida) {
+                window.location.replace('login.html');
+                document.documentElement.style.display = 'none';
+            }
+        })();
+    </script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -21,6 +39,7 @@
         .logo-area { font-size: 18px; font-weight: 800; color: var(--accent); margin-bottom: 30px; }
         .nav-link { text-decoration: none; color: var(--text-dim); padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; font-size: 14px; transition: 0.3s; margin-bottom: 5px; }
         .nav-link.active { background: var(--accent); color: white; }
+        .nav-link:hover:not(.active) { background: #1e293b; color: white; }
 
         .sidebar-sep { margin: 20px 0; border-top: 1px solid #334155; padding-top: 20px; }
         .sidebar-form h4 { font-size: 11px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 15px; letter-spacing: 1px; }
@@ -37,7 +56,7 @@
         
         .table-container { overflow-y: auto; flex: 1; }
         .table-wrap { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .table-wrap th { text-align: left; padding: 10px; color: var(--text-dim); font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #334155; position: sticky; top: 0; background: var(--card-dark); }
+        .table-wrap th { text-align: left; padding: 10px; color: var(--text-dim); font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #334155; position: sticky; top: 0; background: var(--card-dark); z-index: 10; }
         .table-wrap td { padding: 12px 10px; border-bottom: 1px solid #334155; }
         
         .user-clickable { color: var(--accent); cursor: pointer; font-weight: 700; transition: 0.2s; }
@@ -193,10 +212,11 @@
             container.innerHTML = '<p style="font-size:12px; color:var(--accent);">Buscando registros...</p>';
             toggleDetail(true);
 
+            // Búsqueda corregida por la columna 'usuario'
             const { data: cams, error } = await _client
                 .from('cameras')
                 .select('*')
-                .ilike('usuario', `%${cleanName}%`);
+                .eq('usuario', cleanName);
             
             if (error) {
                 container.innerHTML = `<p style="color:var(--danger); font-size:12px;">Error: ${error.message}</p>`;
@@ -204,10 +224,10 @@
             }
 
             if(!cams || cams.length === 0) {
-                container.innerHTML = `<p style="font-size:12px; color:var(--text-dim);">No hay cámaras para "${cleanName}".</p>`;
+                container.innerHTML = `<p style="font-size:12px; color:var(--text-dim);">No se encontraron cámaras vinculadas a <b>${cleanName}</b>.</p>`;
             } else {
                 container.innerHTML = cams.map(c => `
-                    <div style="background:#1a2233; padding:12px; border-radius:10px; border:1px solid #334155;">
+                    <div style="background:#1a2233; padding:12px; border-radius:10px; border:1px solid #334155; margin-bottom:5px;">
                         <div style="font-weight:700; font-size:13px; color:var(--accent);">${c['LUGAR / TITULAR'] || 'Sin Título'}</div>
                         <div style="font-size:11px; color:var(--text-dim); margin-top:5px;">
                             <i class="fa-solid fa-location-dot" style="margin-right:5px"></i>${c.UBICACION || 'Sin ubicación'}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC -6</title>
+    <title>SMC - Mapa de Cámaras</title>
     
     <script>
         (function() {
@@ -42,7 +42,6 @@
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--dark-bg); overflow: hidden; color: #1e293b; }
         #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
 
-        /* NAVBAR */
         .top-bar {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             z-index: 1000; width: 92%; max-width: 1200px;
@@ -58,10 +57,7 @@
             padding: 0 15px; border: 1px solid rgba(0,0,0,0.05); transition: 0.3s;
         }
         .search-group:focus-within { background: white; border-color: var(--primary); }
-        .search-group input { 
-            width: 100%; border: none; padding: 12px; outline: none; 
-            background: transparent; font-size: 14px; font-weight: 500;
-        }
+        .search-group input { width: 100%; border: none; padding: 12px; outline: none; background: transparent; font-size: 14px; font-weight: 500; }
 
         .actions-group { display: flex; align-items: center; gap: 8px; }
         .btn-nav {
@@ -75,53 +71,19 @@
         .btn-city.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
         #btn-trevelin.active { background: var(--warning); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); }
 
-        .btn-logout { 
-            background: #fee2e2; color: var(--danger); border: none; 
-            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; transition: 0.2s;
-        }
+        .btn-logout { background: #fee2e2; color: var(--danger); border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-logout:hover { background: var(--danger); color: white; }
 
-        .btn-add-main { 
-            position: fixed; bottom: 30px; right: 30px; z-index: 1000; 
-            background: var(--dark-bg); color: white; border: none; 
-            padding: 16px 28px; border-radius: 16px; font-weight: 700; 
-            cursor: pointer; display: flex; align-items: center; gap: 10px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
-        }
+        .btn-add-main { position: fixed; bottom: 30px; right: 30px; z-index: 1000; background: var(--dark-bg); color: white; border: none; padding: 16px 28px; border-radius: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s; }
 
-        /* MODALES */
-        .modal { 
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 2001; background: white; width: 90%; max-width: 440px; 
-            border-radius: 24px; padding: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
-            max-height: 85vh; overflow-y: auto;
-        }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2001; background: white; width: 90%; max-width: 440px; border-radius: 24px; padding: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); max-height: 85vh; overflow-y: auto; }
         .modal h3 { font-weight: 800; color: var(--dark-bg); font-size: 20px; margin-bottom: 20px; }
-        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box;}
-        label { display: block; margin-top: 12px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;}
-        
-        .btn-save { 
-            width: 100%; padding: 15px; background: var(--primary); color: white; 
-            border: none; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; 
-            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
-        }
+        .btn-save { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2); }
 
         .overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); z-index: 2000; }
-        #instruccion { 
-            display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); 
-            z-index: 2000; background: var(--primary); color: white; padding: 12px 25px; 
-            border-radius: 50px; font-weight: 700; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-        }
+        #instruccion { display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); z-index: 2000; background: var(--primary); color: white; padding: 12px 25px; border-radius: 50px; font-weight: 700; box-shadow: 0 10px 20px rgba(0,0,0,0.2); animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 100% { top: 100px; } 50% { top: 110px; } }
         .crosshair { cursor: crosshair !important; }
-
-        /* Estilos Popup */
-        .pop-card { min-width: 200px; }
-        .pop-title { font-size: 14px; display: block; margin-bottom: 4px; }
-        .pop-subtitle { color: #64748b; font-size: 12px; display: block; margin-bottom: 8px; }
-        .pop-info { font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
-        .pop-footer { margin-top: 10px; padding-top: 8px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; }
-        .pop-btn { background: none; border: none; font-weight: 700; font-size: 12px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -131,7 +93,7 @@
     <div class="top-bar">
         <div class="search-group">
             <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
-            <input type="text" id="q" placeholder="Buscar dirección o ciudad..." onkeyup="if(event.key==='Enter') buscarLugar()">
+            <input type="text" id="q" placeholder="Buscar dirección o titular..." onkeyup="if(event.key==='Enter') buscarLugar()">
         </div>
 
         <div class="actions-group">
@@ -143,11 +105,11 @@
             </button>
 
             <button class="btn-nav" onclick="abrirModalClave()">
-                <i class="fa-solid fa-key"></i>
+                <i class="fa-solid fa-key"></i> Cambiar clave
             </button>
 
-            <button id="btn-admin-panel" class="btn-nav" style="display: none;" onclick="window.location.href='admin.html'">
-                <i class="fa-solid fa-user-gear"></i>
+            <button id="btn-admin-panel" class="btn-nav" style="background: #f1f5f9; border: none; display: none;" onclick="window.location.href='admin.html'">
+                <i class="fa-solid fa-user-gear"></i> Panel
             </button>
 
             <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
@@ -163,11 +125,11 @@
     <div class="modal" id="modal-clave">
         <h3>Actualizar Contraseña</h3>
         <label>Nueva Contraseña</label>
-        <input type="password" id="pass-nueva">
+        <input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres">
         <label>Confirmar Contraseña</label>
-        <input type="password" id="pass-confirma">
-        <button class="btn-save" onclick="actualizarMiClave()">Guardar Cambios</button>
-        <button style="width:100%; background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer;" onclick="cerrarTodo()">Cancelar</button>
+        <input type="password" id="pass-confirma" placeholder="Repite la contraseña">
+        <button class="btn-save" id="btn-confirmar-clave" onclick="actualizarMiClave()">Guardar Cambios</button>
+        <button style="width:100%; background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer; font-weight:600" onclick="cerrarTodo()">Cancelar</button>
     </div>
 
     <div class="modal" id="form">
@@ -182,7 +144,7 @@
                 </select>
             </div>
             <div>
-                <label>Sistema</label>
+                <label>Tipo de Sistema</label>
                 <select id="t">
                     <option value="CENTRO DE MONITOREO">Monitoreo</option>
                     <option value="PRIVADAS">Privada</option>
@@ -191,14 +153,14 @@
             </div>
         </div>
         <label>Ubicación Geográfica</label>
-        <input type="text" id="u" readonly style="background:#f8fafc;">
+        <input type="text" id="u" readonly style="background:#f8fafc; color:#64748b">
         <label>Dirección Exacta</label>
         <input type="text" id="d" placeholder="Ej: Av. Alvear 1234">
         <label>Titular / Comercio</label>
-        <input type="text" id="n">
+        <input type="text" id="n" placeholder="Nombre del responsable">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
             <div><label>Teléfono</label><input type="text" id="tel"></div>
-            <div><label>Modelo DVR</label><input type="text" id="sis"></div>
+            <div><label>Modelo DVR</label><input type="text" id="sis" placeholder="Hikvision, Dahua..."></div>
         </div>
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
             <div><label>Usuario DVR</label><input type="text" id="usu"></div>
@@ -207,8 +169,8 @@
         <label>Días de Grabación</label>
         <input type="number" id="alm" value="7">
         <label>Observaciones</label>
-        <textarea id="ot" rows="2"></textarea>
-        <button class="btn-save" onclick="enviar()">Guardar en Base de Datos</button>
+        <textarea id="ot" rows="2" placeholder="Notas sobre la instalación..."></textarea>
+        <button class="btn-save" id="btn-submit-camera" onclick="enviar()">Guardar en Base de Datos</button>
     </div>
 
     <div id="map"></div>
@@ -218,21 +180,31 @@
 
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+
+        function verificarPrivilegios() {
+            const session = localStorage.getItem('user_session');
+            if (session) {
+                const userData = JSON.parse(session);
+                const btnPanel = document.getElementById('btn-admin-panel');
+                if (userData.rol === 'admin') btnPanel.style.display = 'flex';
+                return userData;
+            }
+            return null;
+        }
+
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-        
         const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm], zoomControl: false });
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         L.control.layers({ "Calles": osm, "Satélite": satellite }, null, { position: 'bottomright' }).addTo(map);
 
         let items = [], seleccionando = false, tempMarker = null;
 
-        // --- FUNCIÓN BUSCAR CALLE (Geocoding) ---
         async function buscarLugar() {
             const query = document.getElementById('q').value;
             if (query.length < 3) return;
 
-            // Primero buscamos en nuestras cámaras ya cargadas
+            // Búsqueda local primero
             const localMatch = items.find(i => i.info.includes(query.toLowerCase()));
             if (localMatch) {
                 map.flyTo(localMatch.m.getLatLng(), 18);
@@ -240,37 +212,54 @@
                 return;
             }
 
-            // Si no es una cámara, buscamos en el mapa (OpenStreetMap)
+            // Geocoding externo
             try {
                 const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}, Chubut, Argentina`);
                 const results = await response.json();
-                
                 if (results.length > 0) {
-                    const { lat, lon } = results[0];
-                    const coords = [parseFloat(lat), parseFloat(lon)];
+                    const coords = [parseFloat(results[0].lat), parseFloat(results[0].lon)];
                     map.flyTo(coords, 17);
-                    
                     if (tempMarker) map.removeLayer(tempMarker);
-                    tempMarker = L.marker(coords).addTo(map)
-                        .bindPopup("<b>Ubicación encontrada</b><br>Haz clic en 'Nueva Cámara' para registrarla aquí.")
-                        .openPopup();
-                } else {
-                    alert("No se encontró la dirección.");
+                    tempMarker = L.marker(coords).addTo(map).bindPopup("Ubicación encontrada").openPopup();
                 }
-            } catch (e) {
-                console.error("Error buscando dirección");
+            } catch (e) {}
+        }
+
+        async function registrarLog(usuario, accion, detalle) {
+            try { await _client.from('logs_actividad').insert([{ usuario, accion, detalle }]); } catch (e) {}
+        }
+
+        function abrirModalClave() {
+            document.getElementById('pass-nueva').value = '';
+            document.getElementById('pass-confirma').value = '';
+            document.getElementById('modal-clave').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+        }
+
+        async function actualizarMiClave() {
+            const n1 = document.getElementById('pass-nueva').value.trim();
+            const n2 = document.getElementById('pass-confirma').value.trim();
+            const user = verificarPrivilegios();
+            if (!n1 || n1.length < 4) return alert("Mínimo 4 caracteres.");
+            if (n1 !== n2) return alert("No coinciden.");
+            
+            const btn = document.getElementById('btn-confirmar-clave');
+            btn.disabled = true; btn.innerText = "Actualizando...";
+            const { error } = await _client.from('usuarios').update({ clave: n1 }).eq('usuario', user.usuario);
+            if (!error) {
+                await registrarLog(user.usuario, 'CAMBIO CLAVE', 'Actualizó contraseña');
+                alert("✅ Contraseña actualizada");
+                cerrarTodo();
             }
+            btn.disabled = false; btn.innerText = "Guardar Cambios";
         }
 
         async function load() {
-            const session = localStorage.getItem('user_session');
-            const user = session ? JSON.parse(session) : null;
-            if (user?.rol === 'admin') document.getElementById('btn-admin-panel').style.display = 'flex';
-
+            const user = verificarPrivilegios();
             items.forEach(i => map.removeLayer(i.m));
             items = [];
-
             const { data } = await _client.from('cameras').select('*');
+            
             data?.forEach(c => {
                 const latlng = c.UBICACION?.split(',').map(parseFloat);
                 if (latlng && latlng[0]) {
@@ -286,63 +275,40 @@
 
                     marker.bindPopup(`
                         <div class="pop-card">
-                            <b class="pop-title">${c.DIRECCION}</b>
-                            <span class="pop-subtitle">${c['LUGAR / TITULAR'] || '-'}</span>
-                            <div class="pop-info"><i class="fa-solid fa-microchip"></i> <span><b>Sistema:</b> ${c.sistema}</span></div>
-                            <div class="pop-info"><i class="fa-solid fa-user"></i> <span><b>User:</b> ${dvrUser}</span></div>
-                            <div class="pop-info"><i class="fa-solid fa-key"></i> <span><b>Clave:</b> ${c.clave}</span></div>
-                            <div class="pop-footer">
-                                <button class="pop-btn" style="color:var(--primary)" onclick="abrirEditar('${c.id}')">Editar</button>
-                                ${user?.rol === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}')">Eliminar</button>` : ''}
+                            <div class="pop-header"><b class="pop-title">${c.DIRECCION}</b><span class="pop-subtitle">${c['LUGAR / TITULAR'] || '-'}</span></div>
+                            <div class="pop-body">
+                                <div class="pop-info"><i class="fa-solid fa-microchip"></i> <span><b>Sistema:</b> ${c.sistema || '-'}</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-user-shield"></i> <span><b>Usuario:</b> ${dvrUser}</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-key"></i> <span><b>Clave:</b> ${c.clave || '-'}</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-calendar-day"></i> <span><b>Respaldo:</b> ${c.dias_almacenamiento || '7'} días</span></div>
                             </div>
-                        </div>
-                    `);
+                            <div class="pop-footer">
+                                <button class="pop-btn" style="color:var(--primary)" onclick="abrirEditar('${c.id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
+                                ${user?.rol === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}')"><i class="fa-solid fa-trash"></i> Eliminar</button>` : ''}
+                            </div>
+                        </div>`);
                     items.push({ id: c.id, m: marker, data: c, info: `${c.DIRECCION} ${c['LUGAR / TITULAR']}`.toLowerCase() });
                 }
             });
-        }
-
-        function abrirEditar(id) {
-            const cam = items.find(i => i.id == id).data;
-            document.getElementById('edit-id').value = cam.id;
-            document.getElementById('d').value = cam.DIRECCION;
-            document.getElementById('u').value = cam.UBICACION;
-            document.getElementById('n').value = cam['LUGAR / TITULAR'];
-            document.getElementById('t').value = cam.TIPO;
-            document.getElementById('ciudad_select').value = cam.ciudad;
-            document.getElementById('tel').value = cam.telefono;
-            document.getElementById('sis').value = cam.sistema;
-            document.getElementById('pas').value = cam.clave;
-            document.getElementById('form').style.display = 'block';
-            document.getElementById('blur').style.display = 'block';
         }
 
         async function enviar() {
             const id = document.getElementById('edit-id').value;
             const user = JSON.parse(localStorage.getItem('user_session'));
             const cam = {
-                DIRECCION: document.getElementById('d').value,
-                UBICACION: document.getElementById('u').value,
-                "LUGAR / TITULAR": document.getElementById('n').value,
-                TIPO: document.getElementById('t').value,
-                ciudad: document.getElementById('ciudad_select').value,
-                telefono: document.getElementById('tel').value,
-                sistema: document.getElementById('sis').value,
-                usuario: user.usuario,
-                clave: document.getElementById('pas').value,
+                DIRECCION: document.getElementById('d').value, UBICACION: document.getElementById('u').value,
+                "LUGAR / TITULAR": document.getElementById('n').value, TIPO: document.getElementById('t').value,
+                ciudad: document.getElementById('ciudad_select').value, telefono: document.getElementById('tel').value,
+                sistema: document.getElementById('sis').value, usuario: user.usuario, clave: document.getElementById('pas').value,
                 dias_almacenamiento: parseInt(document.getElementById('alm').value),
                 otros_datos: `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
             };
-
             const { error } = id ? await _client.from('cameras').update(cam).eq('id', id) : await _client.from('cameras').insert([cam]);
-            if (!error) { cerrarTodo(); load(); }
+            if (!error) { await registrarLog(user.usuario, id ? 'EDITO' : 'CREO', cam.DIRECCION); cerrarTodo(); load(); }
         }
 
         async function eliminar(id) {
-            if(confirm("¿Eliminar esta cámara?")) {
-                await _client.from('cameras').delete().eq('id', id);
-                load();
-            }
+            if(confirm("¿Eliminar cámara?")) { await _client.from('cameras').delete().eq('id', id); load(); }
         }
 
         function irA(coords, btnId) {

@@ -210,7 +210,7 @@
             errorDiv.innerText = "";
 
             try {
-                // He cambiado 'usuarios_app' por 'usuarios' para unificar con el panel admin
+                // Buscamos al usuario
                 const { data, error } = await _client
                     .from('usuarios') 
                     .select('*')
@@ -223,8 +223,20 @@
                     btn.disabled = false;
                     btn.innerHTML = 'Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>';
                 } else {
-                    // AQUÍ ESTÁ LA MAGIA: Guardamos TODO el objeto (incluyendo el ROL)
-                    localStorage.setItem('user_session', JSON.stringify(data));
+                    // MARCAR COMO ONLINE Y ACTUALIZAR FECHA
+                    // Actualizamos en la base de datos antes de entrar
+                    await _client
+                        .from('usuarios')
+                        .update({ 
+                            is_online: true, 
+                            last_login: new Date().toISOString() 
+                        })
+                        .eq('id', data.id);
+
+                    // Guardamos la sesión (actualizada con los nuevos datos)
+                    const sessionData = { ...data, is_online: true, last_login: new Date().toISOString() };
+                    localStorage.setItem('user_session', JSON.stringify(sessionData));
+                    
                     window.location.replace('index.html');
                 }
             } catch (err) {

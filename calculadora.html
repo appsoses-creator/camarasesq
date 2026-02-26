@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora DPIE </title>
+    <title>Calculadora DPIE - CÁMARAS 10</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-dark: #0f1138;
-            --card-blue: #1e40af;
-            --btn-start: #7e22ce;
-            --btn-end: #db2777;
-            --text-green: #4ade80;
-            --glass: rgba(255, 255, 255, 0.1);
-            --pill-gray: #161b3d;
+            --card-blue: #1d4ed8;
+            --input-blue: #3b82f6;
+            --btn-grad: linear-gradient(90deg, #7e22ce, #db2777);
+            --text-neon: #4ade80;
+            --danger: #e11d48; /* Rojo para atraso */
+            --success: #22c55e; /* Verde para adelanto */
         }
 
         body {
@@ -29,22 +29,17 @@
         }
 
         .container {
-            width: 90%;
-            max-width: 450px;
+            width: 95%;
+            max-width: 480px;
             text-align: center;
         }
 
-        h1 {
-            font-size: 24px;
-            margin-bottom: 30px;
-            letter-spacing: 1px;
-        }
+        h1 { font-size: 24px; margin-bottom: 30px; }
 
-        /* Contenedores Principales */
         .card {
-            background: #1d4ed8;
+            background: var(--card-blue);
             border-radius: 25px;
-            padding: 25px;
+            padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
         }
@@ -54,31 +49,28 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             color: #e2e8f0;
         }
 
         #reloj-actual {
             font-family: 'Courier New', monospace;
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 700;
-            color: var(--text-green);
-            margin: 10px 0;
+            color: var(--text-neon);
         }
 
-        /* Inputs y Campos de Selección */
         .input-wrapper {
-            background: #3b82f6;
+            background: var(--input-blue);
             border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 12px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             border: 1px solid #60a5fa;
-            color: #cbd5e1;
         }
 
         input[type="datetime-local"] {
@@ -88,18 +80,13 @@
             width: 100%;
             font-size: 16px;
             outline: none;
-            font-family: inherit;
         }
 
-        input::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
+        input::-webkit-calendar-picker-indicator { filter: invert(1); }
 
-        /* Botones Principales */
-        .action-button {
+        .btn-main {
             width: 100%;
-            padding: 16px;
+            padding: 14px;
             border-radius: 15px;
             border: none;
             color: white;
@@ -110,44 +97,55 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
-            transition: transform 0.2s, background 0.3s;
-            box-sizing: border-box;
+            margin-bottom: 10px;
         }
 
-        .action-button:active {
-            transform: scale(0.98);
-        }
+        .btn-calc { background: var(--btn-grad); }
+        .btn-back { background: #161b3d; text-decoration: none; font-size: 14px; }
 
-        /* Estilo para el botón de calcular (gradiente) */
-        .btn-calcular {
-            background: linear-gradient(90deg, var(--btn-start), var(--btn-end));
-            margin-bottom: 15px; /* Espacio con el botón de volver */
-        }
-
-        .btn-calcular:hover {
-            opacity: 0.9;
-        }
-
-        /* Estilo para el botón de volver (color sólido de la interfaz) */
-        .btn-volver {
-            background: #161b3d; /* Color gris oscuro pill para contrastar */
-            border: 1px solid rgba(255,255,255,0.1);
-            color: #e2e8f0;
-            text-decoration: none; /* Eliminar subrayado de enlace */
-        }
-
-        .btn-volver:hover {
-            background: #1e293b;
-        }
-
-        /* Área de Resultado */
-        .result-display {
-            margin-top: 20px;
-            padding: 18px;
-            border-radius: 15px;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.05);
+        /* ESTILO RESULTADO (COMO EN LA IMAGEN) */
+        .result-card {
             display: none;
+            border-radius: 25px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+            position: relative;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .time-box {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 10px 5px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .time-label { font-size: 10px; font-weight: 700; text-transform: uppercase; opacity: 0.9; }
+        .time-value { font-size: 20px; font-weight: 800; }
+
+        .footer-times {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            font-family: monospace;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 10px;
         }
     </style>
 </head>
@@ -157,97 +155,93 @@
         <h1>Calculadora DPIE</h1>
 
         <div class="card">
-            <div class="card-title">
-                <i class="fa-regular fa-clock"></i> Hora Actual
-            </div>
+            <div class="card-title"><i class="fa-regular fa-clock"></i> Hora Actual</div>
             <div id="reloj-actual">--/--/----, --:--:--</div>
         </div>
 
         <div class="card">
-            <div class="card-title">
-                <i class="fa-solid fa-rocket"></i> Hora del DVR
-            </div>
-            
+            <div class="card-title"><i class="fa-solid fa-rocket"></i> Hora del DVR</div>
             <div class="input-wrapper">
                 <i class="fa-regular fa-calendar"></i>
-                <input type="datetime-local" id="hora-dvr">
+                <input type="datetime-local" id="hora-dvr" step="1">
             </div>
 
-            <button class="action-button btn-calcular" onclick="calcularDesfase()">
+            <button class="btn-main btn-calc" onclick="calcular()">
                 <i class="fa-solid fa-rocket"></i> Calcular Desfasaje
             </button>
+            <a href="index.html" class="btn-main btn-back">Volver al Mapa</a>
+        </div>
 
-            <a href="index.html" class="action-button btn-volver">
-                <i class="fa-solid fa-arrow-left"></i> Volver al Mapa
-            </a>
-
-            <div class="result-display" id="area-resultado">
-                <div id="texto-resultado" style="font-weight: 700; font-size: 18px; margin-bottom: 5px;"></div>
-                <div id="detalle-resultado" style="font-size: 13px; color: #cbd5e1; line-height: 1.4;"></div>
+        <div id="resultado" class="result-card">
+            <div class="result-header">
+                <i id="res-icon" class="fa-solid"></i>
+                <span id="res-title">¡Desfase Detectado!</span>
             </div>
+            
+            <p id="res-desc" style="font-size: 13px; margin-bottom: 15px;"></p>
+
+            <div class="result-grid">
+                <div class="time-box"><div class="time-label">Días</div><div id="v-dias" class="time-value">0</div></div>
+                <div class="time-box"><div class="time-label">Horas</div><div id="v-horas" class="time-value">0</div></div>
+                <div class="time-box"><div class="time-label">Minutos</div><div id="v-minutos" class="time-value">0</div></div>
+                <div class="time-box"><div class="time-label">Segundos</div><div id="v-segundos" class="time-value">0</div></div>
+            </div>
+
+            <div class="footer-times">
+                <div>HORA ACTUAL<br><span id="foot-actual"></span></div>
+                <div style="text-align: right;">HORA DVR<br><span id="foot-dvr"></span></div>
+            </div>
+            <div style="font-size: 10px; text-align: center; margin-top: 10px; opacity: 0.5;">Desarrollado por Oses Lisandro</div>
         </div>
     </div>
 
     <script>
-        // --- RELOJ AUTOMÁTICO EN TIEMPO REAL ---
         function actualizarReloj() {
             const ahora = new Date();
-            const opciones = { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit', 
-                second: '2-digit',
-                hour12: false 
-            };
-            // Formatear la fecha y hora para que coincida con la imagen (dd/mm/aaaa, hh:mm:ss)
-            const stringFecha = ahora.toLocaleString('es-AR', opciones).replace(',', '');
-            document.getElementById('reloj-actual').innerText = stringFecha;
+            const fmt = ahora.toLocaleString('es-AR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).replace(',', '');
+            document.getElementById('reloj-actual').innerText = fmt;
         }
-
-        // Actualizar cada segundo y al cargar
         setInterval(actualizarReloj, 1000);
         actualizarReloj();
 
+        function calcular() {
+            const input = document.getElementById('hora-dvr').value;
+            if(!input) return alert("Selecciona la hora del DVR");
 
-        // --- LÓGICA DE CÁLCULO DE DESFASE ---
-        function calcularDesfase() {
-            const inputDVR = document.getElementById('hora-dvr').value;
-            if (!inputDVR) return alert("Por favor, selecciona la fecha y hora que muestra el DVR.");
+            const ahora = new Date();
+            const dvr = new Date(input);
+            const diffMs = ahora - dvr;
+            const absDiff = Math.abs(diffMs);
 
-            const fechaActual = new Date();
-            const fechaDVR = new Date(inputDVR);
+            // Cálculos
+            const dias = Math.floor(absDiff / (1000 * 60 * 60 * 24));
+            const horas = Math.floor((absDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutos = Math.floor((absDiff % (1000 * 60 * 60)) / (1000 * 60));
+            const segundos = Math.floor((absDiff % (1000 * 60)) / 1000);
 
-            // Calcular diferencia en milisegundos
-            const diffMs = fechaActual - fechaDVR;
-            // Convertir a segundos absolutos para el desglose
-            const diffSegundosTotal = Math.floor(Math.abs(diffMs) / 1000);
-
-            // Desglosar en horas, minutos y segundos
-            const horas = Math.floor(diffSegundosTotal / 3600);
-            const minutos = Math.floor((diffSegundosTotal % 3600) / 60);
-            const segundos = diffSegundosTotal % 60;
-
-            const resDiv = document.getElementById('area-resultado');
-            const resTexto = document.getElementById('texto-resultado');
-            const resDetalle = document.getElementById('detalle-resultado');
-
-            // Mostrar el panel de resultados
-            resDiv.style.display = 'block';
+            // UI
+            const resCard = document.getElementById('resultado');
+            const resIcon = document.getElementById('res-icon');
             
-            // Formatear el tiempo
-            const tiempoFormateado = `${horas}h ${minutos}m ${segundos}s`;
+            resCard.style.display = 'block';
             
-            if (diffMs > 0) {
-                // Hora Actual > Hora DVR -> El DVR va retrasado
-                resTexto.innerHTML = `<i class="fa-solid fa-warning" style="color: #fbbf24;"></i> <span style="color: #fbbf24;">Retraso: ${tiempoFormateado}</span>`;
-                resDetalle.innerText = "El reloj del grabador está por detrás de la hora real. Para buscar un evento, debes restar este tiempo a la hora real.";
-            } else {
-                // Hora Actual < Hora DVR -> El DVR va adelantado
-                resTexto.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #60a5fa;"></i> <span style="color: #60a5fa;">Adelanto: ${tiempoFormateado}</span>`;
-                resDetalle.innerText = "El reloj del grabador está por delante de la hora real. Para buscar un evento, debes sumar este tiempo a la hora real.";
+            if(diffMs > 0) { // Atrasado
+                resCard.style.background = 'linear-gradient(135deg, #e11d48, #9f1239)';
+                resIcon.className = "fa-solid fa-circle-exclamation";
+                document.getElementById('res-desc').innerText = "La hora del DVR está Atrasada respecto a la actual.";
+            } else { // Adelantado
+                resCard.style.background = 'linear-gradient(135deg, #22c55e, #15803d)';
+                resIcon.className = "fa-solid fa-circle-check";
+                document.getElementById('res-desc').innerText = "La hora del DVR está Adelantada respecto a la actual.";
             }
+
+            document.getElementById('v-dias').innerText = dias;
+            document.getElementById('v-horas').innerText = horas;
+            document.getElementById('v-minutos').innerText = minutos;
+            document.getElementById('v-segundos').innerText = segundos;
+
+            document.getElementById('foot-actual').innerText = ahora.toLocaleString('es-AR').replace(',', '');
+            document.getElementById('foot-dvr').innerText = dvr.toLocaleString('es-AR').replace(',', '');
         }
     </script>
 </body>

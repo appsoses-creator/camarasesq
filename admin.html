@@ -1,1 +1,166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMCee - Panel de Control</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --dark: #0f172a;
+            --danger: #ef4444;
+            --success: #10b981;
+            --bg: #f8fafc;
+        }
 
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--dark); }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        /* Header */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .btn-back { text-decoration: none; color: var(--dark); font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+        /* Card del Formulario */
+        .card { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .card-title { margin-top: 0; font-size: 18px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+        
+        .grid-form { display: grid; grid-template-columns: 1fr 1fr 120px; gap: 15px; align-items: end; }
+        @media (max-width: 600px) { .grid-form { grid-template-columns: 1fr; } }
+
+        label { display: block; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; box-sizing: border-box; font-size: 14px; }
+        
+        .btn-add { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; cursor: pointer; height: 45px; }
+        .btn-add:hover { background: #1d4ed8; }
+
+        /* Tabla de Usuarios */
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        th { background: #f1f5f9; text-align: left; padding: 15px; font-size: 13px; color: #64748b; }
+        td { padding: 15px; border-top: 1px solid #f1f5f9; font-size: 14px; }
+        
+        .btn-del { color: var(--danger); background: #fee2e2; border: none; width: 35px; height: 35px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .btn-del:hover { background: var(--danger); color: white; }
+        
+        .badge { padding: 4px 8px; background: #e0f2fe; color: var(--primary); border-radius: 6px; font-size: 11px; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Volver al Mapa</a>
+            <h2 style="margin:0">Panel de Usuarios</h2>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-user-plus"></i> Crear Nuevo Usuario</h3>
+            <div class="grid-form">
+                <div>
+                    <label>Nombre de Usuario</label>
+                    <input type="text" id="new-user" placeholder="Ej: admin_trevelin">
+                </div>
+                <div>
+                    <label>Contraseña</label>
+                    <input type="password" id="new-pass" placeholder="••••••••">
+                </div>
+                <button class="btn-add" onclick="crearUsuario()">Agregar</button>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Contraseña (Plana)</th>
+                    <th style="width: 50px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="lista-usuarios">
+                </tbody>
+        </table>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Configuración de Supabase (La misma que en tu index)
+        const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+
+        // 1. Verificación de sesión simple
+        const session = localStorage.getItem('user_session');
+        if (!session) window.location.replace('login.html');
+
+        // 2. Cargar Usuarios
+        async function cargarUsuarios() {
+            const { data, error } = await _client
+                .from('usuarios') // Asegúrate que tu tabla en Supabase se llame 'usuarios'
+                .select('*')
+                .order('usuario', { ascending: true });
+
+            if (error) {
+                console.error(error);
+                return;
+            }
+
+            const tbody = document.getElementById('lista-usuarios');
+            tbody.innerHTML = '';
+
+            data.forEach(u => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge">@</span> <b>${u.usuario}</b></td>
+                        <td><code>${u.clave}</code></td>
+                        <td>
+                            <button class="btn-del" onclick="eliminarUsuario('${u.id}')">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // 3. Crear Usuario
+        async function crearUsuario() {
+            const user = document.getElementById('new-user').value.trim();
+            const pass = document.getElementById('new-pass').value.trim();
+
+            if (!user || !pass) {
+                alert("Por favor completa ambos campos");
+                return;
+            }
+
+            const { error } = await _client
+                .from('usuarios')
+                .insert([{ usuario: user, clave: pass }]);
+
+            if (error) {
+                alert("Error: " + error.message);
+            } else {
+                document.getElementById('new-user').value = '';
+                document.getElementById('new-pass').value = '';
+                cargarUsuarios();
+            }
+        }
+
+        // 4. Eliminar Usuario
+        async function eliminarUsuario(id) {
+            if (!confirm("¿Seguro que quieres eliminar este acceso?")) return;
+
+            const { error } = await _client
+                .from('usuarios')
+                .delete()
+                .eq('id', id);
+
+            if (error) alert(error.message);
+            else cargarUsuarios();
+        }
+
+        // Inicializar
+        cargarUsuarios();
+    </script>
+</body>
+</html>

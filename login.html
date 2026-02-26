@@ -179,16 +179,15 @@
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        // Verificación inicial de sesión: Redirigir si ya está logueado
+        // Verificación inicial de sesión: Redirigir SIEMPRE al mapa si ya hay sesión
         (function() {
             const session = localStorage.getItem('user_session');
             try {
                 if (session) {
                     const parsed = JSON.parse(session);
                     if (parsed && parsed.usuario) {
-                        // Redirigir según rol si ya hay sesión
-                        const destino = parsed.rol === 'admin' ? 'admin.html' : 'index.html';
-                        window.location.replace(destino);
+                        // Cambiado: Ahora siempre va a index.html
+                        window.location.replace('index.html');
                     }
                 }
             } catch (e) {
@@ -212,7 +211,6 @@
             errorDiv.innerText = "";
 
             try {
-                // Buscamos al usuario con las credenciales exactas
                 const { data, error } = await _client
                     .from('usuarios') 
                     .select('*')
@@ -225,14 +223,12 @@
                     btn.disabled = false;
                     btn.innerHTML = 'Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>';
                 } else {
-                    // 1. Actualizar estado en Supabase
                     const now = new Date().toISOString();
                     await _client
                         .from('usuarios')
                         .update({ is_online: true, last_login: now })
                         .eq('id', data.id);
 
-                    // 2. Guardar sesión localmente
                     const sessionData = { 
                         id: data.id,
                         usuario: data.usuario, 
@@ -242,10 +238,8 @@
                     };
                     localStorage.setItem('user_session', JSON.stringify(sessionData));
                     
-                    // 3. Redirección inteligente por ROL
-                    // Si es admin va a admin.html, si no a index.html (mapa)
-                    const targetPage = (data.rol === 'admin') ? 'admin.html' : 'index.html';
-                    window.location.replace(targetPage);
+                    // Cambiado: Redirección directa al mapa sin importar el rol
+                    window.location.replace('index.html');
                 }
             } catch (err) {
                 errorDiv.innerText = "📡 Error de conexión con el servidor";
@@ -254,7 +248,6 @@
             }
         }
 
-        // Permitir login con la tecla Enter
         document.querySelectorAll('input').forEach(input => {
             input.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') intentarLogin();

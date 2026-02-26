@@ -16,51 +16,53 @@
 
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-dark); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar compacto */
+        /* Sidebar con Formulario */
         .sidebar { width: 240px; background: #020617; border-right: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; }
-        .logo-area { font-size: 18px; font-weight: 800; color: var(--accent); margin-bottom: 30px; }
+        .logo-area { font-size: 18px; font-weight: 800; color: var(--accent); margin-bottom: 25px; }
         .nav-link { text-decoration: none; color: var(--text-dim); padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; font-size: 14px; transition: 0.3s; margin-bottom: 5px; }
         .nav-link.active { background: var(--accent); color: white; }
 
+        .sidebar-divider { border-top: 1px solid #1e293b; margin: 20px 0; padding-top: 20px; }
+        .sidebar-form h4 { font-size: 12px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 15px; letter-spacing: 1px; }
+
         .main-content { flex: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
         
-        /* Stats compactos */
+        /* Stats */
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .stat-box { background: var(--card-dark); padding: 15px 20px; border-radius: 16px; border: 1px solid #334155; position: relative; }
         .stat-val { font-size: 24px; font-weight: 700; display: block; }
-        .stat-label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; }
 
-        /* Grid Principal */
-        .work-grid { display: grid; grid-template-columns: 1fr 320px; gap: 20px; flex: 1; min-height: 0; }
+        /* Grid Principal: 2 columnas iguales ahora */
+        .work-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; flex: 1; min-height: 0; }
         .glass-card { background: var(--card-dark); border-radius: 20px; border: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* Tabla Ajustada */
+        /* Tabla */
         .table-container { overflow-y: auto; flex: 1; }
         .table-wrap { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .table-wrap th { text-align: left; padding: 10px; color: var(--text-dim); font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #334155; }
+        .table-wrap th { text-align: left; padding: 10px; color: var(--text-dim); font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #334155; position: sticky; top: 0; background: var(--card-dark); }
         .table-wrap td { padding: 12px 10px; border-bottom: 1px solid #334155; }
         
-        .user-clickable { color: var(--accent); cursor: pointer; font-weight: 700; transition: 0.2s; }
-        .user-clickable:hover { text-decoration: underline; filter: brightness(1.3); }
+        .user-clickable { color: var(--accent); cursor: pointer; font-weight: 700; }
+        .user-clickable:hover { text-decoration: underline; }
 
-        /* Inputs de edición rápidos */
-        .edit-input { background: #0f172a; border: 1px solid #334155; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; width: 90px; }
+        .edit-input { background: #0f172a; border: 1px solid #334155; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; width: 85px; }
         .edit-select { background: #0f172a; border: 1px solid #334155; color: white; padding: 3px; border-radius: 6px; font-size: 11px; }
 
-        /* Auditoría compacta */
+        /* Auditoría */
         #log-list { overflow-y: auto; flex: 1; }
-        .log-v-item { border-left: 2px solid var(--accent); padding: 0 0 12px 15px; margin-left: 5px; position: relative; }
+        .log-v-item { border-left: 2px solid var(--accent); padding: 0 0 15px 15px; margin-left: 5px; position: relative; }
         .log-v-item::before { content: ''; position: absolute; left: -5px; top: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-        .log-v-user { font-weight: 700; font-size: 12px; }
-        .log-v-time { font-size: 9px; color: var(--text-dim); }
 
-        /* Modal / Detail Panel lateral */
+        /* Panel Lateral Detalle */
         .detail-panel { position: fixed; right: -400px; top: 0; width: 380px; height: 100vh; background: #020617; border-left: 1px solid #334155; z-index: 1000; transition: 0.4s; padding: 30px; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
         .detail-panel.active { right: 0; }
         .close-btn { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 20px; color: var(--text-dim); }
 
-        .form-dark input, .form-dark select { background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 10px; width: 100%; margin-bottom: 10px; font-size: 13px; }
-        .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer; font-size: 13px; }
+        /* Formulario Estilo Sidebar */
+        .form-dark input, .form-dark select { background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 10px; width: 100%; margin-bottom: 10px; font-size: 12px; box-sizing: border-box; }
+        .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer; font-size: 12px; transition: 0.3s; }
+        .btn-primary:hover { filter: brightness(1.2); }
         
         .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }
         .online { background: var(--success); box-shadow: 0 0 5px var(--success); }
@@ -76,6 +78,20 @@
             <a href="#" class="nav-link active"><i class="fa-solid fa-users-gear"></i> Usuarios</a>
             <a href="javascript:location.reload()" class="nav-link"><i class="fa-solid fa-rotate"></i> Refresh</a>
         </nav>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-form">
+            <h4>Nuevo Acceso</h4>
+            <div class="form-dark">
+                <input type="text" id="new-user" placeholder="Nombre usuario">
+                <input type="text" id="new-pass" placeholder="Contraseña">
+                <select id="new-rol">
+                    <option value="user">Operador</option>
+                    <option value="admin">Administrador</option>
+                </select>
+                <button class="btn-primary" onclick="crearUsuario()"><i class="fa-solid fa-user-plus"></i> VINCULAR</button>
+            </div>
+        </div>
     </aside>
 
     <main class="main-content">
@@ -87,12 +103,12 @@
 
         <div class="work-grid">
             <div class="glass-card">
-                <h3 class="card-title" style="font-size:16px; margin-bottom:15px">Gestión de Accesos</h3>
+                <h3 style="font-size:16px; margin:0 0 15px 0">Gestión de Accesos</h3>
                 <div class="table-container">
                     <table class="table-wrap">
                         <thead>
                             <tr>
-                                <th>Usuario (ver cargas)</th>
+                                <th>Usuario</th>
                                 <th>Conexión</th>
                                 <th>Rol</th>
                                 <th>Clave</th>
@@ -104,31 +120,16 @@
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 20px; overflow: hidden;">
-                <div class="glass-card" style="flex-shrink:0">
-                    <h4 style="margin:0 0 15px 0; font-size:14px">Nuevo Usuario</h4>
-                    <div class="form-dark">
-                        <input type="text" id="new-user" placeholder="Usuario">
-                        <input type="text" id="new-pass" placeholder="Contraseña">
-                        <select id="new-rol">
-                            <option value="user">Operador</option>
-                            <option value="admin">Administrador</option>
-                        </select>
-                        <button class="btn-primary" onclick="crearUsuario()">VINCULAR</button>
-                    </div>
-                </div>
-
-                <div class="glass-card" style="flex:1">
-                    <h4 style="margin:0 0 15px 0; font-size:14px">Auditoría Reciente</h4>
-                    <div id="log-list"></div>
-                </div>
+            <div class="glass-card">
+                <h3 style="font-size:16px; margin:0 0 15px 0">Auditoría Reciente</h3>
+                <div id="log-list"></div>
             </div>
         </div>
     </main>
 
     <div id="detail-panel" class="detail-panel">
         <i class="fa-solid fa-xmark close-btn" onclick="toggleDetail()"></i>
-        <h3 id="detail-user-name" style="color:var(--accent); margin-bottom:5px;">-</h3>
+        <h3 id="detail-user-name" style="color:var(--accent); margin:0 0 5px 0;">-</h3>
         <p style="font-size:12px; color:var(--text-dim); margin-bottom:20px;">Cámaras registradas por este usuario</p>
         <div id="detail-content" style="display: flex; flex-direction: column; gap: 10px;"></div>
     </div>
@@ -136,18 +137,17 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
-        const session = JSON.parse(localStorage.getItem('user_session'));
 
         async function cargarData() {
-            // Stats compactos
             const { count: cC } = await _client.from('cameras').select('*', { count: 'exact', head: true });
             const { count: uC } = await _client.from('usuarios').select('*', { count: 'exact', head: true });
             const { count: lC } = await _client.from('logs_actividad').select('*', { count: 'exact', head: true });
+            
             document.getElementById('stat-cameras').innerText = cC || 0;
             document.getElementById('stat-users').innerText = uC || 0;
             document.getElementById('stat-logs').innerText = lC || 0;
 
-            // Lista de Usuarios
+            // Usuarios
             const { data: users } = await _client.from('usuarios').select('*').order('usuario');
             const tbody = document.getElementById('lista-usuarios');
             tbody.innerHTML = '';
@@ -161,7 +161,7 @@
                         <td class="user-clickable" onclick="verCargasUsuario('${u.usuario}')">${u.usuario}</td>
                         <td>
                             <span class="status-dot ${statusClass}"></span>
-                            <span style="font-size:10px; color:var(--text-dim)">Hoy ${fecha}</span>
+                            <span style="font-size:10px; color:var(--text-dim)">${fecha}</span>
                         </td>
                         <td>
                             <select class="edit-select" onchange="updateUser('${u.id}', 'rol', this.value)">
@@ -170,20 +170,20 @@
                             </select>
                         </td>
                         <td><input type="text" class="edit-input" value="${u.clave}" onchange="updateUser('${u.id}', 'clave', this.value)"></td>
-                        <td><i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer; font-size:12px" onclick="eliminarUsuario('${u.id}', '${u.usuario}')"></i></td>
+                        <td><i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer; font-size:11px" onclick="eliminarUsuario('${u.id}', '${u.usuario}')"></i></td>
                     </tr>`;
             });
 
-            // Auditoría
-            const { data: logs } = await _client.from('logs_actividad').select('*').order('fecha', {ascending: false}).limit(10);
+            // Logs
+            const { data: logs } = await _client.from('logs_actividad').select('*').order('fecha', {ascending: false}).limit(12);
             const lContainer = document.getElementById('log-list');
             lContainer.innerHTML = '';
             logs?.forEach(l => {
                 lContainer.innerHTML += `
                     <div class="log-v-item">
-                        <div class="log-v-user">${l.usuario} <span style="color:var(--accent); font-size:10px">${l.accion}</span></div>
+                        <div style="font-size:12px"><b>${l.usuario}</b> <span style="color:var(--accent); font-size:10px; font-weight:700">${l.accion}</span></div>
                         <div style="font-size:10px; color:var(--text-dim)">${l.detalle}</div>
-                        <span class="log-v-time">${new Date(l.fecha).toLocaleTimeString()}</span>
+                        <span style="font-size:9px; color:var(--text-dim)">${new Date(l.fecha).toLocaleTimeString()}</span>
                     </div>`;
             });
         }
@@ -199,15 +199,14 @@
             container.innerHTML = '<p style="font-size:12px;">Cargando...</p>';
             toggleDetail(true);
 
-            // Buscamos cámaras asociadas al nombre de usuario
             const { data: cams } = await _client.from('cameras').select('*').eq('usuario', userName);
             
             if(!cams || cams.length === 0) {
-                container.innerHTML = '<p style="font-size:12px; color:var(--text-dim);">No hay cámaras registradas por este usuario.</p>';
+                container.innerHTML = '<p style="font-size:12px; color:var(--text-dim);">Sin cámaras registradas.</p>';
             } else {
                 container.innerHTML = cams.map(c => `
                     <div style="background:#1a2233; padding:12px; border-radius:10px; border:1px solid #334155;">
-                        <div style="font-weight:700; font-size:13px; color:var(--accent);">${c.nombre || 'Cámara sin nombre'}</div>
+                        <div style="font-weight:700; font-size:13px; color:var(--accent);">${c.nombre || 'Cámara'}</div>
                         <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
                             <i class="fa-solid fa-location-dot"></i> ${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}
                         </div>
@@ -224,8 +223,10 @@
             const u = document.getElementById('new-user').value;
             const p = document.getElementById('new-pass').value;
             const r = document.getElementById('new-rol').value;
-            if(!u || !p) return alert("Faltan datos");
+            if(!u || !p) return alert("Completa los campos");
             await _client.from('usuarios').insert([{ usuario: u, clave: p, rol: r, is_online: false }]);
+            document.getElementById('new-user').value = '';
+            document.getElementById('new-pass').value = '';
             cargarData();
         }
 

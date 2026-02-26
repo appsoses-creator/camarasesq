@@ -130,7 +130,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Configuración de Cliente
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
         async function cargarData() {
@@ -187,7 +186,6 @@
             await _client.from('usuarios').update(upd).eq('id', id);
         }
 
-        // --- VER CARGAS VINCULADAS ---
         async function verCargasUsuario(userName) {
             const cleanName = userName.trim();
             document.getElementById('detail-user-name').innerText = cleanName;
@@ -195,7 +193,6 @@
             container.innerHTML = '<p style="font-size:12px; color:var(--accent);">Buscando registros...</p>';
             toggleDetail(true);
 
-            // Buscamos en la columna 'usuario' que habilitamos en Supabase
             const { data: cams, error } = await _client
                 .from('cameras')
                 .select('*')
@@ -207,11 +204,7 @@
             }
 
             if(!cams || cams.length === 0) {
-                container.innerHTML = `
-                    <p style="font-size:12px; color:var(--text-dim);">No hay cámaras para "${cleanName}".</p>
-                    <hr style="border:0; border-top:1px solid #334155; margin:10px 0">
-                    <p style="font-size:10px; color:orange;">Recuerda ejecutar el comando UPDATE en el SQL Editor para asignar las cámaras antiguas a este usuario.</p>
-                `;
+                container.innerHTML = `<p style="font-size:12px; color:var(--text-dim);">No hay cámaras para "${cleanName}".</p>`;
             } else {
                 container.innerHTML = cams.map(c => `
                     <div style="background:#1a2233; padding:12px; border-radius:10px; border:1px solid #334155;">
@@ -247,7 +240,6 @@
             }
         }
 
-        // Inicio
         cargarData();
         setInterval(cargarData, 30000);
     </script>

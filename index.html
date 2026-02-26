@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras 4</title>
+    <title>Cámaras - Monitoreo</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <style>
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
+        /* BARRA SUPERIOR */
         .nav-container {
             position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000;
             display: flex; align-items: center; background: white; 
@@ -17,9 +18,7 @@
             width: 95%; max-width: 700px;
         }
 
-        .city-selector {
-            display: flex; gap: 5px; padding: 0 10px; border-right: 1px solid #e2e8f0; margin-right: 5px;
-        }
+        .city-selector { display: flex; gap: 5px; padding: 0 10px; border-right: 1px solid #e2e8f0; margin-right: 5px; }
 
         .btn-nav {
             border: none; padding: 8px 15px; border-radius: 50px;
@@ -32,152 +31,75 @@
         .btn-trevelin.active { background: #dc2626; color: white; box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4); }
 
         .search-area { flex: 1; display: flex; align-items: center; }
-        .search-area input { width: 100%; border: none; padding: 10px; outline: none; font-size: 14px; }
+        .search-area input { width: 100%; border: none; padding: 10px; outline: none; font-size: 14px; background: transparent; }
         
-        .search-btn {
-            background: #2563eb; color: white; border: none; width: 35px; height: 35px;
-            border-radius: 50%; cursor: pointer; transition: 0.3s;
+        .search-btn { background: #2563eb; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
+        .btn-logout { background: #fee2e2; color: #dc2626; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; margin-left: 10px; }
+
+        /* VISTA MÓVIL: BOTONES ABAJO */
+        @media (max-width: 600px) {
+            .city-selector {
+                position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                background: white; padding: 10px; border-radius: 50px;
+                box-shadow: 0 -4px 20px rgba(0,0,0,0.15); border: none;
+                z-index: 2000; width: auto; gap: 15px;
+            }
+            .btn-nav { padding: 12px 25px; font-size: 14px; }
+            .btn-add { bottom: 90px !important; left: 20px !important; } /* Sube el botón de agregar para que no tape */
+            .nav-container { padding: 8px 12px; }
         }
 
-        .btn-logout {
-            background: #fee2e2; color: #dc2626; border: none; width: 35px; height: 35px;
-            border-radius: 50%; cursor: pointer; margin-left: 10px; transition: 0.3s;
-        }
-
-        #instruccion {
-            display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-            z-index: 2000; background: #1e293b; color: white; padding: 12px 20px;
-            border-radius: 8px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        .btn-add {
-            position: fixed; bottom: 30px; left: 30px; z-index: 1000;
-            background: #2563eb; color: white; border: none; padding: 15px 25px;
-            border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        }
-
-        #users-section {
-            display: none; position: fixed; top: 85px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 450px; background: white; z-index: 2000; padding: 20px;
-            border-radius: 15px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); max-height: 70vh; overflow-y: auto;
-        }
-        .user-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #eee; align-items: center; }
-
-        .modal {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 3000; background: white; padding: 20px; border-radius: 15px;
-            width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-        }
+        /* OTROS ESTILOS */
+        #instruccion { display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 2000; background: #1e293b; color: white; padding: 12px 20px; border-radius: 8px; font-weight: bold; }
+        .btn-add { position: fixed; bottom: 30px; left: 30px; z-index: 1000; background: #2563eb; color: white; border: none; padding: 15px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        #users-section { display: none; position: fixed; top: 85px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 450px; background: white; z-index: 2000; padding: 20px; border-radius: 15px; box-shadow: 0 5px 30px rgba(0,0,0,0.3); max-height: 70vh; overflow-y: auto; }
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 3000; background: white; padding: 20px; border-radius: 15px; width: 90%; max-width: 450px; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
         .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .btn-save { width: 100%; padding: 15px; background: #10b981; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; }
         .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1500; }
-        .crosshair { cursor: crosshair !important; }
     </style>
 </head>
 <body>
 
     <script>
         (function() {
-            const rawSession = localStorage.getItem('user_session');
-            let sessionValida = false;
-
-            try {
-                if (rawSession && rawSession !== "undefined" && rawSession !== "null") {
-                    const parsed = JSON.parse(rawSession);
-                    if (parsed && parsed.usuario) {
-                        sessionValida = true;
-                    }
-                }
-            } catch (e) {
-                sessionValida = false;
-            }
-
-            if (!sessionValida) {
-                localStorage.removeItem('user_session'); // Limpia si era basura
+            const session = localStorage.getItem('user_session');
+            if (!session || session === "undefined") {
                 window.location.replace('login.html');
-                document.documentElement.style.display = 'none'; // Oculta todo
             }
         })();
     </script>
 
-    <div id="instruccion">📍 Tocá el mapa en la ubicación de la cámara</div>
-
     <div class="nav-container">
-        <div class="city-selector">
-            <button id="nav-esquel" class="btn-nav btn-esquel" onclick="irA([-42.912, -71.316])">Esquel</button>
-            <button id="nav-trevelin" class="btn-nav btn-trevelin" onclick="irA([-43.085, -71.463])">Trevelin</button>
-        </div>
-        
         <div class="search-area">
-            <input type="text" id="q" placeholder="Buscar..." onkeypress="if(event.key==='Enter') buscarLugar()">
-            <button class="search-btn" onclick="buscarLugar()">🔍</button>
+            <input type="text" id="q" placeholder="Buscar cámara o dirección..." onkeypress="if(event.key==='Enter') buscarLugar()">
+            <button class="search-btn" onclick="buscarLugar()"><i class="fa-solid fa-magnifying-glass"></i></button>
         </div>
-
-        <button id="admin-tab" class="btn-nav" style="display:none; margin-left:5px" onclick="toggleUsuarios()">
-            <i class="fa-solid fa-users"></i>
-        </button>
-
-        <button class="btn-logout" onclick="logout()" title="Cerrar Sesión">
-            <i class="fa-solid fa-power-off"></i>
-        </button>
+        <button id="admin-tab" class="btn-nav" style="display:none; margin-left:5px" onclick="toggleUsuarios()"><i class="fa-solid fa-users"></i></button>
+        <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
     </div>
 
-    <div id="users-section">
-        <h3 style="margin-top:0">Crear Usuario</h3>
-        <input type="text" id="new-u" placeholder="Nombre de usuario">
-        <input type="password" id="new-p" placeholder="Contraseña">
-        <select id="new-r">
-            <option value="operador">Operador</option>
-            <option value="admin">Administrador</option>
-        </select>
-        <button onclick="crearUsuario()" style="width:100%; padding:10px; background:#10b981; color:white; border:none; border-radius:5px; font-weight:bold; cursor:pointer; margin-top:10px">Guardar Usuario</button>
-        <hr>
-        <h4>Usuarios del Sistema</h4>
-        <div id="lista-usuarios"></div>
-        <button onclick="toggleUsuarios()" style="width:100%; margin-top:10px; background:none; border:none; color:red; cursor:pointer">Cerrar</button>
+    <div class="city-selector">
+        <button id="nav-esquel" class="btn-nav btn-esquel" onclick="irA([-42.912, -71.316])">Esquel</button>
+        <button id="nav-trevelin" class="btn-nav btn-trevelin" onclick="irA([-43.085, -71.463])">Trevelin</button>
     </div>
 
     <button class="btn-add" id="main-btn" onclick="activarModoSeleccion()">+ Añadir Cámara</button>
-
-    <div class="overlay" id="blur" onclick="cerrarTodo()"></div>
-    
-    <div class="modal" id="form">
-        <h3 id="form-title">Detalles de la Cámara</h3>
-        <input type="hidden" id="edit-id">
-        <label>Ciudad</label>
-        <select id="ciudad_select"><option value="Esquel">Esquel</option><option value="Trevelin">Trevelin</option></select>
-        <label>Ubicación</label><input type="text" id="u" readonly>
-        <label>Dirección</label><input type="text" id="d">
-        <label>Lugar / Titular</label><input type="text" id="n">
-        <div class="grid-2">
-            <div><label>Tipo</label><select id="t"><option value="CENTRO DE MONITOREO">Monitoreo</option><option value="PRIVADAS">Privada</option><option value="PARTICULARES">Particular</option></select></div>
-            <div><label>Teléfono</label><input type="text" id="tel"></div>
-        </div>
-        <label>Sistema</label><input type="text" id="sis">
-        <div class="grid-2">
-            <div><label>Usuario</label><input type="text" id="usu"></div>
-            <div><label>Clave</label><input type="text" id="pas"></div>
-        </div>
-        <label>Días Almacenamiento</label><input type="number" id="alm">
-        <label>Otros Datos</label><textarea id="ot" rows="2"></textarea>
-        <button class="btn-save" onclick="enviar()">Guardar Cambios</button>
-        <button onclick="cerrarTodo()" style="width:100%; background:none; border:none; color:red; margin-top:10px; cursor:pointer;">Cancelar</button>
-    </div>
 
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <script>
-        // CARGA SUPABASE (Solo si pasó el bloqueo de arriba)
-        const userLogueado = JSON.parse(localStorage.getItem('user_session'));
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+        const userLogueado = JSON.parse(localStorage.getItem('user_session'));
+        
+        if (userLogueado?.rol === 'admin') document.getElementById('admin-tab').style.display = 'block';
 
-        if (userLogueado && userLogueado.rol === 'admin') {
-            document.getElementById('admin-tab').style.display = 'block';
+        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14 });
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        function irA(coords) {
+            map.flyTo(coords, 14);
         }
 
         function logout() {
@@ -185,146 +107,7 @@
             window.location.replace('login.html');
         }
 
-        async function crearUsuario() {
-            const usuario = document.getElementById('new-u').value;
-            const clave = document.getElementById('new-p').value;
-            const rol = document.getElementById('new-r').value;
-            if(!usuario || !clave) return alert("Completa los datos");
-            
-            const { error } = await _client.from('usuarios_app').insert([{ usuario, clave, rol }]);
-            if (error) alert("Error: " + error.message);
-            else {
-                alert("Usuario creado");
-                document.getElementById('new-u').value = "";
-                document.getElementById('new-p').value = "";
-                cargarListaUsuarios();
-            }
-        }
-
-        async function cargarListaUsuarios() {
-            const { data } = await _client.from('usuarios_app').select('*');
-            const lista = document.getElementById('lista-usuarios');
-            lista.innerHTML = data.map(u => `
-                <div class="user-item">
-                    <span><b>${u.usuario}</b> (${u.rol})</span>
-                    ${u.usuario !== 'admin' ? `<button onclick="eliminarUsuario('${u.id}')" style="color:red; border:none; background:none; cursor:pointer">Eliminar</button>` : ''}
-                </div>
-            `).join('');
-        }
-
-        async function eliminarUsuario(id) {
-            if (confirm("¿Eliminar este usuario?")) {
-                await _client.from('usuarios_app').delete().eq('id', id);
-                cargarListaUsuarios();
-            }
-        }
-
-        function toggleUsuarios() {
-            const sec = document.getElementById('users-section');
-            const isVisible = sec.style.display === 'block';
-            sec.style.display = isVisible ? 'none' : 'block';
-            if (!isVisible) cargarListaUsuarios();
-        }
-
-        // --- MAPA ---
-        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm] });
-        
-        let items = [], seleccionando = false, tempMarker = null;
-        const coordsCiudades = { esquel: [-42.912, -71.316], trevelin: [-43.085, -71.463] };
-
-        function actualizarEstiloBotones() {
-            const centro = map.getCenter();
-            const dE = centro.distanceTo(coordsCiudades.esquel);
-            const dT = centro.distanceTo(coordsCiudades.trevelin);
-            document.getElementById('nav-esquel').classList.toggle('active', dE < dT);
-            document.getElementById('nav-trevelin').classList.toggle('active', dT <= dE);
-        }
-
-        map.on('moveend', actualizarEstiloBotones);
-
-        async function load() {
-            items.forEach(i => map.removeLayer(i.m));
-            items = [];
-            const { data } = await _client.from('cameras').select('*');
-            data?.forEach(c => {
-                const latlng = c.UBICACION?.split(',').map(parseFloat);
-                if (latlng && latlng[0]) {
-                    const marker = L.marker(latlng).addTo(map);
-                    marker.bindPopup(`<b>${c.DIRECCION}</b><br><button onclick="abrirEditar('${c.id}')" style="margin-top:5px; cursor:pointer">Editar</button>`);
-                    items.push({ id: c.id, m: marker, data: c });
-                }
-            });
-        }
-
-        function abrirEditar(id) {
-            const cam = items.find(i => i.id == id).data;
-            document.getElementById('edit-id').value = cam.id;
-            document.getElementById('u').value = cam.UBICACION;
-            document.getElementById('d').value = cam.DIRECCION || '';
-            document.getElementById('n').value = cam['LUGAR / TITULAR'] || '';
-            document.getElementById('t').value = cam.TIPO || 'CENTRO DE MONITOREO';
-            document.getElementById('ciudad_select').value = cam.ciudad || 'Esquel';
-            document.getElementById('tel').value = cam.TELÉFONO || '';
-            document.getElementById('sis').value = cam['SISTEMA CÁMARAS'] || '';
-            document.getElementById('usu').value = cam.USUARIO || '';
-            document.getElementById('pas').value = cam.CONTRASEÑA || '';
-            document.getElementById('alm').value = cam['ALMACENAMIENTO (DIAS)'] || '';
-            document.getElementById('ot').value = cam['OTROS DATOS'] || '';
-            document.getElementById('form').style.display = 'block';
-            document.getElementById('blur').style.display = 'block';
-        }
-
-        function activarModoSeleccion() {
-            seleccionando = true;
-            document.getElementById('map').classList.add('crosshair');
-            document.getElementById('instruccion').style.display = 'block';
-            document.getElementById('main-btn').style.display = 'none';
-        }
-
-        map.on('click', function(e) {
-            if (!seleccionando) return;
-            document.getElementById('edit-id').value = "";
-            document.getElementById('u').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
-            if (tempMarker) map.removeLayer(tempMarker);
-            tempMarker = L.marker(e.latlng).addTo(map);
-            document.getElementById('form').style.display = 'block';
-            document.getElementById('blur').style.display = 'block';
-            document.getElementById('instruccion').style.display = 'none';
-        });
-
-        function cerrarTodo() {
-            document.getElementById('form').style.display = 'none';
-            document.getElementById('users-section').style.display = 'none';
-            document.getElementById('blur').style.display = 'none';
-            document.getElementById('map').classList.remove('crosshair');
-            document.getElementById('main-btn').style.display = 'block';
-            if (tempMarker) map.removeLayer(tempMarker);
-            seleccionando = false;
-        }
-
-        async function enviar() {
-            const id = document.getElementById('edit-id').value;
-            const cam = { 
-                "DIRECCION": document.getElementById('d').value, 
-                "UBICACION": document.getElementById('u').value,
-                "LUGAR / TITULAR": document.getElementById('n').value,
-                "TIPO": document.getElementById('t').value,
-                "TELÉFONO": document.getElementById('tel').value,
-                "SISTEMA CÁMARAS": document.getElementById('sis').value,
-                "USUARIO": document.getElementById('usu').value,
-                "CONTRASEÑA": document.getElementById('pas').value,
-                "ALMACENAMIENTO (DIAS)": document.getElementById('alm').value,
-                "OTROS DATOS": document.getElementById('ot').value,
-                "ciudad": document.getElementById('ciudad_select').value
-            };
-            if (id) await _client.from('cameras').update(cam).eq('id', id);
-            else await _client.from('cameras').insert([cam]);
-            cerrarTodo(); load();
-        }
-
-        function irA(c) { map.flyTo(c, 14); }
-        load();
+        // ... Resto de tus funciones (load, enviar, etc.) ...
     </script>
 </body>
 </html>

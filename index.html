@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CÁMARAS 5</title>
+    <title>CÁMARAS7</title>
     
     <script>
         (function() {
@@ -223,15 +223,11 @@
             const n1 = document.getElementById('pass-nueva').value.trim();
             const n2 = document.getElementById('pass-confirma').value.trim();
             const user = verificarPrivilegios();
-
             if (!n1 || n1.length < 4) return alert("La clave debe tener al menos 4 caracteres.");
             if (n1 !== n2) return alert("Las contraseñas no coinciden.");
-
             const btn = document.getElementById('btn-confirmar-clave');
             btn.disabled = true; btn.innerText = "Actualizando...";
-
             const { error } = await _client.from('usuarios').update({ clave: n1 }).eq('usuario', user.usuario);
-
             if (error) {
                 alert("Error: " + error.message);
             } else {
@@ -266,6 +262,13 @@
                             <i class="fa-solid fa-trash"></i> Borrar
                         </button>` : '';
 
+                    // Extraer usuario DVR para mostrar en popup si existe en otros_datos
+                    let dvrUserDisplay = '-';
+                    if (c.otros_datos && c.otros_datos.includes('User DVR:')) {
+                        const partes = c.otros_datos.split('|');
+                        dvrUserDisplay = partes[0].replace('User DVR: ', '').trim();
+                    }
+
                     const popupContent = `
                         <div class="pop-card">
                             <div class="pop-header">
@@ -273,18 +276,19 @@
                                 <span class="pop-subtitle">${c['LUGAR / TITULAR'] || '-'}</span>
                             </div>
                             <div class="pop-body">
-                                <div class="pop-section-title">Información de Acceso</div>
+                                <div class="pop-section-title">Información Técnica</div>
                                 <div class="pop-info"><i class="fa-solid fa-desktop"></i> <b>Sistema:</b> ${c.sistema || '-'}</div>
-                                <div class="pop-info"><i class="fa-solid fa-user"></i> <b>Cargado por:</b> ${c.usuario || '-'}</div>
+                                <div class="pop-info"><i class="fa-solid fa-id-badge"></i> <b>Usuario DVR:</b> ${dvrUserDisplay}</div>
                                 <div class="pop-info"><i class="fa-solid fa-lock"></i> <b>Clave DVR:</b> ${c.clave || '-'}</div>
                                 
-                                <div class="pop-section-title" style="margin-top:5px">Contacto y Almacenamiento</div>
+                                <div class="pop-section-title" style="margin-top:5px">Registro</div>
+                                <div class="pop-info"><i class="fa-solid fa-user-pen"></i> <b>Operador:</b> ${c.usuario || '-'}</div>
                                 <div class="pop-info"><i class="fa-solid fa-phone"></i> ${c.telefono || '-'}</div>
                                 <div class="pop-info"><i class="fa-solid fa-hdd"></i> Almacenamiento: ${c.dias_almacenamiento || '7'} días</div>
                                 
                                 ${c.otros_datos ? `
                                 <div class="pop-section-title" style="margin-top:5px">Observaciones</div>
-                                <div class="pop-info" style="font-style:italic; font-size:11px">${c.otros_datos}</div>
+                                <div class="pop-info" style="font-style:italic; font-size:11px">${c.otros_datos.split('|').slice(1).join('|') || 'Sin notas'}</div>
                                 ` : ''}
                             </div>
                             <div class="pop-footer">
@@ -327,9 +331,9 @@
             const id = document.getElementById('edit-id').value;
             const btnSave = document.getElementById('btn-submit-camera');
             const userSession = JSON.parse(localStorage.getItem('user_session'));
-            const nombreUsuarioSession = userSession ? userSession.usuario : 'Desconocido';
+            const nombreOperador = userSession ? userSession.usuario : 'Desconocido';
 
-            // Mapeo exacto a las columnas de Supabase
+            // El nombre del operador va a "usuario", el usuario del DVR va a "otros_datos"
             const cam = { 
                 "DIRECCION": document.getElementById('d').value, 
                 "UBICACION": document.getElementById('u').value,
@@ -338,7 +342,7 @@
                 "ciudad": document.getElementById('ciudad_select').value,
                 "telefono": document.getElementById('tel').value,
                 "sistema": document.getElementById('sis').value,
-                "usuario": nombreUsuarioSession, // Usamos el usuario de sesión para el Panel
+                "usuario": nombreOperador, // PARA EL PANEL DE ADMIN
                 "clave": document.getElementById('pas').value,
                 "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 7,
                 "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
@@ -347,15 +351,13 @@
             try {
                 btnSave.disabled = true; btnSave.innerText = "Guardando...";
                 let result;
-                
                 if (id) {
                     result = await _client.from('cameras').update(cam).eq('id', id);
-                    if (!result.error) await registrarLog(nombreUsuarioSession, 'EDITO CAMARA', `Modificó cámara en ${cam.DIRECCION}`);
+                    if (!result.error) await registrarLog(nombreOperador, 'EDITO CAMARA', `Modificó cámara en ${cam.DIRECCION}`);
                 } else {
                     result = await _client.from('cameras').insert([cam]);
-                    if (!result.error) await registrarLog(nombreUsuarioSession, 'CREO CAMARA', `Nueva cámara en ${cam.DIRECCION}`);
+                    if (!result.error) await registrarLog(nombreOperador, 'CREO CAMARA', `Nueva cámara en ${cam.DIRECCION}`);
                 }
-                
                 if (result.error) throw result.error;
                 alert("✅ Registro guardado correctamente");
                 cerrarTodo(); 
@@ -372,7 +374,6 @@
                 const userSession = JSON.parse(localStorage.getItem('user_session'));
                 const item = items.find(i => i.id == id);
                 const direccion = item ? item.data.DIRECCION : id;
-
                 const { error } = await _client.from('cameras').delete().eq('id', id); 
                 if (error) {
                     alert("Error al borrar: " + error.message);
@@ -394,17 +395,19 @@
             document.getElementById('tel').value = item.telefono;
             document.getElementById('sis').value = item.sistema;
             
-            // Intentamos extraer el usuario del DVR de las observaciones si existe el prefijo
-            let dvrUser = item.usuario;
+            // Extraer datos técnicos
+            let dvrUser = "";
+            let observacionesPuras = item.otros_datos || "";
             if (item.otros_datos && item.otros_datos.includes('User DVR:')) {
                 const partes = item.otros_datos.split('|');
                 dvrUser = partes[0].replace('User DVR: ', '').trim();
+                observacionesPuras = partes.slice(1).join('|').trim();
             }
             
             document.getElementById('usu').value = dvrUser;
             document.getElementById('pas').value = item.clave || "";
             document.getElementById('alm').value = item.dias_almacenamiento;
-            document.getElementById('ot').value = item.otros_datos || "";
+            document.getElementById('ot').value = observacionesPuras;
             document.getElementById('form-title').innerText = "Editar Cámara";
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';

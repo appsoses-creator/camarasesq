@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC - Sistema de Monitoreo de Cámaras</title>
+    <title>SMC - Sistema de Monitoreo</title>
     
     <script>
         (function() {
@@ -30,162 +30,167 @@
     <style>
         :root {
             --primary: #2563eb;
-            --accent: #3b82f6;
-            --bg: #f8fafc;
             --dark: #0f172a;
             --danger: #ef4444;
             --glass: rgba(255, 255, 255, 0.9);
-            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
-        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--dark); }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #f1f5f9; overflow: hidden; }
         #map { height: 100vh; width: 100%; z-index: 1; }
 
         /* HEADER PROFESIONAL */
         .top-bar {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; width: 90%; max-width: 900px;
-            display: flex; align-items: center; gap: 15px;
-            background: var(--glass); backdrop-filter: blur(10px);
-            padding: 10px 20px; border-radius: 16px;
-            box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.2);
+            position: fixed; top: 15px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; width: 90%; max-width: 800px;
+            display: flex; align-items: center; gap: 12px;
+            background: var(--glass); backdrop-filter: blur(12px);
+            padding: 8px 15px; border-radius: 16px;
+            box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.3);
         }
 
-        .search-container { flex: 1; display: flex; align-items: center; background: #f1f5f9; border-radius: 10px; padding: 0 15px; border: 1px solid #e2e8f0; }
-        .search-container input { width: 100%; border: none; padding: 12px; outline: none; background: transparent; font-size: 14px; }
-        .search-container i { color: #64748b; }
+        .search-group { 
+            flex: 1; display: flex; align-items: center; 
+            background: rgba(0,0,0,0.04); border-radius: 10px; padding: 0 12px;
+        }
+        .search-group input { 
+            width: 100%; border: none; padding: 10px; outline: none; 
+            background: transparent; font-size: 14px; color: var(--dark);
+        }
 
-        .city-pills { display: flex; gap: 8px; border-left: 2px solid #e2e8f0; padding-left: 15px; }
+        .city-pills { display: flex; gap: 5px; border-left: 1px solid #e2e8f0; padding-left: 10px; }
         .pill { 
-            border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px;
-            cursor: pointer; transition: all 0.2s; background: transparent; color: #64748b;
+            border: none; padding: 8px 15px; border-radius: 8px; font-weight: 600; font-size: 12px;
+            cursor: pointer; transition: 0.2s; background: transparent; color: #64748b;
+            display: flex; align-items: center; gap: 6px;
         }
         .pill.active.esquel { background: var(--primary); color: white; }
         .pill.active.trevelin { background: var(--danger); color: white; }
 
-        .btn-icon { 
+        .btn-logout { 
             background: #fee2e2; color: var(--danger); border: none; 
-            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
-            transition: 0.3s; display: grid; place-items: center;
+            width: 38px; height: 38px; border-radius: 10px; cursor: pointer;
+            transition: 0.2s;
         }
-        .btn-icon:hover { background: var(--danger); color: white; }
+        .btn-logout:hover { background: var(--danger); color: white; }
 
         /* BOTÓN FLOTANTE */
         .btn-add-main {
-            position: fixed; bottom: 30px; right: 30px; z-index: 1000;
+            position: fixed; bottom: 30px; left: 30px; z-index: 1000;
             background: var(--dark); color: white; border: none;
-            padding: 15px 25px; border-radius: 14px; font-weight: 700;
+            padding: 14px 22px; border-radius: 12px; font-weight: 700;
             cursor: pointer; display: flex; align-items: center; gap: 10px;
-            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); transition: 0.3s;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2); transition: 0.3s;
         }
-        .btn-add-main:hover { transform: translateY(-5px); box-shadow: 0 25px 30px -5px rgba(0,0,0,0.4); }
+        .btn-add-main:hover { transform: translateY(-3px); }
 
-        /* MODALES Y FORMULARIOS */
-        .overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); z-index: 1500; }
+        /* ICONOS DE CÁMARA */
+        .div-icon { 
+            display: flex; align-items: center; justify-content: center; 
+            background: white; border-radius: 50%; border: 3px solid; 
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15); 
+        }
+
+        /* MODALES PROFESIONALES */
         .modal {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 2000; background: white; width: 95%; max-width: 500px;
-            border-radius: 24px; padding: 30px; box-shadow: var(--shadow);
+            z-index: 2001; background: white; width: 90%; max-width: 480px;
+            border-radius: 20px; padding: 25px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
             max-height: 90vh; overflow-y: auto;
         }
-        .modal h3 { margin: 0 0 20px 0; font-size: 1.5rem; font-weight: 700; color: var(--dark); }
-
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 700; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 14px; box-sizing: border-box;
-        }
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-
-        .btn-submit { 
-            width: 100%; padding: 15px; background: var(--primary); color: white; 
-            border: none; border-radius: 12px; font-weight: 700; cursor: pointer; margin-top: 10px;
+        .modal h3 { margin: 0 0 20px 0; color: var(--dark); font-weight: 700; }
+        .modal label { display: block; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 10px; }
+        .modal input, .modal select, .modal textarea { 
+            width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #e2e8f0; 
+            border-radius: 8px; font-size: 14px; box-sizing: border-box; font-family: inherit;
         }
 
-        /* POPUP DEL MAPA */
-        .leaflet-popup-content-wrapper { border-radius: 12px; padding: 5px; }
-        .popup-title { font-weight: 700; font-size: 14px; margin-bottom: 8px; display: block; }
-        .popup-actions { display: flex; gap: 8px; border-top: 1px solid #f1f5f9; pt: 8px; }
-        .btn-edit-mini { background: #f59e0b; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
-        .btn-del-mini { background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn-save { width: 100%; padding: 15px; background: #10b981; color: white; border: none; border-radius: 10px; font-weight: 700; margin-top: 20px; cursor: pointer; }
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); z-index: 2000; }
 
         #instruccion { 
-            display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); 
-            z-index: 2000; background: var(--dark); color: white; padding: 12px 25px; 
-            border-radius: 50px; font-weight: 600; box-shadow: var(--shadow);
+            display: none; position: fixed; top: 90px; left: 50%; transform: translateX(-50%); 
+            z-index: 2000; background: var(--dark); color: white; padding: 10px 20px; 
+            border-radius: 50px; font-weight: 600; font-size: 13px;
         }
 
+        .crosshair { cursor: crosshair !important; }
+
         @media (max-width: 600px) {
-            .top-bar { flex-direction: column; padding: 15px; border-radius: 20px; top: 10px; }
-            .city-pills { border-left: none; border-top: 2px solid #f1f5f9; padding: 10px 0 0 0; width: 100%; justify-content: center; }
-            .btn-add-main { left: 20px; right: auto; bottom: 20px; width: 80%; justify-content: center; }
+            .top-bar { top: 10px; width: 95%; flex-wrap: wrap; }
+            .city-pills { border-left: none; border-top: 1px solid #eee; padding: 8px 0 0 0; width: 100%; justify-content: center; }
+            .btn-add-main { bottom: 20px; left: 20px; right: 20px; justify-content: center; }
         }
     </style>
 </head>
 <body>
 
-    <div id="instruccion">📍 Haga clic en la ubicación exacta</div>
+    <div id="instruccion">📍 Tocá el mapa en la ubicación de la cámara</div>
 
     <div class="top-bar">
-        <div class="search-container">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="q" placeholder="Buscar cámara o dirección..." onkeypress="if(event.key==='Enter') buscarLugar()">
-        </div>
-        
-        <div class="city-pills">
-            <button id="nav-esquel" class="pill esquel" onclick="irA([-42.912, -71.316])">Esquel</button>
-            <button id="nav-trevelin" class="pill trevelin" onclick="irA([-43.085, -71.463])">Trevelin</button>
+        <div class="search-group">
+            <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
+            <input type="text" id="q" placeholder="Buscar dirección o titular..." onkeypress="if(event.key==='Enter') buscarLugar()">
         </div>
 
-        <button class="btn-icon" onclick="logout()" title="Salir">
-            <i class="fa-solid fa-right-from-bracket"></i>
+        <div class="city-pills">
+            <button id="nav-esquel" class="pill esquel" onclick="irA([-42.912, -71.316])">
+                <i class="fa-solid fa-mountain-city"></i> Esquel
+            </button>
+            <button id="nav-trevelin" class="pill trevelin" onclick="irA([-43.085, -71.463])">
+                <i class="fa-solid fa-tree"></i> Trevelin
+            </button>
+        </div>
+
+        <button class="btn-logout" onclick="logout()" title="Cerrar Sesión">
+            <i class="fa-solid fa-power-off"></i>
         </button>
     </div>
 
     <button class="btn-add-main" id="main-btn" onclick="activarModoSeleccion()">
-        <i class="fa-solid fa-plus"></i> Registrar Cámara
+        <i class="fa-solid fa-plus"></i> Añadir Cámara
     </button>
 
     <div class="overlay" id="blur" onclick="cerrarTodo()"></div>
     
     <div class="modal" id="form">
-        <h3 id="form-title">Nueva Cámara</h3>
+        <h3 id="form-title">Detalles de la Cámara</h3>
         <input type="hidden" id="edit-id">
         
-        <div class="form-group">
-            <label>Ciudad Jurisdicción</label>
-            <select id="ciudad_select"><option value="Esquel">Esquel</option><option value="Trevelin">Trevelin</option></select>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group"><label>Coordenadas</label><input type="text" id="u" readonly></div>
-            <div class="form-group"><label>Tipo de Red</label>
-                <select id="t">
-                    <option value="CENTRO DE MONITOREO">Monitoreo Público</option>
-                    <option value="PRIVADAS">Privada Comercial</option>
-                    <option value="PARTICULARES">Particular/Residencial</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="form-group"><label>Dirección Física</label><input type="text" id="d" placeholder="Ej: Av. Alvear 1234"></div>
-        <div class="form-group"><label>Titular / Razón Social</label><input type="text" id="n"></div>
+        <label>Ciudad</label>
+        <select id="ciudad_select"><option value="Esquel">Esquel</option><option value="Trevelin">Trevelin</option></select>
         
-        <div class="form-row">
-            <div class="form-group"><label>Teléfono Contacto</label><input type="text" id="tel"></div>
-            <div class="form-group"><label>Software/Sistema</label><input type="text" id="sis" placeholder="Hikvision, Dahua..."></div>
+        <label>Coordenadas (Lectura)</label>
+        <input type="text" id="u" readonly>
+        
+        <label>Dirección Exacta</label>
+        <input type="text" id="d" placeholder="Calle y número">
+        
+        <label>Lugar / Titular</label>
+        <input type="text" id="n" placeholder="Nombre del comercio o dueño">
+        
+        <div class="grid-2">
+            <div><label>Tipo</label><select id="t"><option value="CENTRO DE MONITOREO">Monitoreo</option><option value="PRIVADAS">Privada</option><option value="PARTICULARES">Particular</option></select></div>
+            <div><label>Teléfono</label><input type="text" id="tel"></div>
         </div>
-
-        <div class="form-row">
-            <div class="form-group"><label>Usuario</label><input type="text" id="usu"></div>
-            <div class="form-group"><label>Contraseña</label><input type="password" id="pas"></div>
+        
+        <label>Sistema / Software</label>
+        <input type="text" id="sis" placeholder="Ej: Hikvision, Dahua">
+        
+        <div class="grid-2">
+            <div><label>Usuario</label><input type="text" id="usu"></div>
+            <div><label>Clave</label><input type="text" id="pas"></div>
         </div>
-
-        <div class="form-group"><label>Almacenamiento (Días)</label><input type="number" id="alm" value="7"></div>
-        <div class="form-group"><label>Observaciones Adicionales</label><textarea id="ot" rows="2"></textarea></div>
-
-        <button class="btn-submit" onclick="enviar()">Guardar en Base de Datos</button>
-        <button onclick="cerrarTodo()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer; font-size:12px;">Descartar cambios</button>
+        
+        <label>Días de Almacenamiento</label>
+        <input type="number" id="alm" value="7">
+        
+        <label>Observaciones</label>
+        <textarea id="ot" rows="2"></textarea>
+        
+        <button class="btn-save" onclick="enviar()">Guardar Registro</button>
+        <button onclick="cerrarTodo()" style="width:100%; background:none; border:none; color:#94a3b8; margin-top:10px; cursor:pointer; font-weight:600; font-size: 12px;">Descartar</button>
     </div>
 
     <div id="map"></div>
@@ -196,15 +201,13 @@
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        // Capas profesionales
-        const light = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
+        // Configuración de capas
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
         const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
 
-        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [light] });
-        
-        const baseMaps = { "Mapa Claro": light, "Satélite": satellite, "Modo Noche": dark };
-        L.control.layers(baseMaps).addTo(map);
+        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm] });
+        L.control.layers({ "Calles": osm, "Satélite": satellite, "Oscuro": dark }).addTo(map);
 
         let items = [], seleccionando = false, tempMarker = null;
         const coordsCiudades = { esquel: [-42.912, -71.316], trevelin: [-43.085, -71.463] };
@@ -223,7 +226,7 @@
         }
         map.on('moveend', actualizarEstiloBotones);
 
-        function irA(coords) { map.flyTo(coords, 15); }
+        function irA(coords) { map.flyTo(coords, 14); }
 
         async function load() {
             items.forEach(i => map.removeLayer(i.m));
@@ -235,16 +238,18 @@
                     let color = c.TIPO === 'CENTRO DE MONITOREO' ? '#2563eb' : (c.TIPO === 'PRIVADAS' ? '#0f172a' : '#10b981');
                     const icon = L.divIcon({
                         className: 'custom-div-icon',
-                        html: `<div class="div-icon" style="border-color:${color}; color:${color}; width:24px; height:24px; background:white;"><i class="fa-solid fa-video" style="font-size:10px;"></i></div>`,
+                        html: `<div class="div-icon" style="border-color:${color}; color:${color}; width:24px; height:24px;"><i class="fa-solid fa-video" style="font-size:11px"></i></div>`,
                         iconSize: [24, 24], iconAnchor: [12, 12]
                     });
                     const marker = L.marker(latlng, { icon }).addTo(map);
                     marker.bindPopup(`
-                        <span class="popup-title">${c.DIRECCION}</span>
-                        <div style="font-size:11px; color:gray; margin-bottom:10px;">${c['LUGAR / TITULAR'] || 'Sin titular'}</div>
-                        <div class="popup-actions">
-                            <button class="btn-edit-mini" onclick="abrirEditar('${c.id}')">Editar</button>
-                            <button class="btn-del-mini" onclick="eliminar('${c.id}')">Borrar</button>
+                        <div style="font-family:'Inter', sans-serif">
+                            <b style="font-size:14px">${c.DIRECCION}</b><br>
+                            <span style="color:gray; font-size:12px">${c['LUGAR / TITULAR'] || ''}</span>
+                            <div class="popup-actions">
+                                <button class="btn-pop btn-edit" onclick="abrirEditar('${c.id}')">Editar</button>
+                                <button class="btn-pop btn-delete" onclick="eliminar('${c.id}')">Borrar</button>
+                            </div>
                         </div>
                     `);
                     items.push({ id: c.id, m: marker, data: c, info: (c.DIRECCION + " " + (c['LUGAR / TITULAR'] || '')).toLowerCase() });
@@ -260,13 +265,14 @@
 
         function activarModoSeleccion() {
             seleccionando = true;
-            document.getElementById('map').style.cursor = 'crosshair';
+            document.getElementById('map').classList.add('crosshair');
             document.getElementById('instruccion').style.display = 'block';
             document.getElementById('main-btn').style.display = 'none';
         }
 
         map.on('click', (e) => {
             if (!seleccionando) return;
+            document.getElementById('edit-id').value = ""; // Limpiar ID por si era edición
             document.getElementById('u').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
             if (tempMarker) map.removeLayer(tempMarker);
             tempMarker = L.marker(e.latlng).addTo(map);
@@ -275,11 +281,30 @@
             document.getElementById('instruccion').style.display = 'none';
         });
 
+        function abrirEditar(id) {
+            const item = items.find(i => i.id == id).data;
+            document.getElementById('edit-id').value = id;
+            document.getElementById('ciudad_select').value = item.ciudad || "Esquel";
+            document.getElementById('u').value = item.UBICACION;
+            document.getElementById('d').value = item.DIRECCION;
+            document.getElementById('n').value = item['LUGAR / TITULAR'];
+            document.getElementById('t').value = item.TIPO;
+            document.getElementById('tel').value = item.telefono || "";
+            document.getElementById('sis').value = item.sistema || "";
+            document.getElementById('usu').value = item.usuario || "";
+            document.getElementById('pas').value = item.clave || "";
+            document.getElementById('alm').value = item.dias_almacenamiento || 7;
+            document.getElementById('ot').value = item.otros_datos || "";
+            
+            document.getElementById('form').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+        }
+
         function cerrarTodo() {
             document.getElementById('form').style.display = 'none';
             document.getElementById('blur').style.display = 'none';
             document.getElementById('main-btn').style.display = 'flex';
-            document.getElementById('map').style.cursor = '';
+            document.getElementById('map').classList.remove('crosshair');
             if (tempMarker) map.removeLayer(tempMarker);
             seleccionando = false;
         }
@@ -298,7 +323,7 @@
             cerrarTodo(); load();
         }
 
-        async function eliminar(id) { if(confirm("¿Confirma la eliminación del registro?")) { await _client.from('cameras').delete().eq('id', id); load(); } }
+        async function eliminar(id) { if(confirm("¿Borrar definitivamente?")) { await _client.from('cameras').delete().eq('id', id); load(); } }
         
         load();
     </script>

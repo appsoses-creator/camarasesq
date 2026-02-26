@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel</title>
+    <title>SMCee ADMIN - Gestión</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -130,52 +130,56 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        // Configuración de Cliente
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
         async function cargarData() {
-            const { count: cC } = await _client.from('cameras').select('*', { count: 'exact', head: true });
-            const { count: uC } = await _client.from('usuarios').select('*', { count: 'exact', head: true });
-            const { count: lC } = await _client.from('logs_actividad').select('*', { count: 'exact', head: true });
-            document.getElementById('stat-cameras').innerText = cC || 0;
-            document.getElementById('stat-users').innerText = uC || 0;
-            document.getElementById('stat-logs').innerText = lC || 0;
+            try {
+                const { count: cC } = await _client.from('cameras').select('*', { count: 'exact', head: true });
+                const { count: uC } = await _client.from('usuarios').select('*', { count: 'exact', head: true });
+                const { count: lC } = await _client.from('logs_actividad').select('*', { count: 'exact', head: true });
+                
+                document.getElementById('stat-cameras').innerText = cC || 0;
+                document.getElementById('stat-users').innerText = uC || 0;
+                document.getElementById('stat-logs').innerText = lC || 0;
 
-            const { data: users } = await _client.from('usuarios').select('*').order('usuario');
-            const tbody = document.getElementById('lista-usuarios');
-            tbody.innerHTML = '';
-            
-            users?.forEach(u => {
-                const statusClass = u.is_online ? 'online' : 'offline';
-                const fecha = u.last_login ? new Date(u.last_login).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
-                tbody.innerHTML += `
-                    <tr>
-                        <td class="user-clickable" onclick="verCargasUsuario('${u.usuario}')">${u.usuario}</td>
-                        <td>
-                            <span class="status-dot ${statusClass}"></span>
-                            <span style="font-size:10px; color:var(--text-dim)">Hoy ${fecha}</span>
-                        </td>
-                        <td>
-                            <select class="edit-select" onchange="updateUser('${u.id}', 'rol', this.value)">
-                                <option value="user" ${u.rol==='user'?'selected':''}>USER</option>
-                                <option value="admin" ${u.rol==='admin'?'selected':''}>ADMIN</option>
-                            </select>
-                        </td>
-                        <td><input type="text" class="edit-input" value="${u.clave}" onchange="updateUser('${u.id}', 'clave', this.value)"></td>
-                        <td><i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer; font-size:12px" onclick="eliminarUsuario('${u.id}', '${u.usuario}')"></i></td>
-                    </tr>`;
-            });
+                const { data: users } = await _client.from('usuarios').select('*').order('usuario');
+                const tbody = document.getElementById('lista-usuarios');
+                tbody.innerHTML = '';
+                
+                users?.forEach(u => {
+                    const statusClass = u.is_online ? 'online' : 'offline';
+                    const fecha = u.last_login ? new Date(u.last_login).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="user-clickable" onclick="verCargasUsuario('${u.usuario}')">${u.usuario}</td>
+                            <td>
+                                <span class="status-dot ${statusClass}"></span>
+                                <span style="font-size:10px; color:var(--text-dim)">Hoy ${fecha}</span>
+                            </td>
+                            <td>
+                                <select class="edit-select" onchange="updateUser('${u.id}', 'rol', this.value)">
+                                    <option value="user" ${u.rol==='user'?'selected':''}>USER</option>
+                                    <option value="admin" ${u.rol==='admin'?'selected':''}>ADMIN</option>
+                                </select>
+                            </td>
+                            <td><input type="text" class="edit-input" value="${u.clave}" onchange="updateUser('${u.id}', 'clave', this.value)"></td>
+                            <td><i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer; font-size:12px" onclick="eliminarUsuario('${u.id}', '${u.usuario}')"></i></td>
+                        </tr>`;
+                });
 
-            const { data: logs } = await _client.from('logs_actividad').select('*').order('fecha', {ascending: false}).limit(15);
-            const lContainer = document.getElementById('log-list');
-            lContainer.innerHTML = '';
-            logs?.forEach(l => {
-                lContainer.innerHTML += `
-                    <div class="log-v-item">
-                        <div style="font-weight:700; font-size:12px;">${l.usuario} <span style="color:var(--accent); font-size:10px">${l.accion}</span></div>
-                        <div style="font-size:10px; color:var(--text-dim)">${l.detalle}</div>
-                        <span style="font-size:9px; color:var(--text-dim)">${new Date(l.fecha).toLocaleTimeString()}</span>
-                    </div>`;
-            });
+                const { data: logs } = await _client.from('logs_actividad').select('*').order('fecha', {ascending: false}).limit(15);
+                const lContainer = document.getElementById('log-list');
+                lContainer.innerHTML = '';
+                logs?.forEach(l => {
+                    lContainer.innerHTML += `
+                        <div class="log-v-item">
+                            <div style="font-weight:700; font-size:12px;">${l.usuario} <span style="color:var(--accent); font-size:10px">${l.accion}</span></div>
+                            <div style="font-size:10px; color:var(--text-dim)">${l.detalle}</div>
+                            <span style="font-size:9px; color:var(--text-dim)">${new Date(l.fecha).toLocaleTimeString()}</span>
+                        </div>`;
+                });
+            } catch (e) { console.error("Error cargando datos:", e); }
         }
 
         async function updateUser(id, campo, valor) {
@@ -183,55 +187,39 @@
             await _client.from('usuarios').update(upd).eq('id', id);
         }
 
-        // --- FUNCIÓN DE DIAGNÓSTICO MEJORADA ---
+        // --- VER CARGAS VINCULADAS ---
         async function verCargasUsuario(userName) {
             const cleanName = userName.trim();
             document.getElementById('detail-user-name').innerText = cleanName;
             const container = document.getElementById('detail-content');
-            container.innerHTML = '<p style="font-size:12px; color:var(--accent);">Analizando estructura de base de datos...</p>';
+            container.innerHTML = '<p style="font-size:12px; color:var(--accent);">Buscando registros...</p>';
             toggleDetail(true);
 
-            // PASO 1: Ver nombres de columnas reales
-            const { data: sample, error: errSample } = await _client.from('cameras').select('*').limit(1);
-            
-            if (errSample) {
-                container.innerHTML = `<p style="color:var(--danger)">Error Supabase: ${errSample.message}</p>`;
-                return;
-            }
-
-            if (sample && sample.length > 0) {
-                const columnas = Object.keys(sample[0]);
-                // Si la columna 'usuario' no existe, mostramos el error y las que sí existen
-                if (!columnas.includes('usuario')) {
-                    container.innerHTML = `
-                        <p style="color:orange; font-weight:700;">⚠️ Columna Incorrecta</p>
-                        <p style="font-size:11px; color:var(--text-dim);">La tabla 'cameras' no tiene una columna llamada 'usuario'.</p>
-                        <div style="font-size:10px; background:#000; padding:10px; margin-top:10px; border-radius:5px;">
-                            Columnas encontradas: <br>${columnas.join(', ')}
-                        </div>
-                    `;
-                    return;
-                }
-            }
-
-            // PASO 2: Si la columna existe, buscar con ILIKE (insensible a mayúsculas)
+            // Buscamos en la columna 'usuario' que habilitamos en Supabase
             const { data: cams, error } = await _client
                 .from('cameras')
                 .select('*')
                 .ilike('usuario', `%${cleanName}%`);
             
+            if (error) {
+                container.innerHTML = `<p style="color:var(--danger); font-size:12px;">Error: ${error.message}</p>`;
+                return;
+            }
+
             if(!cams || cams.length === 0) {
                 container.innerHTML = `
-                    <p style="font-size:12px; color:var(--text-dim);">No se encontraron registros para "${cleanName}".</p>
-                    <p style="font-size:10px; margin-top:15px; color:var(--accent);">Dato curioso: Si en la Auditoría aparece pero aquí no, puede que el Row Level Security (RLS) en Supabase esté bloqueando la lectura pública de la tabla 'cameras'.</p>
+                    <p style="font-size:12px; color:var(--text-dim);">No hay cámaras para "${cleanName}".</p>
+                    <hr style="border:0; border-top:1px solid #334155; margin:10px 0">
+                    <p style="font-size:10px; color:orange;">Recuerda ejecutar el comando UPDATE en el SQL Editor para asignar las cámaras antiguas a este usuario.</p>
                 `;
             } else {
                 container.innerHTML = cams.map(c => `
                     <div style="background:#1a2233; padding:12px; border-radius:10px; border:1px solid #334155;">
-                        <div style="font-weight:700; font-size:13px; color:var(--accent);">${c.nombre || 'Cámara sin nombre'}</div>
-                        <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
-                            <i class="fa-solid fa-location-dot"></i> ${c.lat.toFixed(4)}, ${c.lng.toFixed(4)}
+                        <div style="font-weight:700; font-size:13px; color:var(--accent);">${c['LUGAR / TITULAR'] || 'Sin Título'}</div>
+                        <div style="font-size:11px; color:var(--text-dim); margin-top:5px;">
+                            <i class="fa-solid fa-location-dot" style="margin-right:5px"></i>${c.UBICACION || 'Sin ubicación'}
                         </div>
+                        <div style="font-size:10px; color:gray; margin-top:3px;">Ciudad: ${c.ciudad || '--'}</div>
                     </div>
                 `).join('');
             }
@@ -259,6 +247,7 @@
             }
         }
 
+        // Inicio
         cargarData();
         setInterval(cargarData, 30000);
     </script>

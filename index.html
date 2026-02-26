@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CÁMARAS DPPPE</title>
+    <title>CÁMARAS DPI</title>
     
     <script>
         (function() {
@@ -60,7 +60,6 @@
         .btn-add-main { position: fixed; bottom: 30px; left: 30px; z-index: 1000; background: var(--dark); color: white; border: none; padding: 16px 24px; border-radius: 50px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
         .div-icon { display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 3px solid; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
 
-        /* Popups */
         .leaflet-popup-content-wrapper { padding: 0; overflow: hidden; border-radius: 12px; }
         .leaflet-popup-content { margin: 0; width: 300px !important; }
         .pop-card { width: 300px; font-family: 'Inter', sans-serif; }
@@ -79,7 +78,6 @@
         .pop-btn-del { background: white; color: var(--danger); border-left: 1px solid #f1f5f9; }
         .pop-btn-del:hover { background: #fef2f2; }
 
-        /* Modales */
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2001; background: white; width: 90%; max-width: 450px; border-radius: 20px; padding: 25px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
         .modal label { display: block; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 12px; }
         .modal input, .modal select, .modal textarea { width: 100%; padding: 12px; margin-top: 4px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; box-sizing: border-box; }
@@ -122,15 +120,12 @@
     <div class="overlay" id="blur" onclick="cerrarTodo()"></div>
     
     <div class="modal" id="modal-clave">
-        <h3 style="margin:0"><i class="fa-solid fa-shield-lock"></i> Cambiar mi Contraseña</h3>
-        <p style="font-size: 12px; color: #64748b; margin-top: 5px;">Actualiza tu clave de acceso al sistema.</p>
-        
+        <h3 style="margin:0"><i class="fa-solid fa-shield-lock"></i> Mi Contraseña</h3>
+        <p style="font-size: 12px; color: #64748b; margin-top: 5px;">Actualiza tu clave de acceso personal.</p>
         <label>Nueva Contraseña</label>
         <input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres">
-        
         <label>Confirmar Contraseña</label>
         <input type="password" id="pass-confirma" placeholder="Repite la contraseña">
-        
         <button class="btn-save" id="btn-confirmar-clave" onclick="actualizarMiClave()">Actualizar Ahora</button>
         <button style="width:100%; background:none; border:none; color:#94a3b8; font-size:12px; margin-top:10px; cursor:pointer;" onclick="cerrarTodo()">Cancelar</button>
     </div>
@@ -157,14 +152,14 @@
         <label>Sistema / DVR</label>
         <input type="text" id="sis">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-            <div><label>Usuario</label><input type="text" id="usu"></div>
-            <div><label>Clave</label><input type="text" id="pas"></div>
+            <div><label>Usuario (DVR)</label><input type="text" id="usu"></div>
+            <div><label>Clave (DVR)</label><input type="text" id="pas"></div>
         </div>
         <label>Días Almacenamiento</label>
         <input type="number" id="alm" value="7">
         <label>Observaciones</label>
         <textarea id="ot" rows="2"></textarea>
-        <button class="btn-save" onclick="enviar()">Guardar Registro</button>
+        <button class="btn-save" id="btn-submit-camera" onclick="enviar()">Guardar Registro</button>
     </div>
 
     <div id="map"></div>
@@ -217,7 +212,7 @@
             }
         }
 
-        async function abrirModalClave() {
+        function abrirModalClave() {
             document.getElementById('pass-nueva').value = '';
             document.getElementById('pass-confirma').value = '';
             document.getElementById('modal-clave').style.display = 'block';
@@ -233,13 +228,9 @@
             if (n1 !== n2) return alert("Las contraseñas no coinciden.");
 
             const btn = document.getElementById('btn-confirmar-clave');
-            btn.disabled = true;
-            btn.innerText = "Actualizando...";
+            btn.disabled = true; btn.innerText = "Actualizando...";
 
-            const { error } = await _client
-                .from('usuarios')
-                .update({ clave: n1 })
-                .eq('usuario', user.usuario);
+            const { error } = await _client.from('usuarios').update({ clave: n1 }).eq('usuario', user.usuario);
 
             if (error) {
                 alert("Error: " + error.message);
@@ -248,8 +239,7 @@
                 alert("✅ Contraseña actualizada con éxito.");
                 cerrarTodo();
             }
-            btn.disabled = false;
-            btn.innerText = "Actualizar Ahora";
+            btn.disabled = false; btn.innerText = "Actualizar Ahora";
         }
 
         async function load() {
@@ -330,17 +320,16 @@
         });
 
         async function registrarLog(usuario, accion, detalle) {
-            try {
-                await _client.from('logs_actividad').insert([{ usuario, accion, detalle }]);
-            } catch (e) { console.error("Error log:", e); }
+            try { await _client.from('logs_actividad').insert([{ usuario, accion, detalle }]); } catch (e) {}
         }
 
         async function enviar() {
             const id = document.getElementById('edit-id').value;
-            const btnSave = document.querySelector('.btn-save');
+            const btnSave = document.getElementById('btn-submit-camera');
             const userSession = JSON.parse(localStorage.getItem('user_session'));
             const nombreUsuario = userSession ? userSession.usuario : 'Desconocido';
 
+            // Mapeo exacto a las columnas de Supabase
             const cam = { 
                 "DIRECCION": document.getElementById('d').value, 
                 "UBICACION": document.getElementById('u').value,
@@ -356,8 +345,7 @@
             };
 
             try {
-                btnSave.disabled = true;
-                btnSave.innerText = "Guardando...";
+                btnSave.disabled = true; btnSave.innerText = "Guardando...";
                 let result;
                 
                 if (id) {
@@ -373,18 +361,15 @@
                 cerrarTodo(); 
                 await load();
             } catch (err) {
-                console.error("Error Supabase:", err);
                 alert("❌ Error al guardar: " + err.message);
             } finally {
-                btnSave.disabled = false;
-                btnSave.innerText = "Guardar Registro";
+                btnSave.disabled = false; btnSave.innerText = "Guardar Registro";
             }
         }
 
         async function eliminar(id) { 
             if(confirm("¿Estás seguro de que deseas borrar este registro?")) { 
                 const userSession = JSON.parse(localStorage.getItem('user_session'));
-                const nombreUsuario = userSession ? userSession.usuario : 'Desconocido';
                 const item = items.find(i => i.id == id);
                 const direccion = item ? item.data.DIRECCION : id;
 
@@ -392,7 +377,7 @@
                 if (error) {
                     alert("Error al borrar: " + error.message);
                 } else {
-                    await registrarLog(nombreUsuario, 'ELIMINO CAMARA', `Eliminó cámara de ${direccion}`);
+                    await registrarLog(userSession?.usuario || 'Desconocido', 'ELIMINO CAMARA', `Eliminó cámara de ${direccion}`);
                     load(); 
                 }
             } 

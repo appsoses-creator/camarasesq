@@ -179,14 +179,16 @@
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        // Verificación inicial de sesión
+        // Verificación inicial de sesión: Redirigir si ya está logueado
         (function() {
             const session = localStorage.getItem('user_session');
             try {
                 if (session) {
                     const parsed = JSON.parse(session);
                     if (parsed && parsed.usuario) {
-                        window.location.replace('index.html');
+                        // Redirigir según rol si ya hay sesión
+                        const destino = parsed.rol === 'admin' ? 'admin.html' : 'index.html';
+                        window.location.replace(destino);
                     }
                 }
             } catch (e) {
@@ -210,7 +212,7 @@
             errorDiv.innerText = "";
 
             try {
-                // Buscamos al usuario
+                // Buscamos al usuario con las credenciales exactas
                 const { data, error } = await _client
                     .from('usuarios') 
                     .select('*')
@@ -223,21 +225,27 @@
                     btn.disabled = false;
                     btn.innerHTML = 'Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>';
                 } else {
-                    // MARCAR COMO ONLINE Y ACTUALIZAR FECHA
-                    // Actualizamos en la base de datos antes de entrar
+                    // 1. Actualizar estado en Supabase
+                    const now = new Date().toISOString();
                     await _client
                         .from('usuarios')
-                        .update({ 
-                            is_online: true, 
-                            last_login: new Date().toISOString() 
-                        })
+                        .update({ is_online: true, last_login: now })
                         .eq('id', data.id);
 
-                    // Guardamos la sesión (actualizada con los nuevos datos)
-                    const sessionData = { ...data, is_online: true, last_login: new Date().toISOString() };
+                    // 2. Guardar sesión localmente
+                    const sessionData = { 
+                        id: data.id,
+                        usuario: data.usuario, 
+                        rol: data.rol, 
+                        is_online: true, 
+                        last_login: now 
+                    };
                     localStorage.setItem('user_session', JSON.stringify(sessionData));
                     
-                    window.location.replace('index.html');
+                    // 3. Redirección inteligente por ROL
+                    // Si es admin va a admin.html, si no a index.html (mapa)
+                    const targetPage = (data.rol === 'admin') ? 'admin.html' : 'index.html';
+                    window.location.replace(targetPage);
                 }
             } catch (err) {
                 errorDiv.innerText = "📡 Error de conexión con el servidor";

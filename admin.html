@@ -17,6 +17,7 @@
             --text-dim: #94a3b8;
             --danger: #f43f5e;
             --success: #10b981;
+            --warning: #f59e0b;
         }
 
         body { 
@@ -48,7 +49,7 @@
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         .card-title { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
 
-        /* Estilos de Estado */
+        /* Estado e Indicadores */
         .status-indicator { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
         .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
         .dot-online { background: var(--success); box-shadow: 0 0 8px var(--success); }
@@ -58,7 +59,11 @@
         .table-wrap th { text-align: left; padding: 15px; color: var(--text-dim); font-size: 11px; text-transform: uppercase; }
         .table-wrap tr td { background: #1a2233; padding: 15px; border-top: 1px solid #334155; border-bottom: 1px solid #334155; }
         .table-wrap tr td:first-child { border-left: 1px solid #334155; border-radius: 15px 0 0 15px; }
-        .table-wrap tr td:last-child { border-right: 1px solid #334155; border-radius: 0 15px 15px 0; }
+        .table-wrap tr td:last-child { border-right: 1px solid #334155; border-radius: 0 15px 15px 0; text-align: right; }
+
+        /* Edición inline */
+        .edit-input { background: #0f172a; border: 1px solid #334155; color: white; padding: 5px 8px; border-radius: 6px; font-family: inherit; font-size: 13px; width: 100px; }
+        .edit-select { background: #0f172a; border: 1px solid #334155; color: white; padding: 4px; border-radius: 6px; font-size: 11px; }
 
         .form-dark input, .form-dark select { 
             background: #0f172a; border: 1px solid #334155; color: white; padding: 14px; 
@@ -70,11 +75,10 @@
         }
         .btn-primary:hover { filter: brightness(1.2); transform: translateY(-2px); }
 
-        .log-v-item { border-left: 2px solid var(--accent); padding: 0 0 20px 20px; position: relative; }
-        .log-v-item::before { content: ''; position: absolute; left: -6px; top: 0; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
-        .log-v-user { font-weight: 700; font-size: 13px; color: var(--text-main); }
-        .log-v-action { color: var(--accent); font-size: 11px; font-weight: 800; margin-left: 8px; }
-        .log-v-time { font-size: 10px; color: var(--text-dim); display: block; margin-top: 4px; }
+        .btn-icon { background: none; border: none; cursor: pointer; padding: 5px; transition: 0.2s; }
+        .btn-edit { color: var(--warning); }
+        .btn-delete { color: var(--danger); }
+        .btn-save { color: var(--success); }
 
         .badge-admin { background: rgba(16, 185, 129, 0.1); color: var(--success); padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 700; }
         .badge-user { background: rgba(59, 130, 246, 0.1); color: var(--accent); padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 700; }
@@ -129,30 +133,23 @@
                             <th>Estado / Último Acceso</th>
                             <th>Rango</th>
                             <th>Contraseña</th>
-                            <th></th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="lista-usuarios"></tbody>
                 </table>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 30px;">
-                <div class="glass-card">
-                    <h3 class="card-title" style="margin-bottom:20px"><i class="fa-solid fa-plus-circle"></i> Nuevo Acceso</h3>
-                    <div class="form-dark">
-                        <input type="text" id="new-user" placeholder="Nombre de usuario">
-                        <input type="text" id="new-pass" placeholder="Clave de acceso">
-                        <select id="new-rol">
-                            <option value="user">Operador Estándar</option>
-                            <option value="admin">Administrador Pro</option>
-                        </select>
-                        <button class="btn-primary" onclick="crearUsuario()">VINCULAR USUARIO</button>
-                    </div>
-                </div>
-
-                <div class="glass-card">
-                    <h3 class="card-title" style="margin-bottom:20px"><i class="fa-solid fa-list-ul"></i> Auditoría</h3>
-                    <div id="log-list"></div>
+            <div class="glass-card">
+                <h3 class="card-title" style="margin-bottom:20px"><i class="fa-solid fa-plus-circle"></i> Nuevo Acceso</h3>
+                <div class="form-dark">
+                    <input type="text" id="new-user" placeholder="Nombre de usuario">
+                    <input type="text" id="new-pass" placeholder="Clave de acceso">
+                    <select id="new-rol">
+                        <option value="user">Operador Estándar</option>
+                        <option value="admin">Administrador Pro</option>
+                    </select>
+                    <button class="btn-primary" onclick="crearUsuario()">VINCULAR USUARIO</button>
                 </div>
             </div>
         </div>
@@ -166,7 +163,6 @@
         if (!session || session.rol !== 'admin') window.location.replace('index.html');
 
         async function cargarData() {
-            // Stats
             const { count: cC } = await _client.from('cameras').select('*', { count: 'exact', head: true });
             const { count: uC } = await _client.from('usuarios').select('*', { count: 'exact', head: true });
             const { count: lC } = await _client.from('logs_actividad').select('*', { count: 'exact', head: true });
@@ -175,7 +171,6 @@
             document.getElementById('stat-users').innerText = uC || 0;
             document.getElementById('stat-logs').innerText = lC || 0;
 
-            // Usuarios (Usando tus columnas: is_online y last_login)
             const { data: users } = await _client.from('usuarios').select('*').order('usuario');
             const tbody = document.getElementById('lista-usuarios');
             tbody.innerHTML = '';
@@ -184,44 +179,61 @@
                 const bClass = u.rol === 'admin' ? 'badge-admin' : 'badge-user';
                 const statusDot = u.is_online ? 'dot-online' : 'dot-offline';
                 const statusText = u.is_online ? 'En línea' : 'Desconectado';
-                const fechaLimpia = u.last_login ? new Date(u.last_login).toLocaleString() : 'Sin registros';
+                const fechaLimpia = u.last_login ? new Date(u.last_login).toLocaleString('es-AR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : 'Sin registros';
 
                 tbody.innerHTML += `
-                    <tr>
+                    <tr id="row-${u.id}">
                         <td><b>${u.usuario}</b></td>
                         <td>
                             <div class="status-indicator">
                                 <span class="dot ${statusDot}"></span>
                                 <span style="color:${u.is_online ? 'var(--success)' : 'var(--text-dim)'}">${statusText}</span>
                             </div>
-                            <div style="font-size:10px; color:var(--text-dim); margin-top:4px;">${fechaLimpia}</div>
+                            <div style="font-size:10px; color:var(--text-dim); margin-top:4px;"><i class="fa-regular fa-clock"></i> ${fechaLimpia}</div>
                         </td>
-                        <td><span class="${bClass}">${u.rol?.toUpperCase()}</span></td>
-                        <td><code style="color:var(--text-dim)">${u.clave}</code></td>
-                        <td><button style="background:none; border:none; color:var(--danger); cursor:pointer;" onclick="eliminarUsuario('${u.id}', '${u.usuario}')"><i class="fa-solid fa-trash"></i></button></td>
+                        <td>
+                            <select class="edit-select" id="rol-${u.id}" onchange="actualizarUsuario('${u.id}')">
+                                <option value="user" ${u.rol === 'user' ? 'selected' : ''}>USER</option>
+                                <option value="admin" ${u.rol === 'admin' ? 'selected' : ''}>ADMIN</option>
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" class="edit-input" id="pass-${u.id}" value="${u.clave}" onchange="actualizarUsuario('${u.id}')">
+                        </td>
+                        <td>
+                            <button class="btn-icon btn-delete" onclick="eliminarUsuario('${u.id}', '${u.usuario}')" title="Eliminar">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </td>
                     </tr>`;
-            });
-
-            // Logs
-            const { data: logs } = await _client.from('logs_actividad').select('*').order('fecha', {ascending: false}).limit(6);
-            const lContainer = document.getElementById('log-list');
-            lContainer.innerHTML = '';
-            logs?.forEach(l => {
-                lContainer.innerHTML += `
-                    <div class="log-v-item">
-                        <div><span class="log-v-user">${l.usuario}</span> <span class="log-v-action">${l.accion}</span></div>
-                        <div style="font-size:11px; color:var(--text-dim)">${l.detalle}</div>
-                        <span class="log-v-time">${new Date(l.fecha).toLocaleString()}</span>
-                    </div>`;
             });
         }
 
+        async function actualizarUsuario(id) {
+            const nuevoRol = document.getElementById(`rol-${id}`).value;
+            const nuevaClave = document.getElementById(`pass-${id}`).value;
+
+            const { error } = await _client
+                .from('usuarios')
+                .update({ rol: nuevoRol, clave: nuevaClave })
+                .eq('id', id);
+
+            if (error) {
+                alert("Error al actualizar: " + error.message);
+            } else {
+                // Pequeña notificación visual de éxito
+                const row = document.getElementById(`row-${id}`);
+                row.style.background = "#10b98122";
+                setTimeout(() => row.style.background = "transparent", 1000);
+            }
+        }
+
         async function crearUsuario() {
-            const u = document.getElementById('new-user').value;
-            const p = document.getElementById('new-pass').value;
+            const u = document.getElementById('new-user').value.trim();
+            const p = document.getElementById('new-pass').value.trim();
             const r = document.getElementById('new-rol').value;
             if(!u || !p) return alert("Completa los datos");
-            // Se inserta con is_online false por defecto
+
             const { error } = await _client.from('usuarios').insert([{ usuario: u, clave: p, rol: r, is_online: false }]);
             if(error) alert(error.message); else { 
                 document.getElementById('new-user').value=''; 
@@ -232,13 +244,12 @@
 
         async function eliminarUsuario(id, nom) {
             if(nom === session.usuario) return alert("No puedes borrarte a ti mismo");
-            if(confirm("¿Eliminar acceso?")) {
+            if(confirm(`¿Estás seguro de eliminar el acceso a ${nom}?`)) {
                 await _client.from('usuarios').delete().eq('id', id);
                 cargarData();
             }
         }
 
-        // Carga inicial y auto-actualización cada 30 segundos
         cargarData();
         setInterval(cargarData, 30000);
     </script>

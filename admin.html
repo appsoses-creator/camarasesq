@@ -70,7 +70,7 @@
     <aside class="sidebar">
         <div class="logo-area"><i class="fa-solid fa-shield-halved"></i> SMCee ADMIN</div>
         <nav style="display: flex; flex-direction: column; height: 100%;">
-            <a href="index.html" class="nav-link"><i class="fa-solid fa-map-location-dot"></i> Mapa</a>
+            <a href="index.html" class="nav-link"><i class="fa-solid fa-map-location-dot"></i> Volver al Mapa</a>
             <a href="#" class="nav-link active"><i class="fa-solid fa-users-gear"></i> Usuarios</a>
             <a href="javascript:location.reload()" class="nav-link"><i class="fa-solid fa-rotate"></i> Refresh</a>
             
@@ -97,7 +97,7 @@
 
     <main class="main-content">
         <div class="stats-row">
-            <div class="stat-box"><span class="stat-label">Cámaras</span><span class="stat-val" id="stat-cameras">-</span></div>
+            <div class="stat-box"><span class="stat-label">Cámaras Totales</span><span class="stat-val" id="stat-cameras">-</span></div>
             <div class="stat-box"><span class="stat-label">Usuarios</span><span class="stat-val" id="stat-users">-</span></div>
             <div class="stat-box"><span class="stat-label">Logs Hoy</span><span class="stat-val" id="stat-logs">-</span></div>
         </div>
@@ -109,7 +109,7 @@
                     <table class="table-wrap">
                         <thead>
                             <tr>
-                                <th>Usuario (ver cargas)</th>
+                                <th>Operador (clic ver cargas)</th>
                                 <th>Conexión</th>
                                 <th>Rol</th>
                                 <th>Clave</th>
@@ -131,15 +131,15 @@
     <div id="detail-panel" class="detail-panel">
         <i class="fa-solid fa-xmark close-btn" onclick="toggleDetail()"></i>
         <h3 id="detail-user-name" style="color:var(--accent); margin-bottom:5px;">-</h3>
-        <p style="font-size:12px; color:var(--text-dim); margin-bottom:20px;">Cámaras registradas por este usuario</p>
+        <p style="font-size:12px; color:var(--text-dim); margin-bottom:20px;">Cámaras registradas en el mapa</p>
         <div id="detail-content" style="display: flex; flex-direction: column; gap: 10px;"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // SEGURIDAD: Verificar sesión antes de cargar nada
-        const session = JSON.parse(localStorage.getItem('user_session'));
-        if (!session || session.rol !== 'admin') {
+        // SEGURIDAD: Solo Admin
+        const sessionData = JSON.parse(localStorage.getItem('user_session'));
+        if (!sessionData || sessionData.rol !== 'admin') {
             window.location.replace('login.html');
         }
 
@@ -164,14 +164,16 @@
                     const fecha = u.last_login ? new Date(u.last_login).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
                     tbody.innerHTML += `
                         <tr>
-                            <td class="user-clickable" onclick="verCargasUsuario('${u.usuario}')">${u.usuario}</td>
+                            <td class="user-clickable" onclick="verCargasUsuario('${u.usuario}')">
+                                <i class="fa-solid fa-user" style="font-size:10px; margin-right:5px"></i>${u.usuario}
+                            </td>
                             <td>
                                 <span class="status-dot ${statusClass}"></span>
                                 <span style="font-size:10px; color:var(--text-dim)">Hoy ${fecha}</span>
                             </td>
                             <td>
                                 <select class="edit-select" onchange="updateUser('${u.id}', 'rol', this.value)">
-                                    <option value="user" ${u.rol==='user'?'selected':''}>USER</option>
+                                    <option value="user" ${u.rol==='user'?'selected':''}>OPERADOR</option>
                                     <option value="admin" ${u.rol==='admin'?'selected':''}>ADMIN</option>
                                 </select>
                             </td>
@@ -191,7 +193,7 @@
                             <span style="font-size:9px; color:var(--text-dim)">${new Date(l.fecha).toLocaleTimeString()}</span>
                         </div>`;
                 });
-            } catch (e) { console.error("Error cargando datos:", e); }
+            } catch (e) { console.error("Error:", e); }
         }
 
         async function updateUser(id, campo, valor) {
@@ -203,10 +205,10 @@
             const cleanName = userName.trim();
             document.getElementById('detail-user-name').innerText = cleanName;
             const container = document.getElementById('detail-content');
-            container.innerHTML = '<p style="font-size:12px; color:var(--accent);">Buscando registros...</p>';
+            container.innerHTML = '<p style="font-size:12px; color:var(--accent);">Filtrando mapa...</p>';
             toggleDetail(true);
 
-            // CORRECCIÓN: Buscamos exactamente por el nombre del usuario en la columna 'usuario'
+            // CORRECCIÓN CLAVE: Buscamos en la columna 'usuario' los registros que coincidan con el nombre del operador
             const { data: cams, error } = await _client
                 .from('cameras')
                 .select('*')
@@ -218,15 +220,15 @@
             }
 
             if(!cams || cams.length === 0) {
-                container.innerHTML = `<p style="font-size:12px; color:var(--text-dim);">No hay cámaras para "${cleanName}".</p>`;
+                container.innerHTML = `<p style="font-size:12px; color:var(--text-dim);">"${cleanName}" aún no ha creado cámaras.</p>`;
             } else {
                 container.innerHTML = cams.map(c => `
                     <div style="background:#1a2233; padding:12px; border-radius:10px; border:1px solid #334155;">
-                        <div style="font-weight:700; font-size:13px; color:var(--accent);">${c['LUGAR / TITULAR'] || 'Sin Título'}</div>
+                        <div style="font-weight:700; font-size:13px; color:var(--accent);">${c['LUGAR / TITULAR'] || 'Sin Nombre'}</div>
                         <div style="font-size:11px; color:var(--text-dim); margin-top:5px;">
-                            <i class="fa-solid fa-location-dot" style="margin-right:5px"></i>${c.UBICACION || 'Sin ubicación'}
+                            <i class="fa-solid fa-location-dot" style="margin-right:5px"></i>${c.DIRECCION || 'Sin dirección'}
                         </div>
-                        <div style="font-size:10px; color:gray; margin-top:3px;">ID: ${c.id} | Ciudad: ${c.ciudad || '--'}</div>
+                        <div style="font-size:10px; color:gray; margin-top:3px;">Ciudad: ${c.ciudad || '--'} | Sistema: ${c.SISTEMA || '--'}</div>
                     </div>
                 `).join('');
             }
@@ -248,7 +250,7 @@
         }
 
         async function eliminarUsuario(id, nom) {
-            if(confirm(`¿Eliminar a ${nom}?`)) {
+            if(confirm(`¿Eliminar acceso de ${nom}?`)) {
                 await _client.from('usuarios').delete().eq('id', id);
                 cargarData();
             }
@@ -260,7 +262,7 @@
         }
 
         cargarData();
-        setInterval(cargarData, 30000);
+        setInterval(cargarData, 20000);
     </script>
 </body>
 </html>

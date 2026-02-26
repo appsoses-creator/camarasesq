@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cámaras 2</title>
+    <title>Cámaras 23</title>
     
     <script>
         (function() {
@@ -30,7 +30,6 @@
         body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* BARRA SUPERIOR */
         .nav-container {
             position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 1000;
             display: flex; align-items: center; background: white; 
@@ -56,7 +55,6 @@
         .search-btn { background: #2563eb; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; }
         .btn-logout { background: #fee2e2; color: #dc2626; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; margin-left: 8px; }
 
-        /* VISTA MÓVIL: BOTONES ABAJO */
         @media (max-width: 600px) {
             .city-selector {
                 position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -69,7 +67,6 @@
             .nav-container { padding: 8px 12px; width: 85%; }
         }
 
-        /* ESTILOS POPUPS Y MODALES (Tus originales) */
         #instruccion { display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 2000; background: #1e293b; color: white; padding: 12px 20px; border-radius: 8px; font-weight: bold; }
         .btn-add { position: fixed; bottom: 30px; left: 30px; z-index: 1000; background: #2563eb; color: white; border: none; padding: 15px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
         .div-icon { display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 2px solid; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
@@ -143,8 +140,15 @@
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14 });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        // --- CAPAS DE MAPA REINTEGRADAS ---
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' });
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution: '© Esri' });
+        const muted = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' });
+        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '© CartoDB' });
+
+        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm] });
+        const baseMaps = { "Calles": osm, "Satélite": satellite, "Gris Suave": muted, "Modo Oscuro": dark };
+        L.control.layers(baseMaps).addTo(map);
 
         let items = [], seleccionando = false, tempMarker = null, searchMarker = null;
         const coordsCiudades = { esquel: [-42.912, -71.316], trevelin: [-43.085, -71.463] };

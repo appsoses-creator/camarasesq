@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control</title>
+    <title>Panel</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -183,29 +183,48 @@
             await _client.from('usuarios').update(upd).eq('id', id);
         }
 
-        // --- CORRECCIÓN AQUÍ ---
+        // --- FUNCIÓN DE DIAGNÓSTICO MEJORADA ---
         async function verCargasUsuario(userName) {
             const cleanName = userName.trim();
             document.getElementById('detail-user-name').innerText = cleanName;
             const container = document.getElementById('detail-content');
-            container.innerHTML = '<p style="font-size:12px;">Buscando registros...</p>';
+            container.innerHTML = '<p style="font-size:12px; color:var(--accent);">Analizando estructura de base de datos...</p>';
             toggleDetail(true);
 
-            // Buscamos ignorando mayúsculas y permitiendo que el nombre esté contenido en el campo
+            // PASO 1: Ver nombres de columnas reales
+            const { data: sample, error: errSample } = await _client.from('cameras').select('*').limit(1);
+            
+            if (errSample) {
+                container.innerHTML = `<p style="color:var(--danger)">Error Supabase: ${errSample.message}</p>`;
+                return;
+            }
+
+            if (sample && sample.length > 0) {
+                const columnas = Object.keys(sample[0]);
+                // Si la columna 'usuario' no existe, mostramos el error y las que sí existen
+                if (!columnas.includes('usuario')) {
+                    container.innerHTML = `
+                        <p style="color:orange; font-weight:700;">⚠️ Columna Incorrecta</p>
+                        <p style="font-size:11px; color:var(--text-dim);">La tabla 'cameras' no tiene una columna llamada 'usuario'.</p>
+                        <div style="font-size:10px; background:#000; padding:10px; margin-top:10px; border-radius:5px;">
+                            Columnas encontradas: <br>${columnas.join(', ')}
+                        </div>
+                    `;
+                    return;
+                }
+            }
+
+            // PASO 2: Si la columna existe, buscar con ILIKE (insensible a mayúsculas)
             const { data: cams, error } = await _client
                 .from('cameras')
                 .select('*')
                 .ilike('usuario', `%${cleanName}%`);
             
-            if (error) {
-                container.innerHTML = `<p style="color:var(--danger)">Error: ${error.message}</p>`;
-                return;
-            }
-
             if(!cams || cams.length === 0) {
                 container.innerHTML = `
-                    <p style="font-size:12px; color:var(--text-dim);">No se encontraron cámaras vinculadas a "${cleanName}".</p>
-                    <p style="font-size:10px; color:var(--accent);">Nota: Verifica que el campo en la tabla se llame 'usuario'.</p>`;
+                    <p style="font-size:12px; color:var(--text-dim);">No se encontraron registros para "${cleanName}".</p>
+                    <p style="font-size:10px; margin-top:15px; color:var(--accent);">Dato curioso: Si en la Auditoría aparece pero aquí no, puede que el Row Level Security (RLS) en Supabase esté bloqueando la lectura pública de la tabla 'cameras'.</p>
+                `;
             } else {
                 container.innerHTML = cams.map(c => `
                     <div style="background:#1a2233; padding:12px; border-radius:10px; border:1px solid #334155;">

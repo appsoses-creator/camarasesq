@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMCee - Gestión de Cámaras</title>
+    <title>SMCee - G3</title>
     
     <script>
         (function() {
@@ -60,10 +60,10 @@
 
         .div-icon { display: flex; align-items: center; justify-content: center; background: white; border-radius: 50%; border: 3px solid; box-shadow: 0 3px 6px rgba(0,0,0,0.15); }
 
-        /* Estilos Popup */
         .card-popup { min-width: 200px; padding: 5px; }
         .card-header { border-bottom: 1px solid #eee; margin-bottom: 8px; padding-bottom: 5px; }
         .card-body div { font-size: 12px; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; color: #475569; }
+        
         .popup-actions { margin-top: 10px; display: flex; gap: 5px; border-top: 1px solid #eee; padding-top: 8px; }
         .btn-pop { flex: 1; border: none; padding: 6px; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 11px; }
         .btn-edit { background: #e0f2fe; color: #0369a1; }
@@ -73,6 +73,7 @@
         .modal label { display: block; font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-top: 12px; }
         .modal input, .modal select, .modal textarea { width: 100%; padding: 12px; margin-top: 4px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 14px; box-sizing: border-box; }
         .btn-save { width: 100%; padding: 16px; background: #10b981; color: white; border: none; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; }
+        .btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
         
         .overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(4px); z-index: 2000; }
         #instruccion { display: none; position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 2000; background: var(--dark); color: white; padding: 12px 24px; border-radius: 50px; font-weight: 600; }
@@ -147,8 +148,12 @@
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14 });
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
+
+        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm] });
+        L.control.layers({ "Calles": osm, "Satélite": satellite, "Oscuro": dark }).addTo(map);
 
         let items = [], seleccionando = false, tempMarker = null;
 
@@ -167,13 +172,17 @@
             if (encontrado) {
                 map.flyTo(encontrado.m.getLatLng(), 18);
                 encontrado.m.openPopup();
+            } else {
+                alert("No se encontró ninguna cámara.");
             }
         }
 
         async function load() {
             items.forEach(i => map.removeLayer(i.m));
             items = [];
-            const { data } = await _client.from('cameras').select('*');
+            const { data, error } = await _client.from('cameras').select('*');
+            if (error) { console.error("Error cargando:", error); return; }
+
             data?.forEach(c => {
                 const latlng = c.UBICACION?.split(',').map(parseFloat);
                 if (latlng && latlng[0]) {
@@ -225,6 +234,8 @@
 
         async function enviar() {
             const id = document.getElementById('edit-id').value;
+            const btnSave = document.querySelector('.btn-save');
+            
             const cam = { 
                 "DIRECCION": document.getElementById('d').value, 
                 "UBICACION": document.getElementById('u').value,
@@ -240,10 +251,29 @@
             };
 
             try {
-                if (id) await _client.from('cameras').update(cam).eq('id', id);
-                else await _client.from('cameras').insert([cam]);
-                cerrarTodo(); load();
-            } catch (err) { alert("Error: " + err.message); }
+                btnSave.disabled = true;
+                btnSave.innerText = "Guardando...";
+
+                let result;
+                if (id) {
+                    result = await _client.from('cameras').update(cam).eq('id', id);
+                } else {
+                    result = await _client.from('cameras').insert([cam]);
+                }
+                
+                if (result.error) throw result.error;
+
+                alert("✅ Registro guardado correctamente");
+                cerrarTodo(); 
+                await load();
+
+            } catch (err) {
+                console.error("Error Supabase:", err);
+                alert("❌ Error al guardar: " + err.message);
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerText = "Guardar Registro";
+            }
         }
 
         function abrirEditar(id) {
@@ -284,11 +314,18 @@
             document.getElementById('main-btn').style.display = 'flex';
             document.getElementById('map').classList.remove('crosshair');
             if (tempMarker) map.removeLayer(tempMarker);
+            tempMarker = null;
             seleccionando = false;
             document.getElementById('instruccion').style.display = 'none';
         }
 
-        async function eliminar(id) { if(confirm("¿Borrar registro?")) { await _client.from('cameras').delete().eq('id', id); load(); } }
+        async function eliminar(id) { 
+            if(confirm("¿Estás seguro de que deseas borrar este registro?")) { 
+                const { error } = await _client.from('cameras').delete().eq('id', id); 
+                if (error) alert("Error al borrar: " + error.message);
+                else load(); 
+            } 
+        }
         
         load();
     </script>

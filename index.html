@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC 3</title>
+    <title>SMC 3 - Sistema de Monitoreo</title>
     
     <script>
         (function() {
@@ -89,6 +89,7 @@
             box-shadow: 0 3px 6px rgba(0,0,0,0.15); 
         }
 
+        /* MODAL FORMULARIO */
         .modal {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             z-index: 2001; background: white; width: 90%; max-width: 480px;
@@ -106,6 +107,19 @@
         .btn-save { width: 100%; padding: 15px; background: #10b981; color: white; border: none; border-radius: 10px; font-weight: 700; margin-top: 20px; cursor: pointer; }
         .overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); z-index: 2000; }
 
+        /* POPUP TARJETA */
+        .leaflet-popup-content-wrapper { border-radius: 12px; padding: 5px; }
+        .card-popup { min-width: 200px; font-family: 'Inter', sans-serif; }
+        .card-header { border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 8px; }
+        .card-header b { font-size: 14px; color: var(--dark); }
+        .card-body div { font-size: 12px; margin-bottom: 4px; color: #475569; }
+        .card-body i { width: 18px; color: #94a3b8; }
+        
+        .popup-actions { margin-top: 12px; display: flex; gap: 6px; border-top: 1px solid #eee; padding-top: 10px; }
+        .btn-pop { flex: 1; border: none; padding: 6px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+        .btn-edit { background: #e0f2fe; color: #0369a1; }
+        .btn-delete { background: #fee2e2; color: #b91c1c; }
+
         #instruccion { 
             display: none; position: fixed; top: 90px; left: 50%; transform: translateX(-50%); 
             z-index: 2000; background: var(--dark); color: white; padding: 10px 20px; 
@@ -113,11 +127,6 @@
         }
 
         .crosshair { cursor: crosshair !important; }
-
-        .popup-actions { margin-top: 10px; display: flex; gap: 5px; }
-        .btn-pop { border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-weight: 600; font-size: 11px; }
-        .btn-edit { background: #e0f2fe; color: #0369a1; }
-        .btn-delete { background: #fee2e2; color: #b91c1c; }
 
         @media (max-width: 600px) {
             .top-bar { top: 10px; width: 95%; flex-wrap: wrap; }
@@ -198,11 +207,13 @@
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
+        // MAPAS Y CAPAS
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
         
         const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm] });
-        L.control.layers({ "Calles": osm, "Satélite": satellite }).addTo(map);
+        L.control.layers({ "Calles": osm, "Satélite": satellite, "Oscuro": dark }).addTo(map);
 
         let items = [], seleccionando = false, tempMarker = null;
 
@@ -236,11 +247,26 @@
                         iconSize: [24, 24], iconAnchor: [12, 12]
                     });
                     const marker = L.marker(latlng, { icon }).addTo(map);
+                    
+                    // TARJETA DE INFORMACIÓN (POPUP)
                     marker.bindPopup(`
-                        <b>${c.DIRECCION}</b><br>${c['LUGAR / TITULAR'] || ''}<br>
-                        <div class="popup-actions">
-                            <button class="btn-pop btn-edit" onclick="abrirEditar('${c.id}')">Editar</button>
-                            <button class="btn-pop btn-delete" onclick="eliminar('${c.id}')">Borrar</button>
+                        <div class="card-popup">
+                            <div class="card-header">
+                                <b>${c.DIRECCION}</b><br>
+                                <small style="color:gray">${c['LUGAR / TITULAR'] || 'Sin nombre'}</small>
+                            </div>
+                            <div class="card-body">
+                                <div><i class="fa-solid fa-phone"></i> ${c.telefono || 'N/A'}</div>
+                                <div><i class="fa-solid fa-microchip"></i> ${c.sistema || 'N/A'}</div>
+                                <div><i class="fa-solid fa-user"></i> ${c.usuario || 'N/A'}</div>
+                                <div><i class="fa-solid fa-key"></i> ${c.clave || 'N/A'}</div>
+                                <div><i class="fa-solid fa-clock"></i> ${c.dias_almacenamiento || '7'} días</div>
+                                ${c.otros_datos ? `<div style="margin-top:5px; padding:5px; background:#f8fafc; border-radius:4px"><i>Obs:</i> ${c.otros_datos}</div>` : ''}
+                            </div>
+                            <div class="popup-actions">
+                                <button class="btn-pop btn-edit" onclick="abrirEditar('${c.id}')"><i class="fa-solid fa-pen"></i></button>
+                                <button class="btn-pop btn-delete" onclick="eliminar('${c.id}')"><i class="fa-solid fa-trash"></i></button>
+                            </div>
                         </div>
                     `);
                     items.push({ id: c.id, m: marker, data: c, info: (c.DIRECCION + " " + (c['LUGAR / TITULAR'] || '')).toLowerCase() });
@@ -263,7 +289,7 @@
 
         map.on('click', (e) => {
             if (!seleccionando) return;
-            limpiarFormulario(); // LIMPIAR FORMULARIO AL CREAR NUEVA
+            limpiarFormulario();
             document.getElementById('u').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
             if (tempMarker) map.removeLayer(tempMarker);
             tempMarker = L.marker(e.latlng).addTo(map);

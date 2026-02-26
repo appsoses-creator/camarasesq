@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC - es</title>
+    <title>SMC - Mapa de Cámaras</title>
     
     <script>
         (function() {
@@ -32,7 +32,7 @@
             --primary: #2563eb;
             --accent: #6366f1;
             --dark-bg: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-bg: rgba(255, 255, 255, 0.85);
             --glass-border: rgba(255, 255, 255, 0.3);
             --danger: #ef4444;
             --success: #10b981;
@@ -49,7 +49,6 @@
 
         #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
 
-        /* NAVBAR */
         .top-bar {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             z-index: 1000; width: 92%; max-width: 1200px;
@@ -107,18 +106,6 @@
         }
         .btn-add-main:hover { transform: scale(1.05); background: #1e293b; }
 
-        /* POPUP STYLES */
-        .pop-card { min-width: 240px; padding: 5px; }
-        .pop-header { border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 10px; }
-        .pop-title { font-size: 14px; color: var(--dark-bg); display: block; margin-bottom: 2px; }
-        .pop-subtitle { font-size: 12px; color: #64748b; display: block; }
-        .pop-body { display: flex; flex-direction: column; gap: 6px; }
-        .pop-info { font-size: 12px; display: flex; align-items: center; gap: 8px; color: #334155; }
-        .pop-info i { color: var(--primary); width: 14px; text-align: center; }
-        .pop-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; }
-        .pop-btn { background: none; border: none; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 5px; }
-
-        /* MODALES */
         .modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             z-index: 2001; background: white; width: 90%; max-width: 440px; 
@@ -126,9 +113,6 @@
             max-height: 85vh; overflow-y: auto;
         }
         .modal h3 { font-weight: 800; color: var(--dark-bg); font-size: 20px; margin-bottom: 20px; }
-        .modal label { font-size: 12px; font-weight: 700; color: #64748b; display: block; margin-top: 12px; margin-bottom: 4px; }
-        .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; box-sizing: border-box; }
-        
         .btn-save { 
             width: 100%; padding: 15px; background: var(--primary); color: white; 
             border: none; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; 
@@ -263,14 +247,63 @@
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         L.control.layers({ "Calles": osm, "Satélite": satellite }, null, { position: 'bottomright' }).addTo(map);
 
-        let items = [], seleccionando = false, tempMarker = null;
+        let items = [], seleccionando = false, tempMarker = null, marcadorBusqueda = null;
 
         function logout() { localStorage.removeItem('user_session'); window.location.replace('login.html'); }
         
         function irA(coords, btnId) { 
+            // Limpia búsqueda anterior al cambiar de ciudad
+            if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
             map.flyTo(coords, 15); 
             document.querySelectorAll('.btn-city').forEach(p => p.classList.remove('active'));
             document.getElementById(btnId).classList.add('active');
+        }
+
+        // --- FUNCION DE BUSQUEDA AGREGADA ---
+        async function buscarLugar() {
+            const q = document.getElementById('q').value.toLowerCase().trim();
+            if (!q) return;
+
+            // 1. Buscar en cámaras cargadas de Supabase
+            const encontrado = items.find(i => i.info.includes(q));
+
+            if (encontrado) {
+                if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
+                map.flyTo(encontrado.m.getLatLng(), 17);
+                encontrado.m.openPopup();
+            } else {
+                // 2. Buscar en OpenStreetMap (Geocodificación)
+                const esEsquel = document.getElementById('btn-esquel').classList.contains('active');
+                const ciudadBusqueda = esEsquel ? "Esquel, Chubut, Argentina" : "Trevelin, Chubut, Argentina";
+                
+                try {
+                    const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ", " + ciudadBusqueda)}&limit=1`);
+                    const data = await resp.json();
+
+                    if (data.length > 0) {
+                        const res = data[0];
+                        const coords = [parseFloat(res.lat), parseFloat(res.lon)];
+
+                        if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
+
+                        const iconDir = L.divIcon({
+                            className: 'custom-div-icon',
+                            html: `<div style="background:#f1f5f9; border:3px solid #64748b; color:#64748b; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-location-dot" style="font-size:12px"></i></div>`,
+                            iconSize: [30, 30], iconAnchor: [15, 15]
+                        });
+
+                        marcadorBusqueda = L.marker(coords, { icon: iconDir }).addTo(map)
+                            .bindPopup(`<div style="text-align:center"><b>Dirección encontrada</b><br>${res.display_name.split(',')[0]}<br><small style="color:var(--danger)">No registrada como cámara</small></div>`)
+                            .openPopup();
+
+                        map.flyTo(coords, 17);
+                    } else {
+                        alert("No se encontró el lugar en " + (esEsquel ? "Esquel" : "Trevelin"));
+                    }
+                } catch (e) {
+                    console.error("Error en búsqueda:", e);
+                }
+            }
         }
 
         async function registrarLog(usuario, accion, detalle) {
@@ -323,13 +356,9 @@
                     
                     const btnEliminarHtml = rolUsuario === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}')"><i class="fa-solid fa-trash"></i> Eliminar</button>` : '';
 
-                    // Procesar datos de otros_datos
                     let dvrUserDisplay = '-';
-                    let obsDisplay = '-';
-                    if (c.otros_datos) {
-                        const parts = c.otros_datos.split('|');
-                        dvrUserDisplay = parts[0] ? parts[0].replace('User DVR: ', '').trim() : '-';
-                        obsDisplay = parts[1] ? parts[1].trim() : '-';
+                    if (c.otros_datos && c.otros_datos.includes('User DVR:')) {
+                        dvrUserDisplay = c.otros_datos.split('|')[0].replace('User DVR: ', '').trim();
                     }
 
                     const popupContent = `
@@ -339,14 +368,10 @@
                                 <span class="pop-subtitle">${c['LUGAR / TITULAR'] || '-'}</span>
                             </div>
                             <div class="pop-body">
-                                <div class="pop-info"><i class="fa-solid fa-city"></i> <span><b>Ciudad:</b> ${c.ciudad || '-'}</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-layer-group"></i> <span><b>Tipo:</b> ${c.TIPO || '-'}</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-phone"></i> <span><b>Tel:</b> ${c.telefono || '-'}</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-microchip"></i> <span><b>Sistema:</b> ${c.sistema || '-'}</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-user-shield"></i> <span><b>Usuario:</b> ${dvrUserDisplay}</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-key"></i> <span><b>Clave:</b> ${c.clave || '-'}</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-calendar-day"></i> <span><b>Respaldo:</b> ${c.dias_almacenamiento || '7'} días</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-comment-dots"></i> <span><b>Obs:</b> ${obsDisplay}</span></div>
                             </div>
                             <div class="pop-footer">
                                 <button class="pop-btn" style="color:var(--primary)" onclick="abrirEditar('${c.id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
@@ -360,36 +385,6 @@
             });
         }
 
-        function abrirEditar(id) {
-            const cam = items.find(i => i.id == id).data;
-            document.getElementById('edit-id').value = cam.id;
-            document.getElementById('d').value = cam.DIRECCION;
-            document.getElementById('u').value = cam.UBICACION;
-            document.getElementById('n').value = cam['LUGAR / TITULAR'];
-            document.getElementById('t').value = cam.TIPO;
-            document.getElementById('ciudad_select').value = cam.ciudad || "Esquel";
-            document.getElementById('tel').value = cam.telefono || "";
-            document.getElementById('sis').value = cam.sistema || "";
-            document.getElementById('pas').value = cam.clave || "";
-            document.getElementById('alm').value = cam.dias_almacenamiento || 7;
-            
-            if(cam.otros_datos) {
-                const parts = cam.otros_datos.split('|');
-                document.getElementById('usu').value = parts[0].replace('User DVR: ', '').trim();
-                document.getElementById('ot').value = parts[1] ? parts[1].trim() : "";
-            }
-
-            document.getElementById('form-title').innerText = "Editar Cámara";
-            document.getElementById('form').style.display = 'block';
-            document.getElementById('blur').style.display = 'block';
-        }
-
-        async function eliminar(id) {
-            if(!confirm("¿Eliminar esta cámara?")) return;
-            const { error } = await _client.from('cameras').delete().eq('id', id);
-            if(!error) load();
-        }
-
         async function enviar() {
             const id = document.getElementById('edit-id').value;
             const userSession = JSON.parse(localStorage.getItem('user_session'));
@@ -401,6 +396,7 @@
                 "ciudad": document.getElementById('ciudad_select').value,
                 "telefono": document.getElementById('tel').value,
                 "sistema": document.getElementById('sis').value,
+                "usuario": userSession.usuario,
                 "clave": document.getElementById('pas').value,
                 "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 7,
                 "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
@@ -419,7 +415,6 @@
             document.getElementById('main-btn').style.display = 'flex';
             document.getElementById('instruccion').style.display = 'none';
             document.getElementById('map').classList.remove('crosshair');
-            document.getElementById('form-title').innerText = "Detalles Técnicos";
             if (tempMarker) map.removeLayer(tempMarker);
             seleccionando = false;
         }
@@ -434,30 +429,12 @@
         map.on('click', (e) => {
             if (!seleccionando) return;
             document.getElementById('edit-id').value = "";
-            // Limpiar formulario para nueva cámara
-            document.getElementById('d').value = "";
-            document.getElementById('n').value = "";
-            document.getElementById('tel').value = "";
-            document.getElementById('sis').value = "";
-            document.getElementById('usu').value = "";
-            document.getElementById('pas').value = "";
-            document.getElementById('ot').value = "";
-            
             document.getElementById('u').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
             if (tempMarker) map.removeLayer(tempMarker);
             tempMarker = L.marker(e.latlng).addTo(map);
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
         });
-
-        function buscarLugar() {
-            const q = document.getElementById('q').value.toLowerCase();
-            const item = items.find(i => i.info.includes(q));
-            if (item) {
-                map.flyTo(item.m.getLatLng(), 18);
-                item.m.openPopup();
-            }
-        }
 
         load();
     </script>

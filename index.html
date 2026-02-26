@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC -22</title>
+    <title>SMC -23</title>
     
     <script>
         (function() {
@@ -80,6 +80,7 @@
             background: white; color: #475569; border: 1px solid #e2e8f0;
             padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13px;
             cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;
+            white-space: nowrap;
         }
         .btn-nav:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
         
@@ -93,7 +94,7 @@
 
         .btn-logout { 
             background: #fee2e2; color: var(--danger); border: none; 
-            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
+            width: 40px; height: 40px; min-width: 40px; border-radius: 10px; cursor: pointer;
             display: flex; align-items: center; justify-content: center; transition: 0.2s;
         }
         .btn-logout:hover { background: var(--danger); color: white; }
@@ -107,23 +108,12 @@
         }
         .btn-add-main:hover { transform: scale(1.05); background: #1e293b; }
 
-        /* POPUP STYLES */
-        .pop-card { min-width: 240px; padding: 5px; }
-        .pop-header { border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 10px; }
-        .pop-title { font-size: 14px; color: var(--dark-bg); display: block; margin-bottom: 2px; }
-        .pop-subtitle { font-size: 12px; color: #64748b; display: block; }
-        .pop-body { display: flex; flex-direction: column; gap: 6px; }
-        .pop-info { font-size: 12px; display: flex; align-items: center; gap: 8px; color: #334155; }
-        .pop-info i { color: var(--primary); width: 14px; text-align: center; }
-        .pop-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; }
-        .pop-btn { background: none; border: none; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 5px; padding: 5px; }
-
         /* MODALES */
         .modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             z-index: 2001; background: white; width: 90%; max-width: 440px; 
             border-radius: 24px; padding: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
-            max-height: 85vh; overflow-y: auto;
+            max-height: 85vh; overflow-y: auto; box-sizing: border-box;
         }
         .modal h3 { font-weight: 800; color: var(--dark-bg); font-size: 20px; margin-bottom: 20px; }
         .modal label { font-size: 12px; font-weight: 700; color: #64748b; display: block; margin-top: 12px; margin-bottom: 4px; }
@@ -144,15 +134,54 @@
             display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); 
             z-index: 2000; background: var(--primary); color: white; padding: 12px 25px; 
             border-radius: 50px; font-weight: 700; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            animation: bounce 2s infinite;
+            animation: bounce 2s infinite; text-align: center; width: 80%; max-width: 300px;
         }
         @keyframes bounce { 0%, 100% { top: 100px; } 50% { top: 110px; } }
         .crosshair { cursor: crosshair !important; }
+
+        /* --- AJUSTES PARA CELULAR --- */
+        @media (max-width: 768px) {
+            .top-bar {
+                top: 10px;
+                padding: 8px 12px;
+                flex-direction: column;
+                gap: 8px;
+                border-radius: 15px;
+            }
+            .search-group {
+                width: 100%;
+            }
+            .actions-group {
+                width: 100%;
+                overflow-x: auto; /* Permite deslizar los botones si no caben */
+                padding-bottom: 4px;
+                justify-content: flex-start;
+            }
+            .btn-nav, .btn-city {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            .btn-add-main {
+                bottom: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                font-size: 14px;
+            }
+            .modal {
+                padding: 20px;
+                width: 95%;
+            }
+            .modal h3 {
+                font-size: 18px;
+            }
+            /* Ocultar texto en botones para ahorrar espacio si es necesario */
+            .btn-nav span { display: none; } 
+        }
     </style>
 </head>
 <body>
 
-    <div id="instruccion"><i class="fa-solid fa-location-dot"></i> Haz clic en el mapa para situar la cámara</div>
+    <div id="instruccion"><i class="fa-solid fa-location-dot"></i> Toca el mapa para situar la cámara</div>
 
     <div class="top-bar">
         <div class="search-group">
@@ -165,15 +194,15 @@
             <button class="btn-city" id="btn-trevelin" onclick="irA([-43.085, -71.463], 'btn-trevelin')">Trevelin</button>
             
             <button class="btn-nav btn-calc" onclick="window.location.href='calculadora.html'">
-                <i class="fa-solid fa-calculator"></i> Calculadora
+                <i class="fa-solid fa-calculator"></i> <span>Calculadora</span>
             </button>
 
             <button class="btn-nav" onclick="abrirModalClave()">
-                <i class="fa-solid fa-key"></i> Cambiar clave
+                <i class="fa-solid fa-key"></i> <span>Clave</span>
             </button>
 
             <button id="btn-admin-panel" class="btn-nav" style="background: #f1f5f9; border: none; display: none;" onclick="window.location.href='admin.html'">
-                <i class="fa-solid fa-user-gear"></i> Panel
+                <i class="fa-solid fa-user-gear"></i> <span>Panel</span>
             </button>
 
             <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
@@ -243,6 +272,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
+        // Los scripts se mantienen idénticos para no romper la lógica de Supabase
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
         function verificarPrivilegios() {

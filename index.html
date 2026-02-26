@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CÁMARAS DPI</title>
+    <title>CÁMARAS 5</title>
     
     <script>
         (function() {
@@ -275,8 +275,8 @@
                             <div class="pop-body">
                                 <div class="pop-section-title">Información de Acceso</div>
                                 <div class="pop-info"><i class="fa-solid fa-desktop"></i> <b>Sistema:</b> ${c.sistema || '-'}</div>
-                                <div class="pop-info"><i class="fa-solid fa-user"></i> <b>User:</b> ${c.usuario || '-'}</div>
-                                <div class="pop-info"><i class="fa-solid fa-lock"></i> <b>Clave:</b> ${c.clave || '-'}</div>
+                                <div class="pop-info"><i class="fa-solid fa-user"></i> <b>Cargado por:</b> ${c.usuario || '-'}</div>
+                                <div class="pop-info"><i class="fa-solid fa-lock"></i> <b>Clave DVR:</b> ${c.clave || '-'}</div>
                                 
                                 <div class="pop-section-title" style="margin-top:5px">Contacto y Almacenamiento</div>
                                 <div class="pop-info"><i class="fa-solid fa-phone"></i> ${c.telefono || '-'}</div>
@@ -327,7 +327,7 @@
             const id = document.getElementById('edit-id').value;
             const btnSave = document.getElementById('btn-submit-camera');
             const userSession = JSON.parse(localStorage.getItem('user_session'));
-            const nombreUsuario = userSession ? userSession.usuario : 'Desconocido';
+            const nombreUsuarioSession = userSession ? userSession.usuario : 'Desconocido';
 
             // Mapeo exacto a las columnas de Supabase
             const cam = { 
@@ -338,10 +338,10 @@
                 "ciudad": document.getElementById('ciudad_select').value,
                 "telefono": document.getElementById('tel').value,
                 "sistema": document.getElementById('sis').value,
-                "usuario": document.getElementById('usu').value,
+                "usuario": nombreUsuarioSession, // Usamos el usuario de sesión para el Panel
                 "clave": document.getElementById('pas').value,
                 "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 7,
-                "otros_datos": document.getElementById('ot').value
+                "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
             };
 
             try {
@@ -350,10 +350,10 @@
                 
                 if (id) {
                     result = await _client.from('cameras').update(cam).eq('id', id);
-                    if (!result.error) await registrarLog(nombreUsuario, 'EDITO CAMARA', `Modificó cámara en ${cam.DIRECCION}`);
+                    if (!result.error) await registrarLog(nombreUsuarioSession, 'EDITO CAMARA', `Modificó cámara en ${cam.DIRECCION}`);
                 } else {
                     result = await _client.from('cameras').insert([cam]);
-                    if (!result.error) await registrarLog(nombreUsuario, 'CREO CAMARA', `Nueva cámara en ${cam.DIRECCION}`);
+                    if (!result.error) await registrarLog(nombreUsuarioSession, 'CREO CAMARA', `Nueva cámara en ${cam.DIRECCION}`);
                 }
                 
                 if (result.error) throw result.error;
@@ -393,10 +393,18 @@
             document.getElementById('ciudad_select').value = item.ciudad || "Esquel";
             document.getElementById('tel').value = item.telefono;
             document.getElementById('sis').value = item.sistema;
-            document.getElementById('usu').value = item.usuario;
+            
+            // Intentamos extraer el usuario del DVR de las observaciones si existe el prefijo
+            let dvrUser = item.usuario;
+            if (item.otros_datos && item.otros_datos.includes('User DVR:')) {
+                const partes = item.otros_datos.split('|');
+                dvrUser = partes[0].replace('User DVR: ', '').trim();
+            }
+            
+            document.getElementById('usu').value = dvrUser;
             document.getElementById('pas').value = item.clave || "";
             document.getElementById('alm').value = item.dias_almacenamiento;
-            document.getElementById('ot').value = item.otros_datos;
+            document.getElementById('ot').value = item.otros_datos || "";
             document.getElementById('form-title').innerText = "Editar Cámara";
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';

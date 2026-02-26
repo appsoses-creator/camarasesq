@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CÁMARAS DE SEGURIDAD DPIE 3</title>
+    <title>CÁMARAS DE SEGURIDAD DPIE 34</title>
     
     <script>
         (function() {
@@ -12,6 +12,7 @@
             try {
                 if (session) {
                     const parsed = JSON.parse(session);
+                    // Validamos que exista el usuario y que el objeto sea correcto
                     if (parsed && parsed.usuario) esValida = true;
                 }
             } catch (e) { esValida = false; }
@@ -53,9 +54,9 @@
         .pill { border: none; padding: 10px 20px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; background: transparent; color: #64748b; }
         .pill.active { background: var(--primary); color: white; }
         
-        /* Estilo para el botón de Panel */
-        .btn-panel { background: #f1f5f9; color: var(--dark); border-radius: 12px; padding: 10px 15px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
-        .btn-panel:hover { background: #e2e8f0; }
+        /* Botón de Panel (se ocultará vía JS si no es admin) */
+        #btn-admin-panel { background: #f1f5f9; color: var(--dark); border-radius: 12px; padding: 10px 15px; border: none; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        #btn-admin-panel:hover { background: #e2e8f0; }
 
         .btn-logout { background: #fee2e2; color: var(--danger); border: none; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-add-main { position: fixed; bottom: 30px; left: 30px; z-index: 1000; background: var(--dark); color: white; border: none; padding: 16px 24px; border-radius: 50px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
@@ -105,7 +106,7 @@
             <button class="pill active" id="btn-esquel" onclick="irA([-42.912, -71.316], 'btn-esquel')">Esquel</button>
             <button class="pill" id="btn-trevelin" onclick="irA([-43.085, -71.463], 'btn-trevelin')">Trevelin</button>
             
-            <button class="btn-panel" onclick="window.location.href='admin.html'">
+            <button id="btn-admin-panel" onclick="window.location.href='admin.html'">
                 <i class="fa-solid fa-user-gear"></i> Panel
             </button>
         </div>
@@ -157,6 +158,22 @@
 
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+
+        // --- LÓGICA DE PRIVILEGIOS ---
+        function verificarPrivilegios() {
+            const session = localStorage.getItem('user_session');
+            if (session) {
+                const userData = JSON.parse(session);
+                const btnPanel = document.getElementById('btn-admin-panel');
+                // Si el rol NO es admin, removemos el botón por completo
+                if (userData.rol !== 'admin' && btnPanel) {
+                    btnPanel.remove();
+                }
+            }
+        }
+        // Ejecutamos al cargar
+        verificarPrivilegios();
+        // ------------------------------
 
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');

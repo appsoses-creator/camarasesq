@@ -74,6 +74,9 @@
             background: transparent; font-size: 14px; font-weight: 500;
         }
 
+        /* Botón búsqueda móvil (oculto en escritorio) */
+        .btn-search-mobile { display: none; }
+
         .actions-group { display: flex; align-items: center; gap: 8px; }
 
         .btn-nav {
@@ -126,9 +129,28 @@
         .nav-item i { font-size: 18px; }
         .nav-item.active { color: var(--primary); }
 
+        /* AJUSTES VISTA MÓVIL */
         @media (max-width: 768px) {
             .actions-group { display: none; }
-            .top-bar { top: 10px; width: 95%; padding: 8px 15px; }
+            .top-bar { top: 10px; width: 95%; padding: 8px 10px; gap: 8px; }
+            
+            /* Reducción de ancho del grupo de búsqueda */
+            .search-group { flex: 1; padding: 0 10px; }
+            .search-group input { padding: 10px 5px; font-size: 13px; }
+
+            /* Mostrar botón buscar en móvil */
+            .btn-search-mobile { 
+                display: block; 
+                background: var(--primary); 
+                color: white; 
+                border: none; 
+                padding: 10px 14px; 
+                border-radius: 10px; 
+                font-weight: 700; 
+                font-size: 12px;
+                cursor: pointer;
+            }
+
             .bottom-nav { display: flex; }
             .btn-add-main { bottom: 85px; right: 20px; padding: 12px 20px; font-size: 14px; }
             #map { height: calc(100vh - 70px); }
@@ -174,6 +196,8 @@
             <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
             <input type="text" id="q" placeholder="Buscar dirección o titular..." onkeyup="if(event.key==='Enter') buscarLugar()">
         </div>
+
+        <button class="btn-search-mobile" onclick="buscarLugar()">Buscar</button>
 
         <div class="actions-group">
             <button class="btn-city active" id="btn-esquel" onclick="irA([-42.912, -71.316], 'btn-esquel')">Esquel</button>
@@ -484,7 +508,7 @@
             document.getElementById('edit-id').value = "";
             document.getElementById('d').value = "";
             document.getElementById('n').value = "";
-            document.getElementById('t').value = ""; // Resetea a vacío
+            document.getElementById('t').value = ""; 
             document.getElementById('tel').value = "";
             document.getElementById('sis').value = "";
             document.getElementById('usu').value = "";

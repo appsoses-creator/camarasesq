@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPIE 4</title>
+    <title>DPIE 4 - Gestión de Cámaras</title>
     
     <script>
         (function() {
@@ -107,7 +107,7 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
         }
 
-        /* DISEÑO NUEVO: BOTTOM BAR FLOTANTE */
+        /* BOTTOM BAR FLOTANTE */
         .bottom-nav {
             display: none;
             position: fixed; 
@@ -131,36 +131,20 @@
             display: flex; flex-direction: column; align-items: center;
             gap: 4px; color: #64748b; font-size: 11px; font-weight: 600;
             text-decoration: none; border: none; background: none; cursor: pointer;
-            transition: all 0.3s ease;
-            padding: 8px 12px;
-            border-radius: 15px;
+            transition: all 0.3s ease; padding: 8px 12px; border-radius: 15px;
         }
         .nav-item i { font-size: 18px; }
-        .nav-item.active { 
-            color: var(--primary); 
-            background: rgba(37, 99, 235, 0.08);
-        }
+        .nav-item.active { color: var(--primary); background: rgba(37, 99, 235, 0.08); }
 
         @media (max-width: 768px) {
             .actions-group { display: none; }
             .top-bar { top: 10px; width: 95%; padding: 8px 15px; }
             .bottom-nav { display: flex; }
-            
-            /* Ajuste botón flotante para no tapar la barra móvil */
-            .btn-add-main { 
-                bottom: 100px; 
-                right: 20px; 
-                padding: 14px 22px; 
-                font-size: 14px; 
-            }
-
-            /* Subir los controles de Leaflet para que no queden detrás de la barra */
-            .leaflet-bottom.leaflet-right {
-                bottom: 160px !important;
-            }
+            .btn-add-main { bottom: 100px; right: 20px; padding: 14px 22px; font-size: 14px; }
+            .leaflet-bottom.leaflet-right { bottom: 160px !important; }
         }
 
-        /* MODALES Y OTROS */
+        /* MODALES */
         .modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             z-index: 2001; background: white; width: 90%; max-width: 440px; 
@@ -181,6 +165,17 @@
             display: none; position: fixed; inset: 0; 
             background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); z-index: 2000; 
         }
+
+        /* POPUP MAPA PERSONALIZADO */
+        .pop-card { min-width: 220px; padding: 5px; }
+        .pop-header { border-bottom: 1px solid #eee; margin-bottom: 10px; padding-bottom: 5px; }
+        .pop-title { display: block; font-size: 14px; color: var(--primary); }
+        .pop-subtitle { font-size: 12px; color: #64748b; }
+        .pop-body { display: flex; flex-direction: column; gap: 6px; }
+        .pop-info { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .pop-info i { width: 14px; color: #94a3b8; }
+        .pop-footer { margin-top: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        .pop-btn { flex: 1; border: none; background: #f1f5f9; padding: 8px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer; }
 
         #instruccion { 
             display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); 
@@ -381,20 +376,28 @@
         async function load() {
             const user = verificarPrivilegios();
             const rolUsuario = user?.rol;
+            
+            // Limpiar marcadores existentes
             items.forEach(i => map.removeLayer(i.m));
             items = [];
+
             const { data, error } = await _client.from('cameras').select('*');
             if (error) return;
 
             data?.forEach(c => {
                 const latlng = c.UBICACION?.split(',').map(parseFloat);
-                if (latlng && latlng[0]) {
-                    let color = c.TIPO === 'CENTRO DE MONITOREO' ? '#2563eb' : (c.TIPO === 'PRIVADAS' ? '#0f172a' : '#10b981');
+                if (latlng && latlng.length === 2 && !isNaN(latlng[0])) {
+                    
+                    let color = '#10b981'; // Particular por defecto
+                    if(c.TIPO === 'CENTRO DE MONITOREO') color = '#2563eb';
+                    else if(c.TIPO === 'PRIVADAS') color = '#0f172a';
+
                     const icon = L.divIcon({
                         className: 'custom-div-icon',
                         html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`,
                         iconSize: [30, 30], iconAnchor: [15, 15]
                     });
+
                     const marker = L.marker(latlng, { icon }).addTo(map);
                     
                     const btnEliminarHtml = rolUsuario === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}')"><i class="fa-solid fa-trash"></i> Eliminar</button>` : '';
@@ -438,9 +441,9 @@
         function abrirEditar(id) {
             const cam = items.find(i => i.id == id).data;
             document.getElementById('edit-id').value = cam.id;
-            document.getElementById('d').value = cam.DIRECCION;
-            document.getElementById('u').value = cam.UBICACION;
-            document.getElementById('n').value = cam['LUGAR / TITULAR'];
+            document.getElementById('d').value = cam.DIRECCION || "";
+            document.getElementById('u').value = cam.UBICACION || "";
+            document.getElementById('n').value = cam['LUGAR / TITULAR'] || "";
             document.getElementById('t').value = cam.TIPO || "";
             document.getElementById('ciudad_select').value = cam.ciudad || "Esquel";
             document.getElementById('tel').value = cam.telefono || "";
@@ -452,6 +455,9 @@
                 const parts = cam.otros_datos.split('|');
                 document.getElementById('usu').value = parts[0].replace('User DVR: ', '').trim();
                 document.getElementById('ot').value = parts[1] ? parts[1].trim() : "";
+            } else {
+                document.getElementById('usu').value = "";
+                document.getElementById('ot').value = "";
             }
 
             document.getElementById('form-title').innerText = "Editar Cámara";
@@ -460,7 +466,7 @@
         }
 
         async function eliminar(id) {
-            if(!confirm("¿Eliminar esta cámara?")) return;
+            if(!confirm("¿Deseas eliminar permanentemente esta cámara?")) return;
             const { error } = await _client.from('cameras').delete().eq('id', id);
             if(!error) load();
         }
@@ -468,6 +474,7 @@
         async function enviar() {
             const id = document.getElementById('edit-id').value;
             const userSession = JSON.parse(localStorage.getItem('user_session'));
+            
             const cam = { 
                 "DIRECCION": document.getElementById('d').value, 
                 "UBICACION": document.getElementById('u').value,
@@ -481,11 +488,24 @@
                 "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
             };
 
-            const { error } = id ? await _client.from('cameras').update(cam).eq('id', id) : await _client.from('cameras').insert([cam]);
-            if (!error) { 
-                await registrarLog(userSession.usuario, id ? 'EDITO' : 'CREO', cam.DIRECCION);
-                cerrarTodo(); load(); 
+            const btn = document.getElementById('btn-submit-camera');
+            btn.disabled = true; btn.innerText = "Guardando...";
+
+            let res;
+            if(id) {
+                res = await _client.from('cameras').update(cam).eq('id', id);
+            } else {
+                res = await _client.from('cameras').insert([cam]);
             }
+
+            if (!res.error) { 
+                await registrarLog(userSession.usuario, id ? 'EDITO' : 'CREO', cam.DIRECCION);
+                cerrarTodo(); 
+                load(); 
+            } else {
+                alert("Error al guardar: " + res.error.message);
+            }
+            btn.disabled = false; btn.innerText = "Guardar en Base de Datos";
         }
 
         function cerrarTodo() {
@@ -508,6 +528,8 @@
 
         map.on('click', (e) => {
             if (!seleccionando) return;
+            
+            // Limpiar formulario para nueva entrada
             document.getElementById('edit-id').value = "";
             document.getElementById('d').value = "";
             document.getElementById('n').value = "";
@@ -519,8 +541,10 @@
             document.getElementById('ot').value = "";
             
             document.getElementById('u').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
+            
             if (tempMarker) map.removeLayer(tempMarker);
             tempMarker = L.marker(e.latlng).addTo(map);
+            
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
         });
@@ -551,6 +575,7 @@
             }
         }
 
+        // Carga inicial
         load();
     </script>
 </body>

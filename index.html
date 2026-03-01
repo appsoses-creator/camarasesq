@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPIE</title>
+    <title>DPIE 22</title>
     
     <script>
         (function() {
@@ -82,11 +82,11 @@
         .top-bar {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             z-index: 1000; width: 92%; max-width: 1200px;
-            display: flex; align-items: center; gap: 15px;
+            display: flex; align-items: center; gap: 10px;
             background: var(--glass-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            padding: 10px 20px; border-radius: 20px;
+            padding: 8px 15px; border-radius: 20px;
             border: 1px solid var(--glass-border);
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
@@ -94,14 +94,28 @@
         .search-group { 
             flex: 1; display: flex; align-items: center; 
             background: rgba(0,0,0,0.05); border-radius: 12px; 
-            padding: 0 15px; border: 1px solid rgba(0,0,0,0.05);
+            padding: 0 5px 0 12px; border: 1px solid rgba(0,0,0,0.05);
             transition: 0.3s;
         }
         .search-group:focus-within { background: white; border-color: var(--primary); }
         .search-group input { 
-            width: 100%; border: none; padding: 12px; outline: none; 
+            width: 100%; border: none; padding: 10px; outline: none; 
             background: transparent; font-size: 14px; font-weight: 500;
         }
+
+        /* Nuevo Botón Buscar */
+        .btn-search-trigger {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-search-trigger:active { transform: scale(0.95); }
 
         .actions-group { display: flex; align-items: center; gap: 8px; }
 
@@ -157,7 +171,10 @@
 
         @media (max-width: 768px) {
             .actions-group { display: none; }
-            .top-bar { top: 10px; width: 95%; padding: 8px 15px; }
+            .top-bar { top: 10px; width: 90%; padding: 6px 10px; }
+            .search-group { padding: 0 4px 0 10px; }
+            .search-group input { padding: 8px; font-size: 13px; }
+            .btn-search-trigger { padding: 6px 10px; font-size: 11px; }
             .bottom-nav { display: flex; }
             .btn-add-main { bottom: 100px; right: 20px; padding: 14px 22px; font-size: 14px; }
             .leaflet-bottom.leaflet-right { bottom: 160px !important; }
@@ -200,7 +217,6 @@
             text-align: center; font-size: 13px;
         }
 
-        /* Estilos Popup */
         .pop-card { min-width: 220px; font-family: 'Inter', sans-serif; }
         .pop-title { font-size: 14px; display: block; color: var(--dark-bg); }
         .pop-subtitle { font-size: 12px; color: #64748b; margin-bottom: 10px; display: block; }
@@ -223,7 +239,8 @@
     <div class="top-bar">
         <div class="search-group">
             <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
-            <input type="text" id="q" placeholder="Buscar dirección o titular..." onkeyup="if(event.key==='Enter') buscarLugar()">
+            <input type="text" id="q" placeholder="Buscar..." onkeyup="if(event.key==='Enter') buscarLugar()">
+            <button class="btn-search-trigger" onclick="buscarLugar()">BUSCAR</button>
         </div>
 
         <div class="actions-group">
@@ -559,6 +576,8 @@
                 if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
                 map.flyTo(item.m.getLatLng(), 18);
                 item.m.openPopup();
+            } else {
+                alert("No se encontró ninguna cámara con ese nombre o dirección.");
             }
         }
 

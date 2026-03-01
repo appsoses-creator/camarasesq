@@ -1,309 +1,311 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calculadora DPIE - Profesional</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-dark: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.03);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --primary: #3b82f6;
-            --accent: #8b5cf6;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --text-main: #f8fafc;
-            --text-dim: #94a3b8;
-        }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calculadora DPIE - CÁMARAS 10</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f1138;
+            --card-blue: #1d4ed8;
+            --input-blue: #3b82f6;
+            --btn-grad: linear-gradient(90deg, #7e22ce, #db2777);
+            --text-neon: #4ade80;
+            --danger: #e11d48;
+            --success: #22c55e;
+            --btn-mapa: #1e293b; /* Color oscuro sólido para el botón mapa */
+        }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        body {
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-            background: radial-gradient(circle at top right, #1e293b, #0f172a);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            padding: 20px;
-        }
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* Mejor para scroll en móvil */
+            min-height: 100vh;
+            padding: 15px;
+        }
 
-        .container {
-            width: 100%;
-            max-width: 450px;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
+        .container { 
+            width: 100%; 
+            max-width: 480px; 
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        h1 { 
+            font-size: 22px; 
+            margin: 10px 0 20px; 
+            text-align: center; 
+            letter-spacing: 0.5px;
+        }
 
-        h1 {
-            text-align: center;
-            font-weight: 800;
-            font-size: 26px;
-            letter-spacing: -1px;
-            margin: 10px 0;
-            background: linear-gradient(to bottom, #fff, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+        /* TARJETAS */
+        .card {
+            background: var(--card-blue);
+            border-radius: 20px;
+            padding: 18px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+        }
 
-        /* Estilo de Tarjetas Glass */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 22px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
+        .card-title {
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-        .card-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        #reloj-actual {
+            font-family: 'Courier New', monospace;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-neon);
+            text-align: center;
+        }
 
-        #reloj-actual {
-            font-size: 24px;
-            font-weight: 700;
-            color: var(--primary);
-            text-align: center;
-            font-variant-numeric: tabular-nums;
-        }
+        /* INPUTS - Optimizados para dedos */
+        .input-wrapper {
+            background: var(--input-blue);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
 
-        /* Inputs Modernos */
-        .input-group { margin-bottom: 15px; }
-        
-        .input-field {
-            background: rgba(0,0,0,0.2);
-            border: 1px solid var(--glass-border);
-            border-radius: 14px;
-            padding: 14px;
-            width: 100%;
-            color: white;
-            font-family: inherit;
-            font-size: 16px;
-            outline: none;
-            transition: 0.3s;
-        }
+        input[type="datetime-local"] {
+            background: transparent;
+            border: none;
+            color: white;
+            width: 100%;
+            font-size: 16px; /* Evita zoom automático en iPhone */
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
 
-        .input-field:focus { border-color: var(--primary); background: rgba(0,0,0,0.4); }
+        input::-webkit-calendar-picker-indicator { filter: invert(1); scale: 1.2; }
 
-        /* Botones */
-        .btn-action {
-            width: 100%;
-            padding: 16px;
-            border-radius: 16px;
-            border: none;
-            color: white;
-            font-weight: 700;
-            font-size: 15px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            transition: all 0.2s;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
-        }
+        /* BOTONES */
+        .btn-main {
+            width: 100%;
+            padding: 18px; /* Más grande para móviles */
+            border-radius: 15px;
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: transform 0.1s;
+        }
 
-        .btn-action:active { transform: scale(0.97); opacity: 0.9; }
+        .btn-main:active { transform: scale(0.96); }
 
-        .btn-outline {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            margin-top: 10px;
-        }
+        .btn-calc { background: var(--btn-grad); margin-bottom: 5px; }
+        .btn-download { background: #2563eb; margin-top: 10px; }
+        
+        /* BOTÓN VOLVER AL MAPA (GIGANTE) */
+        .btn-mapa-container {
+            margin-top: 10px;
+            padding-bottom: 30px;
+        }
+        
+        .btn-volver-mapa {
+            background: var(--btn-mapa);
+            border: 2px solid #334155;
+            text-decoration: none;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
 
-        /* RESULTADO (EL COLOR QUE PEDISTE MANTENER) */
-        .result-card {
-            display: none;
-            border-radius: 24px;
-            padding: 20px;
-            animation: slideIn 0.4s ease-out;
-        }
+        /* RESULTADOS */
+        .result-card {
+            display: none;
+            border-radius: 20px;
+            padding: 18px;
+            text-align: left;
+        }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* 2x2 en móviles para mejor lectura */
+            gap: 10px;
+            margin: 15px 0;
+        }
 
-        .result-title {
-            font-weight: 800;
-            font-size: 18px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
+        .time-box {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+        }
 
-        .result-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-        }
+        .time-value { font-size: 20px; font-weight: 800; }
+        .time-label { font-size: 10px; font-weight: 700; opacity: 0.8; }
 
-        .time-item {
-            background: rgba(0,0,0,0.2);
-            padding: 10px 5px;
-            border-radius: 12px;
-            text-align: center;
-        }
+        #seccion-descarga { display: none; background: #161b3d; }
 
-        .time-val { font-size: 20px; font-weight: 800; display: block; }
-        .time-lab { font-size: 9px; font-weight: 600; opacity: 0.7; }
+        .download-result {
+            background: rgba(0,0,0,0.25);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 5px solid var(--text-neon);
+            display: none;
+        }
 
-        /* Sección de Salida de Datos */
-        #seccion-descarga { display: none; }
+        .dvr-time-output {
+            color: var(--text-neon);
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: 700;
+            display: block;
+            margin-top: 5px;
+        }
 
-        .output-box {
-            background: rgba(0,0,0,0.3);
-            border-radius: 14px;
-            padding: 15px;
-            margin-top: 15px;
-            border-left: 4px solid var(--primary);
-            display: none;
-        }
-
-        .output-label { font-size: 10px; color: var(--text-dim); margin-bottom: 4px; }
-        .output-time { color: var(--primary); font-weight: 700; font-family: monospace; font-size: 16px; }
-
-        footer { text-align: center; font-size: 10px; opacity: 0.4; margin: 20px 0; }
-
-    </style>
+        /* MEDIA QUERY PARA TABLETS/DESKTOP */
+        @media (min-width: 400px) {
+            .result-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+    </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Calculadora DPIE</h1>
+    <div class="container">
+        <h1>Calculadora DPIE</h1>
 
-        <div class="glass-card">
-            <div class="card-label"><i class="fa-solid fa-clock"></i> Hora Local</div>
-            <div id="reloj-actual">00:00:00</div>
-        </div>
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-satellite-dish"></i> HORA ACTUAL REAL</div>
+            <div id="reloj-actual">--/--/----, --:--:--</div>
+        </div>
 
-        <div class="glass-card">
-            <div class="card-label"><i class="fa-solid fa-1"></i> Sincronización DVR</div>
-            <div class="input-group">
-                <input type="datetime-local" id="hora-dvr" class="input-field" step="1">
-            </div>
-            <button class="btn-action" onclick="calcularDesfase()">
-                <i class="fa-solid fa-sync"></i> CALCULAR DESFASE
-            </button>
-        </div>
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-1"></i> SINCRONIZAR CON DVR</div>
+            <div class="input-wrapper">
+                <i class="fa-regular fa-clock"></i>
+                <input type="datetime-local" id="hora-dvr" step="1">
+            </div>
+            <button class="btn-main btn-calc" onclick="calcularDesfase()">
+                <i class="fa-solid fa-sync"></i> CALCULAR DESFASAJE
+            </button>
+        </div>
 
-        <div id="resultado" class="result-card">
-            <div class="result-title">
-                <i id="res-icon" class="fa-solid"></i>
-                <span id="res-title"></span>
-            </div>
-            <div class="result-grid">
-                <div class="time-item"><span id="v-dias" class="time-val">0</span><span class="time-lab">DÍAS</span></div>
-                <div class="time-item"><span id="v-horas" class="time-val">0</span><span class="time-lab">HRS</span></div>
-                <div class="time-item"><span id="v-minutos" class="time-val">0</span><span class="time-lab">MIN</span></div>
-                <div class="time-item"><span id="v-segundos" class="time-val">0</span><span class="time-lab">SEG</span></div>
-            </div>
-        </div>
+        <div id="resultado" class="result-card">
+            <div id="res-header" style="display: flex; align-items: center; gap: 10px; font-weight: 800;">
+                <i id="res-icon" class="fa-solid"></i>
+                <span id="res-title"></span>
+            </div>
+            <div class="result-grid">
+                <div class="time-box"><div id="v-dias" class="time-value">0</div><div class="time-label">DÍAS</div></div>
+                <div class="time-box"><div id="v-horas" class="time-value">0</div><div class="time-label">HORAS</div></div>
+                <div class="time-box"><div id="v-minutos" class="time-value">0</div><div class="time-label">MINS</div></div>
+                <div class="time-box"><div id="v-segundos" class="time-value">0</div><div class="time-label">SEGS</div></div>
+            </div>
+        </div>
 
-        <div id="seccion-descarga" class="glass-card">
-            <div class="card-label"><i class="fa-solid fa-2"></i> Convertir Hora Real a DVR</div>
-            <div class="input-group">
-                <div style="font-size: 10px; margin: 0 0 5px 5px; color: var(--text-dim);">DESDE:</div>
-                <input type="datetime-local" id="real-start" class="input-field" step="1">
-            </div>
-            <div class="input-group">
-                <div style="font-size: 10px; margin: 0 0 5px 5px; color: var(--text-dim);">HASTA:</div>
-                <input type="datetime-local" id="real-end" class="input-field" step="1">
-            </div>
-            <button class="btn-action" onclick="obtenerHorasDVR()">
-                <i class="fa-solid fa-search"></i> OBTENER TIEMPO DVR
-            </button>
+        <div id="seccion-descarga" class="card">
+            <div class="card-title"><i class="fa-solid fa-2"></i> RANGO REAL A BUSCAR</div>
+            
+            <div class="input-wrapper"><input type="datetime-local" id="real-start" step="1"></div>
+            <div class="input-wrapper"><input type="datetime-local" id="real-end" step="1"></div>
+            
+            <button class="btn-main btn-download" onclick="obtenerHorasDVR()">
+                <i class="fa-solid fa-magnifying-glass"></i> OBTENER HORAS DVR
+            </button>
 
-            <div id="res-descarga" class="output-box">
-                <div style="margin-bottom: 12px;">
-                    <div class="output-label">INICIO EN DVR:</div>
-                    <div id="out-start" class="output-time"></div>
-                </div>
-                <div>
-                    <div class="output-label">FIN EN DVR:</div>
-                    <div id="out-end" class="output-time"></div>
-                </div>
-            </div>
-        </div>
+            <div id="res-descarga" class="download-result">
+                <div style="text-align: left;">
+                    <div style="margin-bottom: 10px;">
+                        <span style="font-size: 10px; opacity: 0.7;">INICIO DVR:</span>
+                        <span id="out-start" class="dvr-time-output"></span>
+                    </div>
+                    <div>
+                        <span style="font-size: 10px; opacity: 0.7;">FIN DVR:</span>
+                        <span id="out-end" class="dvr-time-output"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <a href="index.html" class="btn-action btn-outline" style="text-decoration: none;">
-            <i class="fa-solid fa-arrow-left"></i> VOLVER AL MAPA
-        </a>
+        <div class="btn-mapa-container">
+            <a href="index.html" class="btn-main btn-volver-mapa">
+                <i class="fa-solid fa-map-location-dot fa-lg"></i> VOLVER AL MAPA
+            </a>
+        </div>
 
-        <footer>Desarrollado por Oses Lisandro</footer>
-    </div>
+        <p style="font-size: 10px; opacity: 0.4; text-align: center;">Desarrollado por Oses Lisandro</p>
+    </div>
 
-    <script>
-        let offsetMs = 0;
+    <script>
+        let offsetMs = 0;
 
-        function actualizarReloj() {
-            const ahora = new Date();
-            document.getElementById('reloj-actual').innerText = ahora.toLocaleString('es-AR', { hour12: false }).replace(',', '');
-        }
-        setInterval(actualizarReloj, 1000);
-        actualizarReloj();
+        function actualizarReloj() {
+            const ahora = new Date();
+            document.getElementById('reloj-actual').innerText = ahora.toLocaleString('es-AR', { hour12: false }).replace(',', '');
+        }
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
 
-        function calcularDesfase() {
-            const valDVR = document.getElementById('hora-dvr').value;
-            if(!valDVR) return;
+        function calcularDesfase() {
+            const valDVR = document.getElementById('hora-dvr').value;
+            if(!valDVR) return alert("Ingresa la hora del DVR");
 
-            const ahora = new Date();
-            const dvr = new Date(valDVR);
-            offsetMs = dvr.getTime() - ahora.getTime();
+            const ahora = new Date();
+            const dvr = new Date(valDVR);
+            offsetMs = dvr.getTime() - ahora.getTime();
 
-            const absDiff = Math.abs(offsetMs);
-            document.getElementById('v-dias').innerText = Math.floor(absDiff / 86400000);
-            document.getElementById('v-horas').innerText = Math.floor((absDiff % 86400000) / 3600000);
-            document.getElementById('v-minutos').innerText = Math.floor((absDiff % 3600000) / 60000);
-            document.getElementById('v-segundos').innerText = Math.floor((absDiff % 60000) / 1000);
+            const absDiff = Math.abs(offsetMs);
+            document.getElementById('v-dias').innerText = Math.floor(absDiff / 86400000);
+            document.getElementById('v-horas').innerText = Math.floor((absDiff % 86400000) / 3600000);
+            document.getElementById('v-minutos').innerText = Math.floor((absDiff % 3600000) / 60000);
+            document.getElementById('v-segundos').innerText = Math.floor((absDiff % 60000) / 1000);
 
-            const res = document.getElementById('resultado');
-            res.style.display = 'block';
-            document.getElementById('seccion-descarga').style.display = 'block';
+            const res = document.getElementById('resultado');
+            res.style.display = 'block';
+            document.getElementById('seccion-descarga').style.display = 'block';
 
-            if(offsetMs < 0) {
-                res.style.background = 'linear-gradient(135deg, #ef4444, #991b1b)';
-                document.getElementById('res-title').innerText = "DVR ATRASADO";
-                document.getElementById('res-icon').className = "fa-solid fa-triangle-exclamation";
-            } else {
-                res.style.background = 'linear-gradient(135deg, #22c55e, #166534)';
-                document.getElementById('res-title').innerText = "DVR ADELANTADO";
-                document.getElementById('res-icon').className = "fa-solid fa-check-circle";
-            }
-            
-            setTimeout(() => { res.scrollIntoView({ behavior: 'smooth' }); }, 300);
-        }
+            if(offsetMs < 0) {
+                res.style.background = 'linear-gradient(135deg, #e11d48, #9f1239)';
+                document.getElementById('res-title').innerText = "DVR ATRASADO";
+                document.getElementById('res-icon').className = "fa-solid fa-circle-exclamation";
+            } else {
+                res.style.background = 'linear-gradient(135deg, #22c55e, #15803d)';
+                document.getElementById('res-title').innerText = "DVR ADELANTADO";
+                document.getElementById('res-icon').className = "fa-solid fa-circle-check";
+            }
+            
+            setTimeout(() => { document.getElementById('seccion-descarga').scrollIntoView({ behavior: 'smooth' }); }, 300);
+        }
 
-        function obtenerHorasDVR() {
-            const s = document.getElementById('real-start').value;
-            const e = document.getElementById('real-end').value;
-            if(!s || !e) return alert("Ingresa el rango real");
+        function obtenerHorasDVR() {
+            const s = document.getElementById('real-start').value;
+            const e = document.getElementById('real-end').value;
+            if(!s || !e) return alert("Completa el rango real");
 
-            const dvrStart = new Date(new Date(s).getTime() + offsetMs);
-            const dvrEnd = new Date(new Date(e).getTime() + offsetMs);
-            const fmt = (d) => d.toLocaleString('es-AR', { hour12: false }).replace(',', '');
-            
-            document.getElementById('out-start').innerText = fmt(dvrStart);
-            document.getElementById('out-end').innerText = fmt(dvrEnd);
-            document.getElementById('res-descarga').style.display = 'block';
-        }
-    </script>
+            const dvrStart = new Date(new Date(s).getTime() + offsetMs);
+            const dvrEnd = new Date(new Date(e).getTime() + offsetMs);
+            const fmt = (d) => d.toLocaleString('es-AR', { hour12: false }).replace(',', '');
+            
+            document.getElementById('out-start').innerText = fmt(dvrStart);
+            document.getElementById('out-end').innerText = fmt(dvrEnd);
+            document.getElementById('res-descarga').style.display = 'block';
+        }
+    </script>
 </body>
 </html>

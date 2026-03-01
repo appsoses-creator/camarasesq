@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPIE 37</title>
+    <title>DPIE</title>
     
     <script>
         (function() {
@@ -49,7 +49,6 @@
 
         #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
 
-        /* --- PIN CENTRAL Y BOTÓN CONFIRMAR --- */
         .center-pin {
             display: none;
             position: fixed;
@@ -80,7 +79,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* NAVBAR SUPERIOR */
         .top-bar {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             z-index: 1000; width: 92%; max-width: 1200px;
@@ -129,7 +127,6 @@
         }
         .btn-logout:hover { background: var(--danger); color: white; }
 
-        /* BOTÓN FLOTANTE NUEVA CÁMARA */
         .btn-add-main { 
             position: fixed; bottom: 30px; right: 30px; z-index: 1000; 
             background: var(--dark-bg); color: white; border: none; 
@@ -138,7 +135,6 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
         }
 
-        /* BOTTOM BAR FLOTANTE MÓVIL */
         .bottom-nav {
             display: none;
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -167,7 +163,6 @@
             .leaflet-bottom.leaflet-right { bottom: 160px !important; }
         }
 
-        /* MODALES */
         .modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             z-index: 2001; background: white; width: 90%; max-width: 440px; 
@@ -175,7 +170,6 @@
             max-height: 85vh; overflow-y: auto;
         }
 
-        /* BOTÓN CERRAR SUPERIOR DERECHA */
         .btn-modal-close {
             position: absolute; top: 20px; right: 20px;
             background: #f1f5f9; color: #64748b; border: none;
@@ -205,6 +199,15 @@
             border-radius: 50px; font-weight: 700; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
             text-align: center; font-size: 13px;
         }
+
+        /* Estilos Popup */
+        .pop-card { min-width: 220px; font-family: 'Inter', sans-serif; }
+        .pop-title { font-size: 14px; display: block; color: var(--dark-bg); }
+        .pop-subtitle { font-size: 12px; color: #64748b; margin-bottom: 10px; display: block; }
+        .pop-info { font-size: 11px; margin-bottom: 4px; display: flex; align-items: flex-start; gap: 8px; }
+        .pop-info i { margin-top: 3px; width: 12px; text-align: center; color: var(--primary); }
+        .pop-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; }
+        .pop-btn { background: none; border: none; font-weight: 700; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 5px; }
     </style>
 </head>
 <body>
@@ -387,7 +390,7 @@
                     });
                     const marker = L.marker(latlng, { icon }).addTo(map);
                     
-                    const btnEliminarHtml = rolUsuario === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}')"><i class="fa-solid fa-trash"></i> Eliminar</button>` : '';
+                    const btnEliminarHtml = rolUsuario === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}', '${c.DIRECCION}')"><i class="fa-solid fa-trash"></i> Eliminar</button>` : '';
 
                     let dvrUserDisplay = '-';
                     let obsDisplay = '-';
@@ -451,6 +454,18 @@
             btn.disabled = false; btn.innerText = "Guardar en Base de Datos";
         }
 
+        async function eliminar(id, direccion) {
+            if (!confirm(`¿Estás seguro de eliminar la cámara en ${direccion}?`)) return;
+            const userSession = JSON.parse(localStorage.getItem('user_session'));
+            const { error } = await _client.from('cameras').delete().eq('id', id);
+            if (!error) {
+                await registrarLog(userSession.usuario, 'ELIMINO', direccion);
+                load();
+            } else {
+                alert("Error al eliminar: " + error.message);
+            }
+        }
+
         function activarModoSeleccion() {
             seleccionando = true;
             document.getElementById('pin-central').style.display = 'block';
@@ -511,6 +526,11 @@
             }
             document.getElementById('form-title').innerText = "Editar Cámara";
             document.getElementById('form').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+        }
+
+        function abrirModalClave() {
+            document.getElementById('modal-clave').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
         }
 

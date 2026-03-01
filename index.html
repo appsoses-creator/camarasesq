@@ -49,6 +49,37 @@
 
         #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
 
+        /* --- NUEVO: PIN CENTRAL Y BOTÓN CONFIRMAR --- */
+        .center-pin {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            z-index: 2000;
+            pointer-events: none; /* Importante para poder mover el mapa */
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+
+        #btn-confirmar-pin {
+            display: none;
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 14px;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
         /* NAVBAR SUPERIOR */
         .top-bar {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
@@ -107,7 +138,7 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
         }
 
-        /* BOTTOM BAR FLOTANTE MÓVIL (MODIFICADA A DARK) */
+        /* BOTTOM BAR FLOTANTE MÓVIL */
         .bottom-nav {
             display: none;
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -158,30 +189,23 @@
             background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); z-index: 2000; 
         }
 
-        /* POPUP MAPA PERSONALIZADO */
-        .pop-card { min-width: 220px; padding: 5px; }
-        .pop-header { border-bottom: 1px solid #eee; margin-bottom: 10px; padding-bottom: 5px; }
-        .pop-title { display: block; font-size: 14px; color: var(--primary); }
-        .pop-subtitle { font-size: 12px; color: #64748b; }
-        .pop-body { display: flex; flex-direction: column; gap: 6px; }
-        .pop-info { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-        .pop-info i { width: 14px; color: #94a3b8; }
-        .pop-footer { margin-top: 15px; display: flex; gap: 10px; border-top: 1px solid #eee; padding-top: 10px; }
-        .pop-btn { flex: 1; border: none; background: #f1f5f9; padding: 8px; border-radius: 6px; font-weight: 700; font-size: 11px; cursor: pointer; }
-
         #instruccion { 
             display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); 
             z-index: 2000; background: var(--primary); color: white; padding: 12px 25px; 
             border-radius: 50px; font-weight: 700; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            animation: bounce 2s infinite;
+            text-align: center; font-size: 13px;
         }
-        @keyframes bounce { 0%, 100% { top: 100px; } 50% { top: 110px; } }
-        .crosshair { cursor: crosshair !important; }
     </style>
 </head>
 <body>
 
-    <div id="instruccion"><i class="fa-solid fa-location-dot"></i> Haz clic en el mapa para situar la cámara</div>
+    <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" class="center-pin" id="pin-central" width="45">
+    
+    <button id="btn-confirmar-pin" onclick="confirmarPosicionPin()">
+        <i class="fa-solid fa-check"></i> CONFIRMAR UBICACIÓN
+    </button>
+
+    <div id="instruccion"><i class="fa-solid fa-arrows-up-down-left-right"></i> Mueve el mapa hasta situar el pin</div>
 
     <div class="top-bar">
         <div class="search-group">
@@ -294,13 +318,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // Configuración Supabase
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        // Variables Globales
-        let items = [], seleccionando = false, tempMarker = null, marcadorBusqueda = null;
+        let items = [], seleccionando = false, marcadorBusqueda = null;
 
-        // Inicializar Mapa
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
         const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm], zoomControl: false });
@@ -308,7 +329,6 @@
         L.control.zoom({ position: 'bottomright' }).addTo(map);
         L.control.layers({ "Calles": osm, "Satélite": satellite }, null, { position: 'bottomright' }).addTo(map);
 
-        // --- Funciones de Sesión ---
         function verificarPrivilegios() {
             const session = localStorage.getItem('user_session');
             if (session) {
@@ -326,36 +346,25 @@
 
         function logout() { localStorage.removeItem('user_session'); window.location.replace('login.html'); }
 
-        // --- Navegación ---
         function irA(coords, btnId) { 
             if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
             map.flyTo(coords, 15); 
-            
             document.querySelectorAll('.btn-city').forEach(p => p.classList.remove('active'));
             const btn = document.getElementById(btnId);
             if(btn) btn.classList.add('active');
-
-            document.querySelectorAll('.nav-item').forEach(p => p.classList.remove('active'));
-            const mBtnId = btnId === 'btn-esquel' ? 'm-btn-esquel' : 'm-btn-trevelin';
-            const mBtn = document.getElementById(mBtnId);
-            if(mBtn) mBtn.classList.add('active');
         }
 
-        // --- CRUD Cámaras ---
         async function load() {
             const user = verificarPrivilegios();
             const rolUsuario = user?.rol;
-            
             items.forEach(i => map.removeLayer(i.m));
             items = [];
-
             const { data, error } = await _client.from('cameras').select('*');
             if (error) return;
 
             data?.forEach(c => {
                 const latlng = c.UBICACION?.split(',').map(parseFloat);
                 if (latlng && latlng.length === 2 && !isNaN(latlng[0])) {
-                    
                     let color = '#10b981'; 
                     if(c.TIPO === 'CENTRO DE MONITOREO') color = '#2563eb';
                     else if(c.TIPO === 'PRIVADAS') color = '#0f172a';
@@ -365,8 +374,8 @@
                         html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`,
                         iconSize: [30, 30], iconAnchor: [15, 15]
                     });
-
                     const marker = L.marker(latlng, { icon }).addTo(map);
+                    
                     const btnEliminarHtml = rolUsuario === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}')"><i class="fa-solid fa-trash"></i> Eliminar</button>` : '';
 
                     let dvrUserDisplay = '-';
@@ -408,7 +417,6 @@
         async function enviar() {
             const id = document.getElementById('edit-id').value;
             const userSession = JSON.parse(localStorage.getItem('user_session'));
-            
             const cam = { 
                 "DIRECCION": document.getElementById('d').value, 
                 "UBICACION": document.getElementById('u').value,
@@ -421,34 +429,72 @@
                 "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 7,
                 "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
             };
-
             const btn = document.getElementById('btn-submit-camera');
             btn.disabled = true; btn.innerText = "Guardando...";
-
-            let res;
-            if(id) {
-                res = await _client.from('cameras').update(cam).eq('id', id);
-            } else {
-                res = await _client.from('cameras').insert([cam]);
-            }
-
+            let res = id ? await _client.from('cameras').update(cam).eq('id', id) : await _client.from('cameras').insert([cam]);
             if (!res.error) { 
                 await registrarLog(userSession.usuario, id ? 'EDITO' : 'CREO', cam.DIRECCION);
                 cerrarTodo(); 
                 load(); 
-            } else {
-                alert("Error al guardar: " + res.error.message);
-            }
+            } else alert("Error: " + res.error.message);
             btn.disabled = false; btn.innerText = "Guardar en Base de Datos";
         }
 
-        async function eliminar(id) {
-            if(!confirm("¿Deseas eliminar permanentemente esta cámara?")) return;
-            const { error } = await _client.from('cameras').delete().eq('id', id);
-            if(!error) load();
+        // --- LÓGICA DE SELECCIÓN CON PIN ---
+
+        function activarModoSeleccion() {
+            seleccionando = true;
+            document.getElementById('pin-central').style.display = 'block';
+            document.getElementById('btn-confirmar-pin').style.display = 'block';
+            document.getElementById('instruccion').style.display = 'block';
+            document.getElementById('main-btn').style.display = 'none';
+            // Ocultar nav inferior para liberar espacio en móvil
+            document.querySelector('.bottom-nav').style.display = 'none';
         }
 
-        // --- Modos de UI ---
+        function confirmarPosicionPin() {
+            // Captura el centro exacto del mapa
+            const centro = map.getCenter();
+            
+            // Limpiar formulario
+            document.getElementById('edit-id').value = "";
+            document.getElementById('d').value = "";
+            document.getElementById('n').value = "";
+            document.getElementById('t').value = ""; 
+            document.getElementById('tel').value = "";
+            document.getElementById('sis').value = "";
+            document.getElementById('usu').value = "";
+            document.getElementById('pas').value = "";
+            document.getElementById('ot').value = "";
+            
+            // Asignar coordenadas al campo
+            document.getElementById('u').value = `${centro.lat.toFixed(6)}, ${centro.lng.toFixed(6)}`;
+            
+            // Mostrar formulario
+            document.getElementById('form').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+            
+            // Ocultar UI de selección
+            document.getElementById('pin-central').style.display = 'none';
+            document.getElementById('btn-confirmar-pin').style.display = 'none';
+        }
+
+        function cerrarTodo() {
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+            document.getElementById('blur').style.display = 'none';
+            document.getElementById('main-btn').style.display = 'flex';
+            document.getElementById('instruccion').style.display = 'none';
+            document.getElementById('pin-central').style.display = 'none';
+            document.getElementById('btn-confirmar-pin').style.display = 'none';
+            document.getElementById('form-title').innerText = "Detalles Técnicos";
+            
+            // Restaurar nav si es móvil
+            if (window.innerWidth <= 768) {
+                document.querySelector('.bottom-nav').style.display = 'flex';
+            }
+            seleccionando = false;
+        }
+
         function abrirEditar(id) {
             const cam = items.find(i => i.id == id).data;
             document.getElementById('edit-id').value = cam.id;
@@ -461,62 +507,13 @@
             document.getElementById('sis').value = cam.sistema || "";
             document.getElementById('pas').value = cam.clave || "";
             document.getElementById('alm').value = cam.dias_almacenamiento || 7;
-            
             if(cam.otros_datos) {
                 const parts = cam.otros_datos.split('|');
                 document.getElementById('usu').value = parts[0] ? parts[0].replace('User DVR: ', '').trim() : "";
                 document.getElementById('ot').value = parts[1] ? parts[1].trim() : "";
             }
-
             document.getElementById('form-title').innerText = "Editar Cámara";
             document.getElementById('form').style.display = 'block';
-            document.getElementById('blur').style.display = 'block';
-        }
-
-        function activarModoSeleccion() {
-            seleccionando = true;
-            document.getElementById('map').classList.add('crosshair');
-            document.getElementById('instruccion').style.display = 'block';
-            document.getElementById('main-btn').style.display = 'none';
-        }
-
-        map.on('click', (e) => {
-            if (!seleccionando) return;
-            
-            document.getElementById('edit-id').value = "";
-            document.getElementById('d').value = "";
-            document.getElementById('n').value = "";
-            document.getElementById('t').value = ""; 
-            document.getElementById('tel').value = "";
-            document.getElementById('sis').value = "";
-            document.getElementById('usu').value = "";
-            document.getElementById('pas').value = "";
-            document.getElementById('ot').value = "";
-            
-            document.getElementById('u').value = `${e.latlng.lat.toFixed(6)}, ${e.latlng.lng.toFixed(6)}`;
-            
-            if (tempMarker) map.removeLayer(tempMarker);
-            tempMarker = L.marker(e.latlng).addTo(map);
-            
-            document.getElementById('form').style.display = 'block';
-            document.getElementById('blur').style.display = 'block';
-        });
-
-        function cerrarTodo() {
-            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-            document.getElementById('blur').style.display = 'none';
-            document.getElementById('main-btn').style.display = 'flex';
-            document.getElementById('instruccion').style.display = 'none';
-            document.getElementById('map').classList.remove('crosshair');
-            document.getElementById('form-title').innerText = "Detalles Técnicos";
-            if (tempMarker) map.removeLayer(tempMarker);
-            seleccionando = false;
-        }
-
-        function abrirModalClave() {
-            document.getElementById('pass-nueva').value = '';
-            document.getElementById('pass-confirma').value = '';
-            document.getElementById('modal-clave').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
         }
 
@@ -524,18 +521,13 @@
             const n1 = document.getElementById('pass-nueva').value.trim();
             const n2 = document.getElementById('pass-confirma').value.trim();
             const user = verificarPrivilegios();
-            if (!n1 || n1.length < 4) return alert("Mínimo 4 caracteres.");
-            if (n1 !== n2) return alert("No coinciden.");
-            
-            const btn = document.getElementById('btn-confirmar-clave');
-            btn.disabled = true; btn.innerText = "Actualizando...";
+            if (n1.length < 4 || n1 !== n2) return alert("Error en los datos.");
             const { error } = await _client.from('usuarios').update({ clave: n1 }).eq('usuario', user.usuario);
             if (!error) {
                 await registrarLog(user.usuario, 'CAMBIO CLAVE', 'Actualizó contraseña');
-                alert("✅ Contraseña actualizada correctamente");
+                alert("✅ Contraseña actualizada");
                 cerrarTodo();
             }
-            btn.disabled = false; btn.innerText = "Guardar Cambios";
         }
 
         async function registrarLog(usuario, accion, detalle) {
@@ -545,26 +537,11 @@
         async function buscarLugar() {
             const q = document.getElementById('q').value.toLowerCase().trim();
             if (!q) return;
-
             const item = items.find(i => i.info.includes(q));
             if (item) {
                 if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
                 map.flyTo(item.m.getLatLng(), 18);
                 item.m.openPopup();
-            } else {
-                const esEsquel = document.getElementById('btn-esquel').classList.contains('active');
-                const ciudadBusqueda = esEsquel ? "Esquel, Chubut, Argentina" : "Trevelin, Chubut, Argentina";
-                try {
-                    const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ", " + ciudadBusqueda)}&limit=1`);
-                    const data = await resp.json();
-                    if (data.length > 0) {
-                        const coords = [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-                        if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
-                        marcadorBusqueda = L.circleMarker(coords, { radius: 10, color: '#64748b' }).addTo(map)
-                            .bindPopup(`<b>Dirección:</b><br>${data[0].display_name.split(',')[0]}`).openPopup();
-                        map.flyTo(coords, 17);
-                    }
-                } catch (e) { console.error(e); }
             }
         }
 

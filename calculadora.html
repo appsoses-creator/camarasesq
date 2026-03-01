@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calculadora DPIE </title>
+    <title>Calculadora DPIE - CÁMARAS 10</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #121212;         /* Gris casi negro */
-            --card-gray: #1e1e1e;       /* Gris oscuro para tarjetas */
-            --input-gray: #2d2d2d;      /* Gris para los campos */
+            --bg-dark: #121212;
+            --card-gray: #1e1e1e;
+            --input-gray: #2d2d2d;
             --border-soft: #333333;
-            --btn-grad: linear-gradient(90deg, #4f46e5, #7c3aed); /* Un degradado más sobrio */
+            --btn-grad: linear-gradient(90deg, #4f46e5, #7c3aed);
             --text-neon: #4ade80;
             --danger: #e11d48;
             --success: #22c55e;
@@ -50,7 +50,6 @@
             color: white;
         }
 
-        /* TARJETAS */
         .card {
             background: var(--card-gray);
             border-radius: 20px;
@@ -78,7 +77,6 @@
             text-align: center;
         }
 
-        /* INPUTS */
         .input-wrapper {
             background: var(--input-gray);
             border-radius: 12px;
@@ -102,7 +100,6 @@
 
         input::-webkit-calendar-picker-indicator { filter: invert(0.8); }
 
-        /* BOTONES */
         .btn-main {
             width: 100%;
             padding: 18px;
@@ -120,28 +117,16 @@
         }
 
         .btn-main:active { transform: scale(0.96); }
-
         .btn-calc { background: var(--btn-grad); margin-bottom: 5px; }
         .btn-download { background: #374151; margin-top: 10px; border: 1px solid #4b5563; }
         
-        /* BOTÓN VOLVER */
-        .btn-mapa-container {
-            margin-top: 10px;
-            padding-bottom: 30px;
-        }
-        
-        .btn-volver-mapa {
-            background: var(--btn-mapa);
-            border: 1px solid #404040;
-            text-decoration: none;
-        }
+        .btn-mapa-container { margin-top: 10px; padding-bottom: 30px; }
+        .btn-volver-mapa { background: var(--btn-mapa); border: 1px solid #404040; text-decoration: none; }
 
-        /* RESULTADOS */
         .result-card {
             display: none;
             border-radius: 20px;
             padding: 18px;
-            text-align: left;
         }
 
         .result-grid {
@@ -162,8 +147,6 @@
         .time-value { font-size: 22px; font-weight: 800; }
         .time-label { font-size: 10px; font-weight: 700; opacity: 0.6; }
 
-        #seccion-descarga { display: none; }
-
         .download-result {
             background: rgba(0,0,0,0.4);
             border-radius: 12px;
@@ -180,6 +163,16 @@
             font-weight: 700;
             display: block;
             margin-top: 5px;
+        }
+
+        /* ESTILO DE LA LEYENDA SOLICITADA */
+        .leyenda-rango {
+            margin-top: 15px;
+            font-size: 13px;
+            font-style: italic;
+            line-height: 1.4;
+            color: #d1d5db;
+            text-align: center;
         }
 
         @media (min-width: 400px) {
@@ -221,7 +214,7 @@
             </div>
         </div>
 
-        <div id="seccion-descarga" class="card">
+        <div id="seccion-descarga" class="card" style="display:none;">
             <div class="card-title"><i class="fa-solid fa-2"></i> RANGO REAL A BUSCAR</div>
             
             <div class="input-wrapper"><input type="datetime-local" id="real-start" step="1"></div>
@@ -232,7 +225,7 @@
             </button>
 
             <div id="res-descarga" class="download-result">
-                <div style="text-align: left;">
+                <div>
                     <div style="margin-bottom: 10px;">
                         <span style="font-size: 10px; opacity: 0.7;">INICIO DVR:</span>
                         <span id="out-start" class="dvr-time-output"></span>
@@ -242,6 +235,7 @@
                         <span id="out-end" class="dvr-time-output"></span>
                     </div>
                 </div>
+                <div id="leyenda-texto" class="leyenda-rango"></div>
             </div>
         </div>
 
@@ -282,7 +276,6 @@
             res.style.display = 'block';
             document.getElementById('seccion-descarga').style.display = 'block';
 
-            // Mantenemos los colores originales para los estados
             if(offsetMs < 0) {
                 res.style.background = 'linear-gradient(135deg, #e11d48, #9f1239)';
                 document.getElementById('res-title').innerText = "DVR ATRASADO";
@@ -307,6 +300,18 @@
             
             document.getElementById('out-start').innerText = fmt(dvrStart);
             document.getElementById('out-end').innerText = fmt(dvrEnd);
+
+            // CÁLCULO DE LA LEYENDA DINÁMICA
+            const absDiff = Math.abs(offsetMs);
+            const d = Math.floor(absDiff / 86400000);
+            const h = Math.floor((absDiff % 86400000) / 3600000);
+            const m = Math.floor((absDiff % 3600000) / 60000);
+            const seg = Math.floor((absDiff % 60000) / 1000);
+            const tipo = offsetMs < 0 ? "(atrasado)" : "(adelantado)";
+
+            const leyenda = `Cubre perfectamente tu rango real de ${fmt(new Date(s))} a ${fmt(new Date(e))} + ${d}d ${h}h ${m}m ${seg}s ${tipo}.`;
+            
+            document.getElementById('leyenda-texto').innerText = leyenda;
             document.getElementById('res-descarga').style.display = 'block';
         }
     </script>

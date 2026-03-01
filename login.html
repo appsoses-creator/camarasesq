@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DPIE - Acceso al Sistema</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -11,18 +11,21 @@
 
     <style>
         :root {
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg-dark: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.05);
-            --glass-border: rgba(255, 255, 255, 0.1);
+            --primary: #6366f1; /* Indigo moderno */
+            --primary-hover: #4f46e5;
+            --bg-dark: #0a0a0a; /* Negro profundo */
+            --card-bg: #161616; /* Gris carbón */
+            --input-bg: #1e1e1e;
+            --border: #262626;
+            --text-dim: #94a3b8;
         }
 
         body { 
             margin: 0; 
             font-family: 'Inter', sans-serif; 
             background: var(--bg-dark);
-            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+            /* Sutil degradado de profundidad */
+            background: radial-gradient(circle at center, #111111 0%, #050505 100%);
             display: flex; 
             align-items: center; 
             justify-content: center; 
@@ -30,87 +33,97 @@
             overflow: hidden;
         }
 
-        /* Elementos decorativos */
-        .shape {
+        /* Luces ambientales de fondo */
+        .ambient-light {
             position: absolute;
-            filter: blur(80px);
-            z-index: -1;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
             border-radius: 50%;
+            z-index: -1;
+            filter: blur(40px);
         }
-        .shape-1 { width: 300px; height: 300px; background: rgba(37, 99, 235, 0.15); top: -100px; right: -50px; }
-        .shape-2 { width: 250px; height: 250px; background: rgba(30, 41, 59, 0.5); bottom: -50px; left: -50px; }
+        .light-1 { top: -100px; right: -50px; }
+        .light-2 { bottom: -100px; left: -50px; }
 
         .login-card { 
-            background: var(--glass-bg); 
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            padding: 50px 40px; 
-            border-radius: 28px; 
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); 
+            background: var(--card-bg); 
+            padding: 45px 35px; 
+            border-radius: 24px; 
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); 
             width: 90%; 
-            max-width: 420px; 
+            max-width: 380px; 
             text-align: center;
-            animation: fadeIn 0.8s ease-out;
-            box-sizing: border-box; /* Asegura que el padding no rompa el ancho */
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            box-sizing: border-box;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .logo-area {
-            background: var(--primary);
-            width: 70px;
-            height: 70px;
-            border-radius: 20px;
+            background: linear-gradient(135deg, var(--primary), #8b5cf6);
+            width: 65px;
+            height: 65px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 25px;
             color: white;
-            font-size: 28px;
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+            font-size: 26px;
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
         }
 
         h2 { 
             color: white; 
             margin: 0 0 8px 0; 
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             letter-spacing: -0.5px;
-            text-transform: uppercase;
         }
 
-        p {
-            color: #94a3b8;
-            font-size: 16px;
+        p.subtitle {
+            color: var(--text-dim);
+            font-size: 14px;
             margin-bottom: 35px;
             font-weight: 400;
         }
 
         .input-group {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            margin-left: 4px;
+            text-transform: uppercase;
         }
 
         .input-group i {
             position: absolute;
-            left: 18px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #64748b;
+            left: 16px;
+            bottom: 16px;
+            color: #4b5563;
             transition: 0.3s;
-            font-size: 18px;
+            font-size: 16px;
         }
 
         input { 
             width: 100%; 
-            padding: 16px 16px 16px 52px; 
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--glass-border);
-            border-radius: 14px; 
+            padding: 14px 16px 14px 48px; 
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px; 
             box-sizing: border-box; 
             outline: none; 
             font-size: 15px;
@@ -119,9 +132,9 @@
         }
 
         input:focus {
-            background: rgba(255, 255, 255, 0.08);
             border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15);
+            background: #252525;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
         input:focus + i { color: var(--primary); }
@@ -132,104 +145,94 @@
             background: var(--primary); 
             color: white; 
             border: none; 
-            border-radius: 14px; 
+            border-radius: 12px; 
             font-weight: 700; 
-            font-size: 16px;
+            font-size: 15px;
             cursor: pointer; 
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-            margin-top: 10px;
+            transition: all 0.2s ease; 
+            margin-top: 15px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
+            gap: 10px;
         }
 
         button:hover { 
             background: var(--primary-hover); 
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
         }
 
+        button:active { transform: translateY(0); }
+
         button:disabled {
-            background: #334155;
-            color: #64748b;
+            background: #262626;
+            color: #525252;
             cursor: not-allowed;
         }
 
         #error-msg { 
             color: #fb7185; 
-            font-size: 14px; 
+            font-size: 13px; 
             margin-top: 20px; 
             font-weight: 500;
-            padding: 10px;
-            border-radius: 8px;
+            padding: 12px;
+            border-radius: 10px;
             display: none;
             background: rgba(251, 113, 133, 0.1);
+            border: 1px solid rgba(251, 113, 133, 0.2);
         }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-8px); }
-            75% { transform: translateX(8px); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
         }
 
-        /* AJUSTES PARA CELULAR (Sin modificar la estructura original) */
         @media (max-width: 480px) {
-            body {
-                padding: 20px;
-            }
-            .login-card {
-                padding: 35px 25px; /* Menos espacio interno en móvil */
-                border-radius: 20px;
-            }
-            h2 {
-                font-size: 19px; /* Texto un poco más pequeño para que no se rompa */
-            }
-            p {
-                font-size: 14px;
-                margin-bottom: 25px;
-            }
-            .logo-area {
-                width: 60px;
-                height: 60px;
-                font-size: 24px;
-                margin-bottom: 20px;
-            }
+            .login-card { padding: 35px 25px; }
+            h2 { font-size: 18px; }
         }
     </style>
 </head>
 <body>
 
-    <div class="shape shape-1"></div>
-    <div class="shape shape-2"></div>
+    <div class="ambient-light light-1"></div>
+    <div class="ambient-light light-2"></div>
 
     <div class="login-card">
         <div class="logo-area">
-            <i class="fa-solid fa-tower-observation"></i>
+            <i class="fa-solid fa-shield-halved"></i>
         </div>
-        <h2>CÁMARAS DE SEGURIDAD DPIE</h2>
-        <p>Esquel y Trevelin</p>
+        <h2>SISTEMA DPIE</h2>
+        <p class="subtitle">Monitoreo Esquel y Trevelin</p>
 
         <div class="input-group">
-            <input type="text" id="user" placeholder="Nombre de usuario" autocomplete="off">
-            <i class="fa-solid fa-user-shield"></i>
+            <label>Usuario</label>
+            <input type="text" id="user" placeholder="nombre.apellido" autocomplete="off">
+            <i class="fa-solid fa-user"></i>
         </div>
 
         <div class="input-group">
-            <input type="password" id="pass" placeholder="Contraseña">
+            <label>Contraseña</label>
+            <input type="password" id="pass" placeholder="••••••••">
             <i class="fa-solid fa-lock"></i>
         </div>
 
         <button id="login-btn" onclick="intentarLogin()">
-            Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>
+            Acceder <i class="fa-solid fa-chevron-right"></i>
         </button>
 
         <div id="error-msg"></div>
     </div>
 
     <script>
+        // Configuración Supabase
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
+        // Check Sesión
         (function() {
             const session = localStorage.getItem('user_session');
             try {
@@ -251,12 +254,12 @@
             const errorDiv = document.getElementById('error-msg');
 
             if (!u || !p) {
-                showError("⚠️ Complete todos los campos");
+                showError("⚠️ Ingresa tus credenciales");
                 return;
             }
 
             btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Verificando...';
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Autenticando...';
             errorDiv.style.display = "none";
 
             try {
@@ -268,9 +271,9 @@
                     .single();
 
                 if (error || !data) {
-                    showError("❌ Credenciales no válidas");
+                    showError("❌ Credenciales incorrectas");
                     btn.disabled = false;
-                    btn.innerHTML = 'Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>';
+                    btn.innerHTML = 'Acceder <i class="fa-solid fa-chevron-right"></i>';
                 } else {
                     const now = new Date().toISOString();
                     await _client
@@ -289,9 +292,9 @@
                     window.location.replace('index.html');
                 }
             } catch (err) {
-                showError("📡 Error de conexión con el servidor");
+                showError("📡 Error de conexión");
                 btn.disabled = false;
-                btn.innerHTML = 'Ingresar al Sistema <i class="fa-solid fa-arrow-right-to-bracket"></i>';
+                btn.innerHTML = 'Acceder <i class="fa-solid fa-chevron-right"></i>';
             }
         }
 

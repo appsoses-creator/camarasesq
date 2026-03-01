@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPIE 47</title>
+    <title>DPIE 37</title>
     
     <script>
         (function() {
@@ -49,7 +49,7 @@
 
         #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
 
-        /* --- NUEVO: PIN CENTRAL Y BOTÓN CONFIRMAR --- */
+        /* --- PIN CENTRAL Y BOTÓN CONFIRMAR --- */
         .center-pin {
             display: none;
             position: fixed;
@@ -57,7 +57,7 @@
             left: 50%;
             transform: translate(-50%, -100%);
             z-index: 2000;
-            pointer-events: none; /* Importante para poder mover el mapa */
+            pointer-events: none;
             filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
         }
 
@@ -174,6 +174,16 @@
             border-radius: 24px; padding: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
             max-height: 85vh; overflow-y: auto;
         }
+
+        /* BOTÓN CERRAR SUPERIOR DERECHA */
+        .btn-modal-close {
+            position: absolute; top: 20px; right: 20px;
+            background: #f1f5f9; color: #64748b; border: none;
+            padding: 8px 15px; border-radius: 10px; font-weight: 700;
+            font-size: 12px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-modal-close:hover { background: #fee2e2; color: var(--danger); }
+
         .modal h3 { font-weight: 800; color: var(--dark-bg); font-size: 20px; margin-bottom: 20px; }
         .modal label { font-size: 12px; font-weight: 700; color: #64748b; display: block; margin-top: 12px; margin-bottom: 4px; }
         .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; box-sizing: border-box; }
@@ -261,16 +271,17 @@
     <div class="overlay" id="blur" onclick="cerrarTodo()"></div>
     
     <div class="modal" id="modal-clave">
+        <button class="btn-modal-close" onclick="cerrarTodo()">Cancelar</button>
         <h3>Actualizar Contraseña</h3>
         <label>Nueva Contraseña</label>
         <input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres">
         <label>Confirmar Contraseña</label>
         <input type="password" id="pass-confirma" placeholder="Repite la contraseña">
         <button class="btn-save" id="btn-confirmar-clave" onclick="actualizarMiClave()">Guardar Cambios</button>
-        <button style="width:100%; background:none; border:none; color:#94a3b8; margin-top:15px; cursor:pointer; font-weight:600" onclick="cerrarTodo()">Cancelar</button>
     </div>
 
     <div class="modal" id="form">
+        <button class="btn-modal-close" onclick="cerrarTodo()">Cancelar</button>
         <h3 id="form-title">Detalles Técnicos</h3>
         <input type="hidden" id="edit-id">
         <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
@@ -440,23 +451,17 @@
             btn.disabled = false; btn.innerText = "Guardar en Base de Datos";
         }
 
-        // --- LÓGICA DE SELECCIÓN CON PIN ---
-
         function activarModoSeleccion() {
             seleccionando = true;
             document.getElementById('pin-central').style.display = 'block';
             document.getElementById('btn-confirmar-pin').style.display = 'block';
             document.getElementById('instruccion').style.display = 'block';
             document.getElementById('main-btn').style.display = 'none';
-            // Ocultar nav inferior para liberar espacio en móvil
             document.querySelector('.bottom-nav').style.display = 'none';
         }
 
         function confirmarPosicionPin() {
-            // Captura el centro exacto del mapa
             const centro = map.getCenter();
-            
-            // Limpiar formulario
             document.getElementById('edit-id').value = "";
             document.getElementById('d').value = "";
             document.getElementById('n').value = "";
@@ -466,15 +471,9 @@
             document.getElementById('usu').value = "";
             document.getElementById('pas').value = "";
             document.getElementById('ot').value = "";
-            
-            // Asignar coordenadas al campo
             document.getElementById('u').value = `${centro.lat.toFixed(6)}, ${centro.lng.toFixed(6)}`;
-            
-            // Mostrar formulario
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
-            
-            // Ocultar UI de selección
             document.getElementById('pin-central').style.display = 'none';
             document.getElementById('btn-confirmar-pin').style.display = 'none';
         }
@@ -487,8 +486,6 @@
             document.getElementById('pin-central').style.display = 'none';
             document.getElementById('btn-confirmar-pin').style.display = 'none';
             document.getElementById('form-title').innerText = "Detalles Técnicos";
-            
-            // Restaurar nav si es móvil
             if (window.innerWidth <= 768) {
                 document.querySelector('.bottom-nav').style.display = 'flex';
             }

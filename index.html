@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DPIE 5</title>
+    <title>DPIE 7</title>
     
     <script>
         (function() {
@@ -107,26 +107,26 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
         }
 
-        /* BOTTOM BAR FLOTANTE MÓVIL */
+        /* BOTTOM BAR FLOTANTE MÓVIL (MODIFICADA A DARK) */
         .bottom-nav {
             display: none;
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 92%; max-width: 500px;
-            background: rgba(255, 255, 255, 0.85); 
+            background: var(--dark-bg); 
             backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             z-index: 1001; padding: 10px; justify-content: space-around;
-            border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
 
         .nav-item {
             display: flex; flex-direction: column; align-items: center;
-            gap: 4px; color: #64748b; font-size: 11px; font-weight: 600;
+            gap: 4px; color: #94a3b8; font-size: 11px; font-weight: 600;
             text-decoration: none; border: none; background: none; cursor: pointer;
             transition: all 0.3s ease; padding: 8px 12px; border-radius: 15px;
         }
         .nav-item i { font-size: 18px; }
-        .nav-item.active { color: var(--primary); background: rgba(37, 99, 235, 0.08); }
+        .nav-item.active { color: white; background: rgba(255, 255, 255, 0.1); }
 
         @media (max-width: 768px) {
             .actions-group { display: none; }
@@ -483,7 +483,6 @@
         map.on('click', (e) => {
             if (!seleccionando) return;
             
-            // Limpiar formulario para nueva entrada
             document.getElementById('edit-id').value = "";
             document.getElementById('d').value = "";
             document.getElementById('n').value = "";
@@ -514,7 +513,6 @@
             seleccionando = false;
         }
 
-        // --- Gestión de Clave ---
         function abrirModalClave() {
             document.getElementById('pass-nueva').value = '';
             document.getElementById('pass-confirma').value = '';
@@ -540,7 +538,6 @@
             btn.disabled = false; btn.innerText = "Guardar Cambios";
         }
 
-        // --- Utilidades ---
         async function registrarLog(usuario, accion, detalle) {
             try { await _client.from('logs_actividad').insert([{ usuario, accion, detalle }]); } catch (e) {}
         }
@@ -571,7 +568,6 @@
             }
         }
 
-        // Carga inicial
         load();
     </script>
 </body>

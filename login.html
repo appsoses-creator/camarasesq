@@ -11,7 +11,7 @@
 
     <style>
         :root {
-            /* CAMBIO A AMARILLO */
+            /* TEMA AMARILLO DPIE */
             --primary: #f59e0b; 
             --primary-hover: #d97706;
             --bg-dark: #0a0a0a; 
@@ -19,7 +19,7 @@
             --input-bg: #1e1e1e;
             --border: #262626;
             --text-dim: #94a3b8;
-            --text-on-primary: #000000; /* Texto negro para contraste */
+            --text-on-primary: #000000;
         }
 
         body { 
@@ -34,7 +34,6 @@
             overflow: hidden;
         }
 
-        /* Luces ambientales amarillas */
         .ambient-light {
             position: absolute;
             width: 400px;
@@ -65,19 +64,25 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* CONTENEDOR DEL LOGO ACTUALIZADO */
         .logo-area {
-            /* Degradado amarillo/naranja */
             background: linear-gradient(135deg, var(--primary), #fbbf24);
-            width: 65px;
-            height: 65px;
-            border-radius: 18px;
+            width: 90px;
+            height: 90px;
+            border-radius: 22px;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 25px;
-            color: var(--text-on-primary);
-            font-size: 26px;
-            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.2);
+            box-shadow: 0 10px 20px rgba(245, 158, 11, 0.25);
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo-area img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         h2 { 
@@ -128,7 +133,7 @@
             border-radius: 12px; 
             box-sizing: border-box; 
             outline: none; 
-            font-size: 16px; /* Ajustado para evitar zoom en iOS */
+            font-size: 16px;
             color: white;
             transition: all 0.3s;
         }
@@ -206,7 +211,7 @@
 
     <div class="login-card">
         <div class="logo-area">
-            <i class="fa-solid fa-shield-halved"></i>
+            <img src="https://ubdlfcjcgdnzqwjvwsmn.supabase.co/storage/v1/object/public/logos/ChatGPT%20Image%2026%20feb%202026,%2008_05_12%20p.m..png" alt="Logo DPIE">
         </div>
         <h2>SISTEMA DPIE</h2>
         <p class="subtitle">Monitoreo Esquel y Trevelin</p>
@@ -231,10 +236,8 @@
     </div>
 
     <script>
-        // Configuración Supabase
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        // Check Sesión
         (function() {
             const session = localStorage.getItem('user_session');
             try {

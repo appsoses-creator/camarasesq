@@ -96,6 +96,7 @@
             background: rgba(0,0,0,0.05); border-radius: 12px; 
             padding: 0 5px 0 12px; border: 1px solid rgba(0,0,0,0.05);
             transition: 0.3s;
+            gap: 5px;
         }
         .search-group:focus-within { background: white; border-color: var(--primary); }
         .search-group input { 
@@ -115,6 +116,19 @@
             transition: 0.2s;
         }
         .btn-search-trigger:active { transform: scale(0.95); }
+
+        .btn-clear-search {
+            background: #f1f5f9;
+            color: #64748b;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-clear-search:hover { background: #e2e8f0; color: var(--danger); }
 
         .actions-group { display: flex; align-items: center; gap: 8px; }
 
@@ -239,6 +253,7 @@
         <div class="search-group">
             <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
             <input type="text" id="q" placeholder="Buscar cámara o calle..." onkeyup="if(event.key==='Enter') buscarLugar()">
+            <button class="btn-clear-search" onclick="limpiarBusqueda()"><i class="fa-solid fa-xmark"></i></button>
             <button class="btn-search-trigger" onclick="buscarLugar()">BUSCAR</button>
         </div>
 
@@ -565,6 +580,15 @@
 
         async function registrarLog(usuario, accion, detalle) {
             try { await _client.from('logs_actividad').insert([{ usuario, accion, detalle }]); } catch (e) {}
+        }
+
+        function limpiarBusqueda() {
+            document.getElementById('q').value = "";
+            if (marcadorBusqueda) {
+                map.removeLayer(marcadorBusqueda);
+                marcadorBusqueda = null;
+            }
+            irA([-42.912, -71.316], 'btn-esquel');
         }
 
         async function buscarLugar() {

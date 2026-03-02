@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE 23</title>
+    <title>DPIE ESQ</title>
     
     <script>
         (function() {
@@ -329,7 +329,6 @@
             <div>
                 <label>Tipo de Sistema</label>
                 <select id="t">
-                    <option value=""></option>
                     <option value="CENTRO DE MONITOREO">Monitoreo</option>
                     <option value="PRIVADAS">Privada</option>
                     <option value="PARTICULARES">Particular</option>
@@ -461,12 +460,20 @@
 
         async function enviar() {
             const id = document.getElementById('edit-id').value;
+            const tipo = document.getElementById('t').value;
+            
+            // Validación extra: Si el tipo está vacío, no dejar guardar
+            if (!tipo) {
+                alert("Por favor selecciona un Tipo de Sistema.");
+                return;
+            }
+
             const userSession = JSON.parse(localStorage.getItem('user_session'));
             const cam = { 
                 "DIRECCION": document.getElementById('d').value, 
                 "UBICACION": document.getElementById('u').value,
                 "LUGAR / TITULAR": document.getElementById('n').value,
-                "TIPO": document.getElementById('t').value,
+                "TIPO": tipo,
                 "ciudad": document.getElementById('ciudad_select').value,
                 "telefono": document.getElementById('tel').value,
                 "sistema": document.getElementById('sis').value,
@@ -474,14 +481,17 @@
                 "dias_almacenamiento": document.getElementById('alm').value ? parseInt(document.getElementById('alm').value) : null,
                 "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
             };
+            
             const btn = document.getElementById('btn-submit-camera');
             btn.disabled = true; btn.innerText = "Guardando...";
             let res = id ? await _client.from('cameras').update(cam).eq('id', id) : await _client.from('cameras').insert([cam]);
+            
             if (!res.error) { 
                 await registrarLog(userSession.usuario, id ? 'EDITO' : 'CREO', cam.DIRECCION);
                 cerrarTodo(); 
                 load(); 
             } else alert("Error: " + res.error.message);
+            
             btn.disabled = false; btn.innerText = "Guardar en Base de Datos";
         }
 
@@ -511,7 +521,7 @@
             document.getElementById('edit-id').value = "";
             document.getElementById('d').value = "";
             document.getElementById('n').value = "";
-            document.getElementById('t').value = ""; 
+            // He quitado el reset a "" del tipo para que siempre tenga un valor seleccionado por defecto
             document.getElementById('tel').value = "";
             document.getElementById('sis').value = "";
             document.getElementById('usu').value = "";
@@ -545,7 +555,7 @@
             document.getElementById('d').value = cam.DIRECCION || "";
             document.getElementById('u').value = cam.UBICACION || "";
             document.getElementById('n').value = cam['LUGAR / TITULAR'] || "";
-            document.getElementById('t').value = cam.TIPO || "";
+            document.getElementById('t').value = cam.TIPO || "CENTRO DE MONITOREO";
             document.getElementById('ciudad_select').value = cam.ciudad || "Esquel";
             document.getElementById('tel').value = cam.telefono || "";
             document.getElementById('sis').value = cam.sistema || "";

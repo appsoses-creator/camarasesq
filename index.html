@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>DPIE 22</title>
     
     <script>
@@ -100,10 +100,9 @@
         .search-group:focus-within { background: white; border-color: var(--primary); }
         .search-group input { 
             width: 100%; border: none; padding: 10px; outline: none; 
-            background: transparent; font-size: 14px; font-weight: 500;
+            background: transparent; font-size: 16px; font-weight: 500;
         }
 
-        /* Nuevo Botón Buscar */
         .btn-search-trigger {
             background: var(--primary);
             color: white;
@@ -173,7 +172,7 @@
             .actions-group { display: none; }
             .top-bar { top: 10px; width: 90%; padding: 6px 10px; }
             .search-group { padding: 0 4px 0 10px; }
-            .search-group input { padding: 8px; font-size: 13px; }
+            .search-group input { padding: 8px; font-size: 16px; }
             .btn-search-trigger { padding: 6px 10px; font-size: 11px; }
             .bottom-nav { display: flex; }
             .btn-add-main { bottom: 100px; right: 20px; padding: 14px 22px; font-size: 14px; }
@@ -197,7 +196,7 @@
 
         .modal h3 { font-weight: 800; color: var(--dark-bg); font-size: 20px; margin-bottom: 20px; }
         .modal label { font-size: 12px; font-weight: 700; color: #64748b; display: block; margin-top: 12px; margin-bottom: 4px; }
-        .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; box-sizing: border-box; }
+        .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; box-sizing: border-box; font-size: 16px; }
         
         .btn-save { 
             width: 100%; padding: 15px; background: var(--primary); color: white; 
@@ -239,7 +238,7 @@
     <div class="top-bar">
         <div class="search-group">
             <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
-            <input type="text" id="q" placeholder="Buscar..." onkeyup="if(event.key==='Enter') buscarLugar()">
+            <input type="text" id="q" placeholder="Buscar cámara o calle..." onkeyup="if(event.key==='Enter') buscarLugar()">
             <button class="btn-search-trigger" onclick="buscarLugar()">BUSCAR</button>
         </div>
 
@@ -569,15 +568,40 @@
         }
 
         async function buscarLugar() {
-            const q = document.getElementById('q').value.toLowerCase().trim();
+            const q = document.getElementById('q').value.trim();
             if (!q) return;
-            const item = items.find(i => i.info.includes(q));
+
+            // 1. Intentar buscar en las cámaras cargadas (Supabase)
+            const item = items.find(i => i.info.includes(q.toLowerCase()));
+            
             if (item) {
                 if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
                 map.flyTo(item.m.getLatLng(), 18);
                 item.m.openPopup();
             } else {
-                alert("No se encontró ninguna cámara con ese nombre o dirección.");
+                // 2. Si no hay cámara, buscar en OpenStreetMap (Nominatim)
+                try {
+                    const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ", Chubut, Argentina")}`);
+                    const data = await resp.json();
+                    
+                    if (data && data.length > 0) {
+                        const { lat, lon, display_name } = data[0];
+                        const pos = [parseFloat(lat), parseFloat(lon)];
+                        
+                        if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
+                        
+                        marcadorBusqueda = L.marker(pos).addTo(map)
+                            .bindPopup(`<b>Ubicación encontrada:</b><br>${display_name}`)
+                            .openPopup();
+                        
+                        map.flyTo(pos, 17);
+                    } else {
+                        alert("No se encontró la dirección ni cámaras relacionadas.");
+                    }
+                } catch (err) {
+                    console.error("Error buscando en mapa:", err);
+                    alert("No se encontró ninguna cámara cargada.");
+                }
             }
         }
 

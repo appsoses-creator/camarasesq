@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE 23</title>
+    <title>DPIE</title>
     
     <script>
         (function() {
@@ -471,7 +471,7 @@
                 "telefono": document.getElementById('tel').value,
                 "sistema": document.getElementById('sis').value,
                 "clave": document.getElementById('pas').value,
-                "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 7,
+                "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 0,
                 "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
             };
             const btn = document.getElementById('btn-submit-camera');

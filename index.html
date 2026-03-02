@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE ESQ</title>
+    <title>DPIE 23</title>
     
     <script>
         (function() {
@@ -212,6 +212,17 @@
         .modal label { font-size: 12px; font-weight: 700; color: #64748b; display: block; margin-top: 12px; margin-bottom: 4px; }
         .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; box-sizing: border-box; font-size: 16px; }
         
+        /* Estilos para los botones de tipo de cámara */
+        .type-selector { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        .type-btn { 
+            background: white; border: 2px solid #e2e8f0; padding: 10px; border-radius: 12px; 
+            text-align: left; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column;
+        }
+        .type-btn b { font-size: 14px; color: var(--dark-bg); }
+        .type-btn span { font-size: 11px; color: #64748b; }
+        .type-btn.selected { border-color: var(--primary); background: #eff6ff; }
+        .type-btn.selected b { color: var(--primary); }
+
         .btn-save { 
             width: 100%; padding: 15px; background: var(--primary); color: white; 
             border: none; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; 
@@ -318,23 +329,28 @@
         <button class="btn-modal-close" onclick="cerrarTodo()">Cancelar</button>
         <h3 id="form-title">Detalles Técnicos</h3>
         <input type="hidden" id="edit-id">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
-            <div>
-                <label>Ciudad</label>
-                <select id="ciudad_select">
-                    <option value="Esquel">Esquel</option>
-                    <option value="Trevelin">Trevelin</option>
-                </select>
-            </div>
-            <div>
-                <label>Tipo de Sistema</label>
-                <select id="t">
-                    <option value="CENTRO DE MONITOREO">Monitoreo</option>
-                    <option value="PRIVADAS">Privada</option>
-                    <option value="PARTICULARES">Particular</option>
-                </select>
-            </div>
+        <input type="hidden" id="t" value=""> <label>Ciudad</label>
+        <select id="ciudad_select">
+            <option value="Esquel">Esquel</option>
+            <option value="Trevelin">Trevelin</option>
+        </select>
+
+        <label>Tipo de Cámara (Selección Obligatoria)</label>
+        <div class="type-selector">
+            <button type="button" class="type-btn" onclick="seleccionarTipo('CENTRO DE MONITOREO', this)">
+                <b>MONITOREO</b>
+                <span>Cámaras oficiales municipales</span>
+            </button>
+            <button type="button" class="type-btn" onclick="seleccionarTipo('PRIVADAS', this)">
+                <b>PRIVADA</b>
+                <span>Comercios, empresas, depósitos, etc.</span>
+            </button>
+            <button type="button" class="type-btn" onclick="seleccionarTipo('PARTICULARES', this)">
+                <b>PARTICULARES</b>
+                <span>Casas particulares / Residencias</span>
+            </button>
         </div>
+
         <label>Ubicación Geográfica</label>
         <input type="text" id="u" readonly style="background:#f8fafc; color:#64748b">
         <label>Dirección Exacta</label>
@@ -458,13 +474,20 @@
             });
         }
 
+        // Nueva función para manejar los botones de tipo
+        function seleccionarTipo(valor, elemento) {
+            document.getElementById('t').value = valor;
+            document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('selected'));
+            elemento.classList.add('selected');
+        }
+
         async function enviar() {
             const id = document.getElementById('edit-id').value;
             const tipo = document.getElementById('t').value;
             
-            // Validación extra: Si el tipo está vacío, no dejar guardar
+            // Validación: Obligatorio elegir tipo
             if (!tipo) {
-                alert("Por favor selecciona un Tipo de Sistema.");
+                alert("DEBES SELECCIONAR EL TIPO DE CÁMARA PARA CONTINUAR");
                 return;
             }
 
@@ -521,7 +544,8 @@
             document.getElementById('edit-id').value = "";
             document.getElementById('d').value = "";
             document.getElementById('n').value = "";
-            // He quitado el reset a "" del tipo para que siempre tenga un valor seleccionado por defecto
+            document.getElementById('t').value = ""; // Reset de tipo para obligar elección
+            document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('selected'));
             document.getElementById('tel').value = "";
             document.getElementById('sis').value = "";
             document.getElementById('usu').value = "";
@@ -555,7 +579,15 @@
             document.getElementById('d').value = cam.DIRECCION || "";
             document.getElementById('u').value = cam.UBICACION || "";
             document.getElementById('n').value = cam['LUGAR / TITULAR'] || "";
-            document.getElementById('t').value = cam.TIPO || "CENTRO DE MONITOREO";
+            
+            // Lógica para marcar el botón correcto al editar
+            const tipo = cam.TIPO || "";
+            document.getElementById('t').value = tipo;
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if(btn.innerText.includes(tipo)) btn.classList.add('selected');
+            });
+
             document.getElementById('ciudad_select').value = cam.ciudad || "Esquel";
             document.getElementById('tel').value = cam.telefono || "";
             document.getElementById('sis').value = cam.sistema || "";

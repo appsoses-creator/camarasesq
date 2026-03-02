@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE</title>
+    <title>DPIE 23 - Gestión Integral de Cámaras</title>
     
     <script>
         (function() {
@@ -25,30 +25,40 @@
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --primary: #2563eb;
+            --primary-hover: #1d4ed8;
             --accent: #6366f1;
             --dark-bg: #0f172a;
-            --glass-bg: rgba(255, 255, 255, 0.95);
-            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-bg: rgba(255, 255, 255, 0.98);
+            --glass-border: rgba(255, 255, 255, 0.4);
             --danger: #ef4444;
             --success: #10b981;
             --warning: #f59e0b;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-input: #f8fafc;
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body { 
             margin: 0; 
             font-family: 'Inter', sans-serif; 
             background: var(--dark-bg); 
             overflow: hidden; 
-            color: #1e293b;
+            color: var(--text-main);
+            height: 100vh;
         }
 
-        #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
+        /* --- MAPA --- */
+        #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.1) contrast(1.05); }
 
+        /* --- UI OVERLAYS --- */
         .center-pin {
             display: none;
             position: fixed;
@@ -57,8 +67,11 @@
             transform: translate(-50%, -100%);
             z-index: 2000;
             pointer-events: none;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.4));
+            animation: bounce 0.5s ease infinite alternate;
         }
+
+        @keyframes bounce { from { margin-top: 0; } to { margin-top: -10px; } }
 
         #btn-confirmar-pin {
             display: none;
@@ -70,306 +83,211 @@
             background: var(--success);
             color: white;
             border: none;
-            padding: 16px 30px;
+            padding: 18px 36px;
             border-radius: 50px;
             font-weight: 800;
-            font-size: 14px;
-            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            font-size: 15px;
+            box-shadow: 0 12px 24px rgba(16, 185, 129, 0.4);
             cursor: pointer;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        #btn-confirmar-pin:active { transform: translateX(-50%) scale(0.95); }
+
+        /* --- TOP BAR --- */
         .top-bar {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; width: 92%; max-width: 1200px;
-            display: flex; align-items: center; gap: 10px;
+            z-index: 1000; width: 94%; max-width: 1300px;
+            display: flex; align-items: center; gap: 12px;
             background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            padding: 8px 15px; border-radius: 20px;
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            padding: 10px 20px; border-radius: 24px;
             border: 1px solid var(--glass-border);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            box-shadow: var(--shadow-lg);
         }
 
         .search-group { 
             flex: 1; display: flex; align-items: center; 
-            background: rgba(0,0,0,0.05); border-radius: 12px; 
-            padding: 0 5px 0 12px; border: 1px solid rgba(0,0,0,0.05);
-            transition: 0.3s;
-            gap: 5px;
+            background: rgba(15, 23, 42, 0.05); border-radius: 16px; 
+            padding: 2px 8px 2px 16px; border: 1px solid transparent;
+            transition: 0.3s; gap: 8px;
         }
-        .search-group:focus-within { background: white; border-color: var(--primary); }
+        .search-group:focus-within { background: white; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
         .search-group input { 
-            width: 100%; border: none; padding: 10px; outline: none; 
-            background: transparent; font-size: 16px; font-weight: 500;
+            width: 100%; border: none; padding: 12px 0; outline: none; 
+            background: transparent; font-size: 16px; font-weight: 500; color: var(--text-main);
         }
 
         .btn-search-trigger {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
+            background: var(--primary); color: white; border: none;
+            padding: 10px 20px; border-radius: 12px; font-size: 13px;
+            font-weight: 700; cursor: pointer; transition: 0.2s;
         }
-        .btn-search-trigger:active { transform: scale(0.95); }
 
-        .btn-clear-search {
-            background: #f1f5f9;
-            color: #64748b;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-clear-search:hover { background: #e2e8f0; color: var(--danger); }
-
-        .actions-group { display: flex; align-items: center; gap: 8px; }
+        /* --- ACTIONS --- */
+        .actions-group { display: flex; align-items: center; gap: 10px; }
 
         .btn-nav {
-            background: white; color: #475569; border: 1px solid #e2e8f0;
-            padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13px;
+            background: white; color: var(--text-muted); border: 1px solid #e2e8f0;
+            padding: 10px 18px; border-radius: 14px; font-weight: 600; font-size: 13px;
             cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;
         }
         .btn-nav:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
         
-        .btn-calc { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
-        .btn-calc:hover { background: var(--accent); color: white; }
-
-        .btn-city { border: none; background: transparent; color: #64748b; font-weight: 700; cursor: pointer; padding: 8px 12px; border-radius: 8px; transition: 0.3s;}
-        .btn-city.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
-        
-        #btn-trevelin.active { background: var(--warning); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); }
+        .btn-city { border: none; background: transparent; color: var(--text-muted); font-weight: 700; cursor: pointer; padding: 10px 16px; border-radius: 12px; transition: 0.3s; }
+        .btn-city.active { background: var(--primary); color: white; box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3); }
 
         .btn-logout { 
             background: #fee2e2; color: var(--danger); border: none; 
-            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+            width: 44px; height: 44px; border-radius: 14px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 18px;
         }
-        .btn-logout:hover { background: var(--danger); color: white; }
 
+        /* --- BUTTON ADD --- */
         .btn-add-main { 
-            position: fixed; bottom: 30px; right: 30px; z-index: 1000; 
+            position: fixed; bottom: 35px; right: 35px; z-index: 1000; 
             background: var(--dark-bg); color: white; border: none; 
-            padding: 16px 28px; border-radius: 16px; font-weight: 700; 
-            cursor: pointer; display: flex; align-items: center; gap: 10px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
+            padding: 18px 32px; border-radius: 20px; font-weight: 700; 
+            cursor: pointer; display: flex; align-items: center; gap: 12px; 
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+        .btn-add-main:hover { transform: translateY(-5px) scale(1.02); background: #1e293b; }
 
-        .bottom-nav {
-            display: none;
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 92%; max-width: 500px;
-            background: var(--dark-bg); 
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            z-index: 1001; padding: 10px; justify-content: space-around;
-            border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-        }
-
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center;
-            gap: 4px; color: #94a3b8; font-size: 11px; font-weight: 600;
-            text-decoration: none; border: none; background: none; cursor: pointer;
-            transition: all 0.3s ease; padding: 8px 12px; border-radius: 15px;
-        }
-        .nav-item i { font-size: 18px; }
-        .nav-item.active { color: white; background: rgba(255, 255, 255, 0.1); }
-
-        @media (max-width: 768px) {
-            .actions-group { display: none; }
-            .top-bar { top: 10px; width: 90%; padding: 6px 10px; }
-            .search-group { padding: 0 4px 0 10px; }
-            .search-group input { padding: 8px; font-size: 16px; }
-            .btn-search-trigger { padding: 6px 10px; font-size: 11px; }
-            .bottom-nav { display: flex; }
-            .btn-add-main { bottom: 100px; right: 20px; padding: 14px 22px; font-size: 14px; }
-            .leaflet-bottom.leaflet-right { bottom: 160px !important; }
+        /* --- MODALES --- */
+        .overlay { 
+            display: none; position: fixed; inset: 0; 
+            background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 2000; 
+            animation: fadeIn 0.3s ease;
         }
 
         .modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
-            z-index: 2001; background: white; width: 90%; max-width: 440px; 
-            border-radius: 24px; padding: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
-            max-height: 85vh; overflow-y: auto;
+            z-index: 2001; background: white; width: 92%; max-width: 500px; 
+            border-radius: 30px; padding: 35px; box-shadow: 0 40px 80px rgba(0,0,0,0.5); 
+            max-height: 90vh; overflow-y: auto; animation: slideUp 0.4s cubic-bezier(0.23, 1, 0.32, 1);
         }
 
-        .btn-modal-close {
-            position: absolute; top: 20px; right: 20px;
-            background: #f1f5f9; color: #64748b; border: none;
-            padding: 8px 15px; border-radius: 10px; font-weight: 700;
-            font-size: 12px; cursor: pointer; transition: 0.2s;
-        }
-        .btn-modal-close:hover { background: #fee2e2; color: var(--danger); }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translate(-50%, -40%); } to { opacity: 1; transform: translate(-50%, -50%); } }
 
-        .modal h3 { font-weight: 800; color: var(--dark-bg); font-size: 20px; margin-bottom: 20px; }
-        .modal label { font-size: 12px; font-weight: 700; color: #64748b; display: block; margin-top: 12px; margin-bottom: 4px; }
-        .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; box-sizing: border-box; font-size: 16px; }
+        .modal h3 { font-weight: 800; color: var(--dark-bg); font-size: 24px; margin: 0 0 25px 0; letter-spacing: -0.5px; }
+        .modal label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; display: block; margin-top: 18px; margin-bottom: 6px; letter-spacing: 0.5px; }
         
-        /* Estilos para los botones de tipo de cámara */
-        .type-selector { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-        .type-btn { 
-            background: white; border: 2px solid #e2e8f0; padding: 10px; border-radius: 12px; 
-            text-align: left; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column;
+        .modal input, .modal select, .modal textarea { 
+            width: 100%; padding: 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; 
+            font-family: inherit; font-size: 16px; background: var(--bg-input); transition: 0.2s;
         }
-        .type-btn b { font-size: 14px; color: var(--dark-bg); }
-        .type-btn span { font-size: 11px; color: #64748b; }
-        .type-btn.selected { border-color: var(--primary); background: #eff6ff; }
-        .type-btn.selected b { color: var(--primary); }
+        .modal input:focus { border-color: var(--primary); background: white; outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05); }
 
         .btn-save { 
-            width: 100%; padding: 15px; background: var(--primary); color: white; 
-            border: none; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; 
-            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+            width: 100%; padding: 18px; background: var(--primary); color: white; 
+            border: none; border-radius: 16px; font-weight: 700; font-size: 16px;
+            margin-top: 30px; cursor: pointer; transition: 0.2s;
         }
+        .btn-save:hover { background: var(--primary-hover); }
 
-        .overlay { 
-            display: none; position: fixed; inset: 0; 
-            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); z-index: 2000; 
+        /* --- POPUPS MAPA --- */
+        .leaflet-popup-content-wrapper { border-radius: 20px; padding: 8px; box-shadow: 0 15px 30px rgba(0,0,0,0.2); }
+        .pop-card { min-width: 240px; }
+        .pop-title { font-size: 16px; font-weight: 800; color: var(--dark-bg); display: block; margin-bottom: 4px; }
+        .pop-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; display: block; }
+        .pop-footer { display: flex; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 12px; }
+        .pop-btn-edit { background: var(--primary); color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 11px; flex: 1; }
+        .pop-btn-del { background: #fee2e2; color: var(--danger); border: none; padding: 8px 12px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 11px; }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .actions-group { display: none; }
+            .top-bar { top: 10px; width: 92%; padding: 8px 12px; border-radius: 18px; }
+            .btn-add-main { bottom: 25px; right: 25px; padding: 15px 24px; font-size: 14px; }
+            .modal { padding: 25px; border-radius: 24px; }
         }
-
-        #instruccion { 
-            display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); 
-            z-index: 2000; background: var(--primary); color: white; padding: 12px 25px; 
-            border-radius: 50px; font-weight: 700; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-            text-align: center; font-size: 13px;
-        }
-
-        .pop-card { min-width: 220px; font-family: 'Inter', sans-serif; }
-        .pop-title { font-size: 14px; display: block; color: var(--dark-bg); }
-        .pop-subtitle { font-size: 12px; color: #64748b; margin-bottom: 10px; display: block; }
-        .pop-info { font-size: 11px; margin-bottom: 4px; display: flex; align-items: flex-start; gap: 8px; }
-        .pop-info i { margin-top: 3px; width: 12px; text-align: center; color: var(--primary); }
-        .pop-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; }
-        .pop-btn { background: none; border: none; font-weight: 700; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 5px; }
     </style>
 </head>
 <body>
 
-    <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" class="center-pin" id="pin-central" width="45">
+    <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" class="center-pin" id="pin-central" width="50">
     
-    <button id="btn-confirmar-pin" onclick="confirmarPosicionPin()">
-        <i class="fa-solid fa-check"></i> CONFIRMAR UBICACIÓN
+    <button id="btn-confirmar-pin" onclick="abrirFormularioNuevo()">
+        <i class="fa-solid fa-location-dot"></i> CONFIRMAR POSICIÓN
     </button>
 
-    <div id="instruccion"><i class="fa-solid fa-arrows-up-down-left-right"></i> Mueve el mapa hasta situar el pin</div>
+    <div id="instruccion" style="display:none; position:fixed; top:110px; left:50%; transform:translateX(-50%); z-index:2000; background:var(--dark-bg); color:white; padding:12px 24px; border-radius:50px; font-size:13px; font-weight:600; box-shadow: var(--shadow-lg);">
+        <i class="fa-solid fa-hand-pointer"></i> Desliza el mapa para ubicar la cámara
+    </div>
 
     <div class="top-bar">
         <div class="search-group">
             <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
-            <input type="text" id="q" placeholder="Buscar cámara o calle..." onkeyup="if(event.key==='Enter') buscarLugar()">
-            <button class="btn-clear-search" onclick="limpiarBusqueda()"><i class="fa-solid fa-xmark"></i></button>
-            <button class="btn-search-trigger" onclick="buscarLugar()">BUSCAR</button>
+            <input type="text" id="q" placeholder="Buscar por calle, nombre o IP..." onkeyup="if(event.key==='Enter') buscarEnMapa()">
+            <button class="btn-search-trigger" onclick="buscarEnMapa()">BUSCAR</button>
         </div>
 
         <div class="actions-group">
-            <button class="btn-city active" id="btn-esquel" onclick="irA([-42.912, -71.316], 'btn-esquel')">Esquel</button>
-            <button class="btn-city" id="btn-trevelin" onclick="irA([-43.085, -71.463], 'btn-trevelin')">Trevelin</button>
-            
-            <button class="btn-nav btn-calc" onclick="window.location.href='calculadora.html'">
-                <i class="fa-solid fa-calculator"></i> Calculadora
-            </button>
-
-            <button class="btn-nav" onclick="abrirModalClave()">
-                <i class="fa-solid fa-key"></i> Cambiar clave
-            </button>
-
-            <button id="btn-admin-panel" class="btn-nav" style="background: #f1f5f9; border: none; display: none;" onclick="window.location.href='admin.html'">
-                <i class="fa-solid fa-user-gear"></i> Panel
-            </button>
-
-            <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+            <button class="btn-city active" id="btn-esquel" onclick="volarA([-42.912, -71.316], 'btn-esquel')">Esquel</button>
+            <button class="btn-city" id="btn-trevelin" onclick="volarA([-43.085, -71.463], 'btn-trevelin')">Trevelin</button>
+            <div style="width:1px; height:24px; background:#e2e8f0; margin:0 5px;"></div>
+            <button class="btn-nav" onclick="window.location.href='calculadora.html'"><i class="fa-solid fa-calculator"></i> Almacenamiento</button>
+            <button class="btn-logout" onclick="procesarLogout()"><i class="fa-solid fa-power-off"></i></button>
         </div>
     </div>
 
-    <nav class="bottom-nav">
-        <button class="nav-item active" id="m-btn-esquel" onclick="irA([-42.912, -71.316], 'btn-esquel')">
-            <i class="fa-solid fa-mountain-city"></i> Esquel
-        </button>
-        <button class="nav-item" id="m-btn-trevelin" onclick="irA([-43.085, -71.463], 'btn-trevelin')">
-            <i class="fa-solid fa-tree"></i> Trevelin
-        </button>
-        <button class="nav-item" onclick="window.location.href='calculadora.html'">
-            <i class="fa-solid fa-calculator"></i> Calc
-        </button>
-        <button class="nav-item" onclick="abrirModalClave()">
-            <i class="fa-solid fa-key"></i> Clave
-        </button>
-        <button id="btn-admin-mobile" class="nav-item" style="display:none" onclick="window.location.href='admin.html'">
-            <i class="fa-solid fa-user-gear"></i> Admin
-        </button>
-        <button class="nav-item" style="color:var(--danger)" onclick="logout()">
-            <i class="fa-solid fa-power-off"></i> Salir
-        </button>
-    </nav>
-
-    <button class="btn-add-main" id="main-btn" onclick="activarModoSeleccion()">
-        <i class="fa-solid fa-plus"></i> Nueva Cámara
+    <button class="btn-add-main" id="main-btn" onclick="iniciarModoMapa()">
+        <i class="fa-solid fa-plus-circle"></i> Nueva Cámara
     </button>
 
-    <div class="overlay" id="blur" onclick="cerrarTodo()"></div>
+    <div class="overlay" id="blur-overlay" onclick="cerrarModales()"></div>
     
-    <div class="modal" id="modal-clave">
-        <button class="btn-modal-close" onclick="cerrarTodo()">Cancelar</button>
-        <h3>Actualizar Contraseña</h3>
-        <label>Nueva Contraseña</label>
-        <input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres">
-        <label>Confirmar Contraseña</label>
-        <input type="password" id="pass-confirma" placeholder="Repite la contraseña">
-        <button class="btn-save" id="btn-confirmar-clave" onclick="actualizarMiClave()">Guardar Cambios</button>
-    </div>
-
-    <div class="modal" id="form">
-        <button class="btn-modal-close" onclick="cerrarTodo()">Cancelar</button>
-        <h3 id="form-title">Detalles Técnicos</h3>
+    <div class="modal" id="form-camara">
+        <h3 id="modal-title">Ficha Técnica de Cámara</h3>
         <input type="hidden" id="edit-id">
-        <input type="hidden" id="t" value=""> <label>Ciudad</label>
-        <select id="ciudad_select">
-            <option value="Esquel">Esquel</option>
-            <option value="Trevelin">Trevelin</option>
-        </select>
-
-        <label>Tipo de Cámara (Selección Obligatoria)</label>
-        <div class="type-selector">
-            <button type="button" class="type-btn" onclick="seleccionarTipo('CENTRO DE MONITOREO', this)">
-                <b>MONITOREO</b>
-                <span>Cámaras oficiales municipales</span>
-            </button>
-            <button type="button" class="type-btn" onclick="seleccionarTipo('PRIVADAS', this)">
-                <b>PRIVADA</b>
-                <span>Comercios, empresas, depósitos, etc.</span>
-            </button>
-            <button type="button" class="type-btn" onclick="seleccionarTipo('PARTICULARES', this)">
-                <b>PARTICULARES</b>
-                <span>Casas particulares / Residencias</span>
-            </button>
+        
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+            <div>
+                <label>Ciudad</label>
+                <select id="f_ciudad">
+                    <option value="Esquel">Esquel</option>
+                    <option value="Trevelin">Trevelin</option>
+                </select>
+            </div>
+            <div>
+                <label>Tipo de Sistema</label>
+                <select id="f_tipo">
+                    <option value="CENTRO DE MONITOREO">Monitoreo</option>
+                    <option value="PRIVADAS">Privada</option>
+                    <option value="PARTICULARES">Particular</option>
+                </select>
+            </div>
         </div>
 
-        <label>Ubicación Geográfica</label>
-        <input type="text" id="u" readonly style="background:#f8fafc; color:#64748b">
-        <label>Dirección Exacta</label>
-        <input type="text" id="d" placeholder="Ej: Av. Alvear 1234">
-        <label>Titular / Comercio</label>
-        <input type="text" id="n" placeholder="Nombre del responsable">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
-            <div><label>Teléfono</label><input type="text" id="tel"></div>
-            <div><label>Modelo DVR</label><input type="text" id="sis" placeholder="Hikvision, Dahua..."></div>
+        <label>Coordenadas (GPS)</label>
+        <input type="text" id="f_gps" readonly style="font-family: monospace; font-size: 14px; color: var(--primary);">
+
+        <label>Dirección y Altura</label>
+        <input type="text" id="f_dir" placeholder="Ej: Belgrano 1245">
+
+        <label>Titular o Nombre del Comercio</label>
+        <input type="text" id="f_titular" placeholder="Ej: Kiosco 'El Sol'">
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+            <div>
+                <label>Usuario Acceso</label>
+                <input type="text" id="f_user" placeholder="admin">
+            </div>
+            <div>
+                <label>Contraseña / Pin</label>
+                <input type="text" id="f_pass" placeholder="****">
+            </div>
         </div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
-            <div><label>Usuario DVR</label><input type="text" id="usu"></div>
-            <div><label>Clave DVR</label><input type="text" id="pas"></div>
-        </div>
-        <label>Días de Grabación</label>
-        <input type="number" id="alm" value="">
-        <label>Observaciones</label>
-        <textarea id="ot" rows="2" placeholder="Llevar monitor, mouse, oficio, etc..."></textarea>
-        <button class="btn-save" id="btn-submit-camera" onclick="enviar()">Guardar en Base de Datos</button>
+
+        <label>Notas Adicionales / Observaciones</label>
+        <textarea id="f_notas" rows="3" placeholder="Especificaciones del equipo, marca, etc..."></textarea>
+
+        <button class="btn-save" onclick="guardarDatos()">
+            <i class="fa-solid fa-cloud-arrow-up"></i> GUARDAR EN SUPABASE
+        </button>
+        <p style="text-align:center; font-size:12px; color:var(--text-muted); margin-top:15px; cursor:pointer;" onclick="cerrarModales()">Descartar cambios</p>
     </div>
 
     <div id="map"></div>
@@ -377,415 +295,215 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-<script>
-    const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
-
-    let items = [], seleccionando = false, marcadorBusqueda = null;
-    let timerInactividad;
-
-    // --- LÓGICA DE INACTIVIDAD ---
-    function reiniciarTimer() {
-        clearTimeout(timerInactividad);
-        timerInactividad = setTimeout(logout, 5 * 60 * 1000); // 5 minutos
-    }
-
-    // Detectar actividad
-    document.onmousemove = reiniciarTimer;
-    document.onkeypress = reiniciarTimer;
-    document.onclick = reiniciarTimer;
-    document.onscroll = reiniciarTimer;
-
-    async function logout() {
-        const session = JSON.parse(localStorage.getItem('user_session'));
-        if (session && session.id) {
-            try {
-                await _client.from('usuarios').update({ is_online: false }).eq('id', session.id);
-            } catch (e) { console.log("Error al marcar offline"); }
-        }
-        localStorage.removeItem('user_session');
-        window.location.replace('login.html');
-    }
-
-    // --- FUNCIONES DEL MAPA Y UI ---
-    function verificarPrivilegios() {
-        const session = localStorage.getItem('user_session');
-        if (session) {
-            const userData = JSON.parse(session);
-            if (userData.rol === 'admin') {
-                document.querySelectorAll('#btn-admin-panel, #btn-admin-mobile').forEach(el => { if(el) el.style.display = 'flex'; });
-            }
-            return userData;
-        }
-        return null;
-    }
-
-    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-    const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm], zoomControl: false });
-    
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-    L.control.layers({ "Calles": osm, "Satélite": satellite }, null, { position: 'bottomright' }).addTo(map);
-
-    async function load() {
-        const user = verificarPrivilegios();
-        const { data, error } = await _client.from('cameras').select('*');
-        if (error) return;
-        
-        items.forEach(i => map.removeLayer(i.m));
-        items = [];
-
-        data.forEach(c => {
-            const latlng = c.UBICACION?.split(',').map(parseFloat);
-            if (latlng && latlng.length === 2) {
-                let color = c.TIPO === 'CENTRO DE MONITOREO' ? '#2563eb' : (c.TIPO === 'PRIVADAS' ? '#0f172a' : '#10b981');
-                const icon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`,
-                    iconSize: [30, 30], iconAnchor: [15, 15]
-                });
-                const marker = L.marker(latlng, { icon }).addTo(map);
-                
-                const btnEliminar = user?.rol === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}', '${c.DIRECCION}')"><i class="fa-solid fa-trash"></i> Eliminar</button>` : '';
-
-                marker.bindPopup(`
-                    <div class="pop-card">
-                        <b class="pop-title">${c.DIRECCION || 'S/D'}</b>
-                        <div class="pop-info"><b>Titular:</b> ${c['LUGAR / TITULAR'] || '-'}</div>
-                        <div class="pop-info"><b>Tipo:</b> ${c.TIPO}</div>
-                        <div class="pop-info"><b>Clave:</b> ${c.clave || '-'}</div>
-                        <div class="pop-footer">
-                            <button class="pop-btn" style="color:var(--primary)" onclick="abrirEditar('${c.id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
-                            ${btnEliminar}
-                        </div>
-                    </div>`);
-                items.push({ id: c.id, m: marker, data: c, info: `${c.DIRECCION} ${c['LUGAR / TITULAR']}`.toLowerCase() });
-            }
-        });
-    }
-
-    function irA(coords, btnId) {
-        map.flyTo(coords, 15);
-        document.querySelectorAll('.btn-city').forEach(b => b.classList.remove('active'));
-        document.getElementById(btnId)?.classList.add('active');
-    }
-
-    function activarModoSeleccion() {
-        seleccionando = true;
-        document.getElementById('pin-central').style.display = 'block';
-        document.getElementById('btn-confirmar-pin').style.display = 'block';
-        document.getElementById('instruccion').style.display = 'block';
-        document.getElementById('main-btn').style.display = 'none';
-    }
-
-    function cerrarTodo() {
-        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-        document.getElementById('blur').style.display = 'none';
-        document.getElementById('main-btn').style.display = 'flex';
-        document.getElementById('pin-central').style.display = 'none';
-        document.getElementById('btn-confirmar-pin').style.display = 'none';
-        document.getElementById('instruccion').style.display = 'none';
-    }
-
-    // Inicialización
-    reiniciarTimer();
-    load();
-</script>
-    
-
     <script>
-        const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+        // 1. Configuración Inicial y Supabase
+        const SUPABASE_URL = 'https://ubdlfcjcgdnzqwjvwsmn.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let items = [], seleccionando = false, marcadorBusqueda = null;
+        let mapa_items = [];
+        let item_busqueda_actual = null;
 
-        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
-        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm], zoomControl: false });
-        
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.control.layers({ "Calles": osm, "Satélite": satellite }, null, { position: 'bottomright' }).addTo(map);
+        // 2. Inicialización del Mapa
+        const map = L.map('map', { 
+            center: [-42.912, -71.316], 
+            zoom: 14, 
+            zoomControl: false,
+            attributionControl: false
+        });
 
-        function verificarPrivilegios() {
-            const session = localStorage.getItem('user_session');
-            if (session) {
-                const userData = JSON.parse(session);
-                const btnPanel = document.getElementById('btn-admin-panel');
-                const btnPanelMob = document.getElementById('btn-admin-mobile');
-                if (userData.rol === 'admin') {
-                    if(btnPanel) btnPanel.style.display = 'flex';
-                    if(btnPanelMob) btnPanelMob.style.display = 'flex';
-                }
-                return userData;
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+        // 3. Carga de Datos desde Supabase
+        async function fetchCameras() {
+            const { data, error } = await _supabase.from('cameras').select('*');
+            if (error) {
+                console.error("Error cargando cámaras:", error);
+                return;
             }
-            return null;
-        }
 
-        function logout() { localStorage.removeItem('user_session'); window.location.replace('login.html'); }
+            // Limpiar marcadores previos
+            mapa_items.forEach(item => map.removeLayer(item.layer));
+            mapa_items = [];
 
-        function irA(coords, btnId) { 
-            if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
-            map.flyTo(coords, 15); 
-            document.querySelectorAll('.btn-city').forEach(p => p.classList.remove('active'));
-            const btn = document.getElementById(btnId);
-            if(btn) btn.classList.add('active');
-        }
-
-        async function load() {
-            const user = verificarPrivilegios();
-            const rolUsuario = user?.rol;
-            items.forEach(i => map.removeLayer(i.m));
-            items = [];
-            const { data, error } = await _client.from('cameras').select('*');
-            if (error) return;
-
-            data?.forEach(c => {
-                const latlng = c.UBICACION?.split(',').map(parseFloat);
-                if (latlng && latlng.length === 2 && !isNaN(latlng[0])) {
-                    let color = '#10b981'; 
-                    if(c.TIPO === 'CENTRO DE MONITOREO') color = '#2563eb';
-                    else if(c.TIPO === 'PRIVADAS') color = '#0f172a';
-
-                    const icon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`,
-                        iconSize: [30, 30], iconAnchor: [15, 15]
-                    });
-                    const marker = L.marker(latlng, { icon }).addTo(map);
+            data.forEach(cam => {
+                const pos = cam.UBICACION?.split(',').map(n => parseFloat(n.trim()));
+                if (pos && pos.length === 2 && !isNaN(pos[0])) {
                     
-                    const btnEliminarHtml = rolUsuario === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}', '${c.DIRECCION}')"><i class="fa-solid fa-trash"></i> Eliminar</button>` : '';
+                    // Lógica de colores por tipo
+                    let colorMarker = '#10b981'; // Particular
+                    if (cam.TIPO === 'CENTRO DE MONITOREO') colorMarker = '#2563eb';
+                    if (cam.TIPO === 'PRIVADAS') colorMarker = '#0f172a';
 
-                    let dvrUserDisplay = '-';
-                    let obsDisplay = '-';
-                    if (c.otros_datos) {
-                        const parts = c.otros_datos.split('|');
-                        dvrUserDisplay = parts[0] ? parts[0].replace('User DVR: ', '').trim() : '-';
-                        obsDisplay = parts[1] ? parts[1].trim() : '-';
-                    }
+                    const marker = L.circleMarker(pos, {
+                        radius: 9,
+                        fillColor: colorMarker,
+                        color: 'white',
+                        weight: 2,
+                        fillOpacity: 0.9
+                    }).addTo(map);
 
+                    // Contenido del Popup enriquecido
                     const popupContent = `
                         <div class="pop-card">
-                            <div class="pop-header">
-                                <b class="pop-title">${c.DIRECCION || 'Sin dirección'}</b>
-                                <span class="pop-subtitle">${c['LUGAR / TITULAR'] || '-'}</span>
-                            </div>
-                            <div class="pop-body">
-                                <div class="pop-info"><i class="fa-solid fa-city"></i> <span><b>Ciudad:</b> ${c.ciudad || '-'}</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-layer-group"></i> <span><b>Tipo:</b> ${c.TIPO || '-'}</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-phone"></i> <span><b>Tel:</b> ${c.telefono || '-'}</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-microchip"></i> <span><b>Sistema:</b> ${c.sistema || '-'}</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-user-shield"></i> <span><b>Usuario:</b> ${dvrUserDisplay}</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-key"></i> <span><b>Clave:</b> ${c.clave || '-'}</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-calendar-day"></i> <span><b>Respaldo:</b> ${c.dias_almacenamiento || '-'} días</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-comment-dots"></i> <span><b>Obs:</b> ${obsDisplay}</span></div>
+                            <span class="pop-title">${cam.DIRECCION}</span>
+                            <span class="pop-subtitle">${cam['LUGAR / TITULAR']}</span>
+                            <div style="font-size:11px; color:#64748b; margin-bottom:10px;">
+                                <strong>Tipo:</strong> ${cam.TIPO}<br>
+                                <strong>Obs:</strong> ${cam.otros_datos || 'Sin notas'}
                             </div>
                             <div class="pop-footer">
-                                <button class="pop-btn" style="color:var(--primary)" onclick="abrirEditar('${c.id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
-                                ${btnEliminarHtml}
+                                <button class="pop-btn-edit" onclick="editarCamara('${cam.id}')">
+                                    <i class="fa-solid fa-pen"></i> Editar
+                                </button>
+                                <button class="pop-btn-del" onclick="eliminarCamara('${cam.id}', '${cam.DIRECCION}')">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
                             </div>
-                        </div>`;
+                        </div>
+                    `;
 
                     marker.bindPopup(popupContent);
-                    items.push({ id: c.id, m: marker, data: c, info: `${c.DIRECCION} ${c['LUGAR / TITULAR']}`.toLowerCase() });
+                    
+                    mapa_items.push({
+                        id: cam.id,
+                        layer: marker,
+                        data: cam,
+                        searchString: `${cam.DIRECCION} ${cam['LUGAR / TITULAR']}`.toLowerCase()
+                    });
                 }
             });
         }
 
-        // Nueva función para manejar los botones de tipo
-        function seleccionarTipo(valor, elemento) {
-            document.getElementById('t').value = valor;
-            document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('selected'));
-            elemento.classList.add('selected');
-        }
-
-        async function enviar() {
-            const id = document.getElementById('edit-id').value;
-            const tipo = document.getElementById('t').value;
-            
-            // Validación: Obligatorio elegir tipo
-            if (!tipo) {
-                alert("DEBES SELECCIONAR EL TIPO DE CÁMARA PARA CONTINUAR");
-                return;
-            }
-
-            const userSession = JSON.parse(localStorage.getItem('user_session'));
-            const cam = { 
-                "DIRECCION": document.getElementById('d').value, 
-                "UBICACION": document.getElementById('u').value,
-                "LUGAR / TITULAR": document.getElementById('n').value,
-                "TIPO": tipo,
-                "ciudad": document.getElementById('ciudad_select').value,
-                "telefono": document.getElementById('tel').value,
-                "sistema": document.getElementById('sis').value,
-                "clave": document.getElementById('pas').value,
-                "dias_almacenamiento": document.getElementById('alm').value ? parseInt(document.getElementById('alm').value) : null,
-                "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
-            };
-            
-            const btn = document.getElementById('btn-submit-camera');
-            btn.disabled = true; btn.innerText = "Guardando...";
-            let res = id ? await _client.from('cameras').update(cam).eq('id', id) : await _client.from('cameras').insert([cam]);
-            
-            if (!res.error) { 
-                await registrarLog(userSession.usuario, id ? 'EDITO' : 'CREO', cam.DIRECCION);
-                cerrarTodo(); 
-                load(); 
-            } else alert("Error: " + res.error.message);
-            
-            btn.disabled = false; btn.innerText = "Guardar en Base de Datos";
-        }
-
-        async function eliminar(id, direccion) {
-            if (!confirm(`¿Estás seguro de eliminar la cámara en ${direccion}?`)) return;
-            const userSession = JSON.parse(localStorage.getItem('user_session'));
-            const { error } = await _client.from('cameras').delete().eq('id', id);
-            if (!error) {
-                await registrarLog(userSession.usuario, 'ELIMINO', direccion);
-                load();
-            } else {
-                alert("Error al eliminar: " + error.message);
-            }
-        }
-
-        function activarModoSeleccion() {
-            seleccionando = true;
+        // 4. Lógica de Interfaz y Modos
+        function iniciarModoMapa() {
             document.getElementById('pin-central').style.display = 'block';
             document.getElementById('btn-confirmar-pin').style.display = 'block';
             document.getElementById('instruccion').style.display = 'block';
             document.getElementById('main-btn').style.display = 'none';
-            document.querySelector('.bottom-nav').style.display = 'none';
+            map.flyTo(map.getCenter(), 17);
         }
 
-        function confirmarPosicionPin() {
+        function abrirFormularioNuevo() {
             const centro = map.getCenter();
-            document.getElementById('edit-id').value = "";
-            document.getElementById('d').value = "";
-            document.getElementById('n').value = "";
-            document.getElementById('t').value = ""; // Reset de tipo para obligar elección
-            document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('selected'));
-            document.getElementById('tel').value = "";
-            document.getElementById('sis').value = "";
-            document.getElementById('usu').value = "";
-            document.getElementById('pas').value = "";
-            document.getElementById('ot').value = "";
-            document.getElementById('alm').value = "";
-            document.getElementById('u').value = `${centro.lat.toFixed(6)}, ${centro.lng.toFixed(6)}`;
-            document.getElementById('form').style.display = 'block';
-            document.getElementById('blur').style.display = 'block';
-            document.getElementById('pin-central').style.display = 'none';
-            document.getElementById('btn-confirmar-pin').style.display = 'none';
+            resetForm();
+            document.getElementById('f_gps').value = `${centro.lat.toFixed(6)}, ${centro.lng.toFixed(6)}`;
+            document.getElementById('form-camara').style.display = 'block';
+            document.getElementById('blur-overlay').style.display = 'block';
         }
 
-        function cerrarTodo() {
+        function cerrarModales() {
             document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-            document.getElementById('blur').style.display = 'none';
-            document.getElementById('main-btn').style.display = 'flex';
-            document.getElementById('instruccion').style.display = 'none';
+            document.getElementById('blur-overlay').style.display = 'none';
             document.getElementById('pin-central').style.display = 'none';
             document.getElementById('btn-confirmar-pin').style.display = 'none';
-            document.getElementById('form-title').innerText = "Detalles Técnicos";
-            if (window.innerWidth <= 768) {
-                document.querySelector('.bottom-nav').style.display = 'flex';
+            document.getElementById('instruccion').style.display = 'none';
+            document.getElementById('main-btn').style.display = 'flex';
+        }
+
+        function resetForm() {
+            document.getElementById('edit-id').value = "";
+            document.getElementById('f_dir').value = "";
+            document.getElementById('f_titular').value = "";
+            document.getElementById('f_user').value = "";
+            document.getElementById('f_pass').value = "";
+            document.getElementById('f_notas').value = "";
+            document.getElementById('modal-title').innerText = "Ficha Técnica de Cámara";
+        }
+
+        // 5. CRUD Operaciones
+        async function guardarDatos() {
+            const id = document.getElementById('edit-id').value;
+            const payload = {
+                DIRECCION: document.getElementById('f_dir').value,
+                UBICACION: document.getElementById('f_gps').value,
+                "LUGAR / TITULAR": document.getElementById('f_titular').value,
+                TIPO: document.getElementById('f_tipo').value,
+                ciudad: document.getElementById('f_ciudad').value,
+                clave: document.getElementById('f_pass').value,
+                otros_datos: `Acceso: ${document.getElementById('f_user').value} | Notas: ${document.getElementById('f_notas').value}`
+            };
+
+            if (!payload.DIRECCION || !payload.UBICACION) {
+                alert("La dirección y ubicación son obligatorias.");
+                return;
             }
-            seleccionando = false;
-        }
 
-        function abrirEditar(id) {
-            const cam = items.find(i => i.id == id).data;
-            document.getElementById('edit-id').value = cam.id;
-            document.getElementById('d').value = cam.DIRECCION || "";
-            document.getElementById('u').value = cam.UBICACION || "";
-            document.getElementById('n').value = cam['LUGAR / TITULAR'] || "";
-            
-            // Lógica para marcar el botón correcto al editar
-            const tipo = cam.TIPO || "";
-            document.getElementById('t').value = tipo;
-            document.querySelectorAll('.type-btn').forEach(btn => {
-                btn.classList.remove('selected');
-                if(btn.innerText.includes(tipo)) btn.classList.add('selected');
-            });
-
-            document.getElementById('ciudad_select').value = cam.ciudad || "Esquel";
-            document.getElementById('tel').value = cam.telefono || "";
-            document.getElementById('sis').value = cam.sistema || "";
-            document.getElementById('pas').value = cam.clave || "";
-            document.getElementById('alm').value = cam.dias_almacenamiento || "";
-            if(cam.otros_datos) {
-                const parts = cam.otros_datos.split('|');
-                document.getElementById('usu').value = parts[0] ? parts[0].replace('User DVR: ', '').trim() : "";
-                document.getElementById('ot').value = parts[1] ? parts[1].trim() : "";
-            }
-            document.getElementById('form-title').innerText = "Editar Cámara";
-            document.getElementById('form').style.display = 'block';
-            document.getElementById('blur').style.display = 'block';
-        }
-
-        function abrirModalClave() {
-            document.getElementById('modal-clave').style.display = 'block';
-            document.getElementById('blur').style.display = 'block';
-        }
-
-        async function actualizarMiClave() {
-            const n1 = document.getElementById('pass-nueva').value.trim();
-            const n2 = document.getElementById('pass-confirma').value.trim();
-            const user = verificarPrivilegios();
-            if (n1.length < 4 || n1 !== n2) return alert("Error en los datos.");
-            const { error } = await _client.from('usuarios').update({ clave: n1 }).eq('usuario', user.usuario);
-            if (!error) {
-                await registrarLog(user.usuario, 'CAMBIO CLAVE', 'Actualizó contraseña');
-                alert("✅ Contraseña actualizada");
-                cerrarTodo();
-            }
-        }
-
-        async function registrarLog(usuario, accion, detalle) {
-            try { await _client.from('logs_actividad').insert([{ usuario, accion, detalle }]); } catch (e) {}
-        }
-
-        function limpiarBusqueda() {
-            document.getElementById('q').value = "";
-            if (marcadorBusqueda) {
-                map.removeLayer(marcadorBusqueda);
-                marcadorBusqueda = null;
-            }
-            irA([-42.912, -71.316], 'btn-esquel');
-        }
-
-        async function buscarLugar() {
-            const q = document.getElementById('q').value.trim();
-            if (!q) return;
-
-            const item = items.find(i => i.info.includes(q.toLowerCase()));
-            
-            if (item) {
-                if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
-                map.flyTo(item.m.getLatLng(), 18);
-                item.m.openPopup();
+            let response;
+            if (id) {
+                response = await _supabase.from('cameras').update(payload).eq('id', id);
             } else {
-                try {
-                    const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ", Chubut, Argentina")}`);
-                    const data = await resp.json();
-                    
-                    if (data && data.length > 0) {
-                        const { lat, lon, display_name } = data[0];
-                        const pos = [parseFloat(lat), parseFloat(lon)];
-                        
-                        if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
-                        
-                        marcadorBusqueda = L.marker(pos).addTo(map)
-                            .bindPopup(`<b>Ubicación encontrada:</b><br>${display_name}`)
-                            .openPopup();
-                        
-                        map.flyTo(pos, 17);
-                    } else {
-                        alert("No se encontró la dirección ni cámaras relacionadas.");
-                    }
-                } catch (err) {
-                    console.error("Error buscando en mapa:", err);
-                    alert("No se encontró ninguna cámara cargada.");
-                }
+                response = await _supabase.from('cameras').insert([payload]);
+            }
+
+            if (!response.error) {
+                cerrarModales();
+                fetchCameras();
+            } else {
+                alert("Error al guardar: " + response.error.message);
             }
         }
 
-        load();
+        async function eliminarCamara(id, nombre) {
+            if (confirm(`¿Estás seguro de eliminar la cámara en ${nombre}?`)) {
+                const { error } = await _supabase.from('cameras').delete().eq('id', id);
+                if (!error) fetchCameras();
+            }
+        }
+
+        function editarCamara(id) {
+            const item = mapa_items.find(i => i.id == id);
+            if (!item) return;
+            const c = item.data;
+
+            document.getElementById('edit-id').value = c.id;
+            document.getElementById('f_dir').value = c.DIRECCION || "";
+            document.getElementById('f_gps').value = c.UBICACION || "";
+            document.getElementById('f_titular').value = c['LUGAR / TITULAR'] || "";
+            document.getElementById('f_tipo').value = c.TIPO || "PRIVADAS";
+            document.getElementById('f_ciudad').value = c.ciudad || "Esquel";
+            document.getElementById('f_pass').value = c.clave || "";
+            
+            // Parsear notas
+            if (c.otros_datos && c.otros_datos.includes('|')) {
+                const partes = c.otros_datos.split('|');
+                document.getElementById('f_user').value = partes[0].replace('Acceso:', '').trim();
+                document.getElementById('f_notas').value = partes[1].replace('Notas:', '').trim();
+            }
+
+            document.getElementById('modal-title').innerText = "Editando Cámara";
+            document.getElementById('form-camara').style.display = 'block';
+            document.getElementById('blur-overlay').style.display = 'block';
+        }
+
+        // 6. Utilidades de Navegación
+        function volarA(coords, btnId) {
+            map.flyTo(coords, 15);
+            document.querySelectorAll('.btn-city').forEach(b => b.classList.remove('active'));
+            document.getElementById(btnId).classList.add('active');
+        }
+
+        function buscarEnMapa() {
+            const query = document.getElementById('q').value.toLowerCase().trim();
+            if (!query) return;
+
+            const resultado = mapa_items.find(i => i.searchString.includes(query));
+            if (resultado) {
+                map.flyTo(resultado.layer.getLatLng(), 18);
+                resultado.layer.openPopup();
+            } else {
+                alert("No se encontró ninguna cámara con ese criterio.");
+            }
+        }
+
+        function procesarLogout() {
+            localStorage.removeItem('user_session');
+            window.location.replace('login.html');
+        }
+
+        // Init
+        fetchCameras();
+
     </script>
 </body>
 </html>

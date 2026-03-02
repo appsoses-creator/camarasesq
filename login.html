@@ -169,6 +169,14 @@
             box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
         }
 
+        button:active { transform: translateY(0); }
+
+        button:disabled {
+            background: #262626;
+            color: #525252;
+            cursor: not-allowed;
+        }
+
         #error-msg { 
             color: #fb7185; 
             font-size: 13px; 
@@ -194,9 +202,9 @@
 
     <div class="login-card">
         <div class="logo-area">
-            <img src="https://ubdlfcjcgdnzqwjvwsmn.supabase.co/storage/v1/object/public/logos/2.png" alt="Logo DPIE">
+            <img src="https://ubdlfcjcgdnzqwjvwsmn.supabase.co/storage/v1/object/public/logos/dpie.png" alt="Logo DPIE">
         </div>
-        <h2>BASE DE DATOS CÁMARAS</h2>
+        <h2>CÁMARAS DE SEGURIDAD</h2>
         <p class="subtitle">DPI ESQUEL</p>
 
         <div class="input-group">

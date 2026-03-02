@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE</title>
+    <title>DPIE 23</title>
     
     <script>
         (function() {
@@ -351,7 +351,7 @@
             <div><label>Clave DVR</label><input type="text" id="pas"></div>
         </div>
         <label>Días de Grabación</label>
-        <input type="number" id="alm" value="7">
+        <input type="number" id="alm" value="">
         <label>Observaciones</label>
         <textarea id="ot" rows="2" placeholder="Notas sobre la instalación..."></textarea>
         <button class="btn-save" id="btn-submit-camera" onclick="enviar()">Guardar en Base de Datos</button>
@@ -444,7 +444,7 @@
                                 <div class="pop-info"><i class="fa-solid fa-microchip"></i> <span><b>Sistema:</b> ${c.sistema || '-'}</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-user-shield"></i> <span><b>Usuario:</b> ${dvrUserDisplay}</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-key"></i> <span><b>Clave:</b> ${c.clave || '-'}</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-calendar-day"></i> <span><b>Respaldo:</b> ${c.dias_almacenamiento || '7'} días</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-calendar-day"></i> <span><b>Respaldo:</b> ${c.dias_almacenamiento || '-'} días</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-comment-dots"></i> <span><b>Obs:</b> ${obsDisplay}</span></div>
                             </div>
                             <div class="pop-footer">
@@ -471,7 +471,7 @@
                 "telefono": document.getElementById('tel').value,
                 "sistema": document.getElementById('sis').value,
                 "clave": document.getElementById('pas').value,
-                "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 0,
+                "dias_almacenamiento": document.getElementById('alm').value ? parseInt(document.getElementById('alm').value) : null,
                 "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
             };
             const btn = document.getElementById('btn-submit-camera');
@@ -517,6 +517,7 @@
             document.getElementById('usu').value = "";
             document.getElementById('pas').value = "";
             document.getElementById('ot').value = "";
+            document.getElementById('alm').value = "";
             document.getElementById('u').value = `${centro.lat.toFixed(6)}, ${centro.lng.toFixed(6)}`;
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
@@ -549,7 +550,7 @@
             document.getElementById('tel').value = cam.telefono || "";
             document.getElementById('sis').value = cam.sistema || "";
             document.getElementById('pas').value = cam.clave || "";
-            document.getElementById('alm').value = cam.dias_almacenamiento || 7;
+            document.getElementById('alm').value = cam.dias_almacenamiento || "";
             if(cam.otros_datos) {
                 const parts = cam.otros_datos.split('|');
                 document.getElementById('usu').value = parts[0] ? parts[0].replace('User DVR: ', '').trim() : "";
@@ -595,7 +596,6 @@
             const q = document.getElementById('q').value.trim();
             if (!q) return;
 
-            // 1. Intentar buscar en las cámaras cargadas (Supabase)
             const item = items.find(i => i.info.includes(q.toLowerCase()));
             
             if (item) {
@@ -603,7 +603,6 @@
                 map.flyTo(item.m.getLatLng(), 18);
                 item.m.openPopup();
             } else {
-                // 2. Si no hay cámara, buscar en OpenStreetMap (Nominatim)
                 try {
                     const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ", Chubut, Argentina")}`);
                     const data = await resp.json();

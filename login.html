@@ -11,7 +11,6 @@
 
     <style>
         :root {
-            /* TEMA AMARILLO DPIE */
             --primary: #f59e0b; 
             --primary-hover: #d97706;
             --bg-dark: #0a0a0a; 
@@ -64,7 +63,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* CONTENEDOR DEL LOGO ACTUALIZADO */
         .logo-area {
             background: linear-gradient(135deg, var(--primary), #fbbf24);
             width: 90px;
@@ -91,6 +89,7 @@
             font-size: 20px;
             font-weight: 700;
             letter-spacing: -0.5px;
+            text-transform: uppercase;
         }
 
         p.subtitle {
@@ -170,14 +169,6 @@
             box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
         }
 
-        button:active { transform: translateY(0); }
-
-        button:disabled {
-            background: #262626;
-            color: #525252;
-            cursor: not-allowed;
-        }
-
         #error-msg { 
             color: #fb7185; 
             font-size: 13px; 
@@ -188,14 +179,6 @@
             display: none;
             background: rgba(251, 113, 133, 0.1);
             border: 1px solid rgba(251, 113, 133, 0.2);
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20% { transform: translateX(-5px); }
-            40% { transform: translateX(5px); }
-            60% { transform: translateX(-5px); }
-            80% { transform: translateX(5px); }
         }
 
         @media (max-width: 480px) {
@@ -211,20 +194,20 @@
 
     <div class="login-card">
         <div class="logo-area">
-            <img src="https://ubdlfcjcgdnzqwjvwsmn.supabase.co/storage/v1/object/public/logos/ChatGPT%20Image%2026%20feb%202026,%2008_05_12%20p.m..png" alt="Logo DPIE">
+            <img src="https://ubdlfcjcgdnzqwjvwsmn.supabase.co/storage/v1/object/public/logos/2.png" alt="Logo DPIE">
         </div>
-        <h2>SISTEMA DPIE</h2>
-        <p class="subtitle">Monitoreo Esquel y Trevelin</p>
+        <h2>BASE DE DATOS CÁMARAS</h2>
+        <p class="subtitle">DPI ESQUEL</p>
 
         <div class="input-group">
             <label>Usuario</label>
-            <input type="text" id="user" placeholder="nombre.apellido" autocomplete="off">
+            <input type="text" id="user" autocomplete="off">
             <i class="fa-solid fa-user"></i>
         </div>
 
         <div class="input-group">
             <label>Contraseña</label>
-            <input type="password" id="pass" placeholder="••••••••">
+            <input type="password" id="pass">
             <i class="fa-solid fa-lock"></i>
         </div>
 
@@ -237,20 +220,6 @@
 
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
-
-        (function() {
-            const session = localStorage.getItem('user_session');
-            try {
-                if (session) {
-                    const parsed = JSON.parse(session);
-                    if (parsed && parsed.usuario) {
-                        window.location.replace('index.html');
-                    }
-                }
-            } catch (e) {
-                localStorage.removeItem('user_session');
-            }
-        })();
 
         async function intentarLogin() {
             const u = document.getElementById('user').value.trim();
@@ -281,11 +250,6 @@
                     btn.innerHTML = 'Acceder <i class="fa-solid fa-chevron-right"></i>';
                 } else {
                     const now = new Date().toISOString();
-                    await _client
-                        .from('usuarios')
-                        .update({ is_online: true, last_login: now })
-                        .eq('id', data.id);
-
                     const sessionData = { 
                         id: data.id,
                         usuario: data.usuario, 
@@ -307,10 +271,6 @@
             const errorDiv = document.getElementById('error-msg');
             errorDiv.innerText = msg;
             errorDiv.style.display = "block";
-            const card = document.querySelector('.login-card');
-            card.style.animation = 'none';
-            void card.offsetWidth; 
-            card.style.animation = 'shake 0.4s';
         }
 
         document.querySelectorAll('input').forEach(input => {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE 773</title>
+    <title>DPIE PRUEBA</title>
     
     <script>
         (function() {
@@ -96,7 +96,6 @@
             background: rgba(0,0,0,0.05); border-radius: 12px; 
             padding: 0 5px 0 12px; border: 1px solid rgba(0,0,0,0.05);
             transition: 0.3s;
-            gap: 5px;
         }
         .search-group:focus-within { background: white; border-color: var(--primary); }
         .search-group input { 
@@ -116,19 +115,6 @@
             transition: 0.2s;
         }
         .btn-search-trigger:active { transform: scale(0.95); }
-
-        .btn-clear-search {
-            background: #f1f5f9;
-            color: #64748b;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-clear-search:hover { background: #e2e8f0; color: var(--danger); }
 
         .actions-group { display: flex; align-items: center; gap: 8px; }
 
@@ -253,7 +239,6 @@
         <div class="search-group">
             <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
             <input type="text" id="q" placeholder="Buscar cámara o calle..." onkeyup="if(event.key==='Enter') buscarLugar()">
-            <button class="btn-clear-search" onclick="limpiarBusqueda()"><i class="fa-solid fa-xmark"></i></button>
             <button class="btn-search-trigger" onclick="buscarLugar()">BUSCAR</button>
         </div>
 
@@ -351,9 +336,9 @@
             <div><label>Clave DVR</label><input type="text" id="pas"></div>
         </div>
         <label>Días de Grabación</label>
-        <input type="number" id="alm" value="">
+        <input type="number" id="alm" value="7">
         <label>Observaciones</label>
-        <textarea id="ot" rows="2" placeholder="Llevar monitor, mouse, oficio, etc..."></textarea>
+        <textarea id="ot" rows="2" placeholder="Notas sobre la instalación..."></textarea>
         <button class="btn-save" id="btn-submit-camera" onclick="enviar()">Guardar en Base de Datos</button>
     </div>
 
@@ -444,7 +429,7 @@
                                 <div class="pop-info"><i class="fa-solid fa-microchip"></i> <span><b>Sistema:</b> ${c.sistema || '-'}</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-user-shield"></i> <span><b>Usuario:</b> ${dvrUserDisplay}</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-key"></i> <span><b>Clave:</b> ${c.clave || '-'}</span></div>
-                                <div class="pop-info"><i class="fa-solid fa-calendar-day"></i> <span><b>Respaldo:</b> ${c.dias_almacenamiento || '-'} días</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-calendar-day"></i> <span><b>Respaldo:</b> ${c.dias_almacenamiento || '7'} días</span></div>
                                 <div class="pop-info"><i class="fa-solid fa-comment-dots"></i> <span><b>Obs:</b> ${obsDisplay}</span></div>
                             </div>
                             <div class="pop-footer">
@@ -471,7 +456,7 @@
                 "telefono": document.getElementById('tel').value,
                 "sistema": document.getElementById('sis').value,
                 "clave": document.getElementById('pas').value,
-                "dias_almacenamiento": document.getElementById('alm').value ? parseInt(document.getElementById('alm').value) : null,
+                "dias_almacenamiento": parseInt(document.getElementById('alm').value) || 7,
                 "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
             };
             const btn = document.getElementById('btn-submit-camera');
@@ -517,7 +502,6 @@
             document.getElementById('usu').value = "";
             document.getElementById('pas').value = "";
             document.getElementById('ot').value = "";
-            document.getElementById('alm').value = "";
             document.getElementById('u').value = `${centro.lat.toFixed(6)}, ${centro.lng.toFixed(6)}`;
             document.getElementById('form').style.display = 'block';
             document.getElementById('blur').style.display = 'block';
@@ -550,7 +534,7 @@
             document.getElementById('tel').value = cam.telefono || "";
             document.getElementById('sis').value = cam.sistema || "";
             document.getElementById('pas').value = cam.clave || "";
-            document.getElementById('alm').value = cam.dias_almacenamiento || "";
+            document.getElementById('alm').value = cam.dias_almacenamiento || 7;
             if(cam.otros_datos) {
                 const parts = cam.otros_datos.split('|');
                 document.getElementById('usu').value = parts[0] ? parts[0].replace('User DVR: ', '').trim() : "";
@@ -583,19 +567,11 @@
             try { await _client.from('logs_actividad').insert([{ usuario, accion, detalle }]); } catch (e) {}
         }
 
-        function limpiarBusqueda() {
-            document.getElementById('q').value = "";
-            if (marcadorBusqueda) {
-                map.removeLayer(marcadorBusqueda);
-                marcadorBusqueda = null;
-            }
-            irA([-42.912, -71.316], 'btn-esquel');
-        }
-
         async function buscarLugar() {
             const q = document.getElementById('q').value.trim();
             if (!q) return;
 
+            // 1. Intentar buscar en las cámaras cargadas (Supabase)
             const item = items.find(i => i.info.includes(q.toLowerCase()));
             
             if (item) {
@@ -603,6 +579,7 @@
                 map.flyTo(item.m.getLatLng(), 18);
                 item.m.openPopup();
             } else {
+                // 2. Si no hay cámara, buscar en OpenStreetMap (Nominatim)
                 try {
                     const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ", Chubut, Argentina")}`);
                     const data = await resp.json();

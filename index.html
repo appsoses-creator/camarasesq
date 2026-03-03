@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE 4</title>
+    <title>DPIE 23</title>
     
     <script>
         (function() {
@@ -474,9 +474,7 @@
             });
         }
 
-        /
-        }
-// Nueva función para manejar los botones de tipo
+        // Nueva función para manejar los botones de tipo
         function seleccionarTipo(valor, elemento) {
             document.getElementById('t').value = valor;
             document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('selected'));
@@ -671,41 +669,8 @@
                 }
             }
         }
-        
-// Cierra el else de la búsqueda
-    } catch (err) {
-        console.error("Error buscando en mapa:", err);
-        alert("No se encontró ninguna cámara cargada.");
-    }
-}
 
-// Ejecutar carga inicial
-load();
-
-// --- Lógica de Auto-Cierre por Inactividad (5 Minutos) ---
-let tiempoInactividad;
-
-function resetearTemporizador() {
-    clearTimeout(tiempoInactividad);
-    tiempoInactividad = setTimeout(logoutInactividad, 300000); // 5 min
-}
-
-function logoutInactividad() {
-    // Solo avisar si el usuario sigue en la página
-    if (localStorage.getItem('user_session')) {
-        alert("Sesión cerrada por inactividad (5 minutos).");
-        logout(); 
-    }
-}
-
-// Escuchar eventos de interacción
-window.onload = resetearTemporizador;
-document.onmousemove = resetearTemporizador;
-document.onkeypress = resetearTemporizador;
-document.ontouchstart = resetearTemporizador; 
-document.onclick = resetearTemporizador;
-document.onscroll = resetearTemporizador;
-
-</script>
+        load();
+    </script>
 </body>
-</html>    
+</html>

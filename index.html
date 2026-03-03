@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE 23</title>
+    <title>DPIE OK</title>
     
     <script>
         (function() {
@@ -675,8 +675,8 @@
 
         function resetearTemporizador() {
             clearTimeout(tiempoInactividad);
-            // 10000 milisegundos = 10 segundos para probar
-            tiempoInactividad = setTimeout(logoutInactividad, 10000); 
+            // 10000 milisegundos = 60 segundos para probar
+            tiempoInactividad = setTimeout(logoutInactividad, 60000); 
         }
 
         function logoutInactividad() {

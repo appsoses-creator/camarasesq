@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE 22</title>
+    <title>DPIE OK</title>
     
     <script>
         (function() {
@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
-   <style>
+    <style>
         :root {
             --primary: #2563eb;
             --accent: #6366f1;
@@ -177,27 +177,10 @@
             display: flex; flex-direction: column; align-items: center;
             gap: 4px; color: #94a3b8; font-size: 11px; font-weight: 600;
             text-decoration: none; border: none; background: none; cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 8px 12px; border-radius: 15px;
-            position: relative;
+            transition: all 0.3s ease; padding: 8px 12px; border-radius: 15px;
         }
         .nav-item i { font-size: 18px; }
-
-        /* --- RESALTE DE POSICIÓN ACTIVA --- */
-        .nav-item.active { 
-            color: white !important; 
-            background: rgba(255, 255, 255, 0.15) !important; 
-            transform: translateY(-4px); /* Eleva el icono para resaltar */
-        }
-        /* Puntito indicador opcional debajo */
-        .nav-item.active::after {
-            content: '';
-            position: absolute;
-            bottom: 4px;
-            width: 4px;
-            height: 4px;
-            background: white;
-            border-radius: 50%;
-        }
+        .nav-item.active { color: white; background: rgba(255, 255, 255, 0.1); }
 
         @media (max-width: 768px) {
             .actions-group { display: none; }
@@ -229,6 +212,7 @@
         .modal label { font-size: 12px; font-weight: 700; color: #64748b; display: block; margin-top: 12px; margin-bottom: 4px; }
         .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; box-sizing: border-box; font-size: 16px; }
         
+        /* Estilos para los botones de tipo de cámara */
         .type-selector { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
         .type-btn { 
             background: white; border: 2px solid #e2e8f0; padding: 10px; border-radius: 12px; 

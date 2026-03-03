@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE r</title>
+    <title>DPIE</title>
     
     <script>
         (function() {
@@ -378,36 +378,39 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
    <script>
+        <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
         let items = [], seleccionando = false, marcadorBusqueda = null;
 
-        // --- CAPAS DEFINIDAS ---
+        // --- DEFINICIÓN DE CAPAS ---
+        
+        // 1. Calles Estándar
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
         
+        // 2. Satélite solo (sin nombres)
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
         
-        // 1. Vista de calles en otro color (Modo Oscuro)
-        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{y}/{x}{r}.png', {
+        // 3. Satélite + Nombres (Híbrido real de Esri)
+        const hybrid = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        const labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}');
+        const vistaHibrida = L.layerGroup([hybrid, labels]);
+
+        // 4. Calles Alternativa (Vista clara pero con otro color - Estilo Retro/Gris claro)
+        const callesAlt = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{y}/{x}{r}.png', {
             attribution: '© CartoDB'
         });
-
-        // 2. Vista Satélite con nombre de calles (Híbrido)
-        const hybrid = L.layerGroup([
-            satellite,
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{y}/{x}{r}.png')
-        ]);
 
         const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm], zoomControl: false });
         
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // --- SELECTOR CON LAS NUEVAS OPCIONES ---
+        // --- SELECTOR DE CAPAS ---
         const baseMaps = { 
             "Calles": osm, 
-            "Calles Oscuro": dark,
+            "Calles (Alt)": callesAlt,
             "Satélite": satellite,
-            "Satélite + Calles": hybrid 
+            "Satélite con Calles": vistaHibrida 
         };
 
         L.control.layers(baseMaps, null, { position: 'bottomright' }).addTo(map);
@@ -426,6 +429,7 @@
             }
             return null;
         }
+        
         function logout() { localStorage.removeItem('user_session'); window.location.replace('login.html'); }
 
         function irA(coords, btnId) { 

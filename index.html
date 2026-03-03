@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE OKa</title>
+    <title>DPIE OK</title>
     
     <script>
         (function() {
@@ -378,41 +378,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        const _client = supabase.createClient('https://ubdlfcjcgonzqwjvwsm n.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+        const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
         let items = [], seleccionando = false, marcadorBusqueda = null;
 
-        // --- DEFINICIÓN DE CAPAS ---
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-        
-        // Nueva: Vista Oscura
-        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{y}/{x}{r}.png', { attribution: '© CartoDB' });
-        
-        // Nueva: Vista Relieve
-        const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{y}/{x}.png', { attribution: '© OpenTopoMap' });
-        
-        // Nueva: Vista Híbrida (Satelital + Calles)
-        const hybrid = L.layerGroup([
-            satellite,
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{y}/{x}{r}.png')
-        ]);
-
-        // --- INICIALIZACIÓN DEL MAPA ---
         const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm], zoomControl: false });
-
+        
         L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-        // --- SELECTOR DE CAPAS ACTUALIZADO ---
-        const baseMaps = {
-            "Calles": osm,
-            "Satélite": satellite,
-            "Híbrido": hybrid,
-            "Modo Oscuro": dark,
-            "Relieve": topo
-        };
-
-        L.control.layers(baseMaps, null, { position: 'bottomright' }).addTo(map);
+        L.control.layers({ "Calles": osm, "Satélite": satellite }, null, { position: 'bottomright' }).addTo(map);
 
         function verificarPrivilegios() {
             const session = localStorage.getItem('user_session');

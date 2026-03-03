@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE OK</title>
+    <title>DPIE s</title>
     
     <script>
         (function() {
@@ -382,12 +382,37 @@
 
         let items = [], seleccionando = false, marcadorBusqueda = null;
 
+        // --- DEFINICIÓN DE CAPAS ---
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        
+        // Capa Oscura
+        const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{y}/{x}{r}.png', { attribution: '© CartoDB' });
+        
+        // Capa de Relieve
+        const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{y}/{x}.png', { attribution: '© OpenTopoMap' });
+        
+        // Capa Híbrida (Satélite + Etiquetas)
+        const hybrid = L.layerGroup([
+            satellite,
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{y}/{x}{r}.png')
+        ]);
+
+        // --- INICIALIZACIÓN DEL MAPA ---
         const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm], zoomControl: false });
         
         L.control.zoom({ position: 'bottomright' }).addTo(map);
-        L.control.layers({ "Calles": osm, "Satélite": satellite }, null, { position: 'bottomright' }).addTo(map);
+
+        // --- SELECTOR DE CAPAS ACTUALIZADO ---
+        const baseMaps = { 
+            "Calles": osm, 
+            "Satélite": satellite,
+            "Híbrido": hybrid,
+            "Modo Oscuro": dark,
+            "Relieve": topo 
+        };
+
+        L.control.layers(baseMaps, null, { position: 'bottomright' }).addTo(map);
 
         function verificarPrivilegios() {
             const session = localStorage.getItem('user_session');

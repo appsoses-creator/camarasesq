@@ -678,37 +678,41 @@
                 }
             }
         }
+} // Cierra el else de la búsqueda
+    } catch (err) {
+        console.error("Error buscando en mapa:", err);
+        alert("No se encontró ninguna cámara cargada.");
+    }
+}
 
-        load();
+// Ejecutar carga inicial
+load();
 
-        // --- Lógica de Auto-Cierre por Inactividad (5 Minutos) ---
-        let tiempoInactividad;
-        function resetearTemporizador() {
-            clearTimeout(tiempoInactividad);
-            tiempoInactividad = setTimeout(logoutInactividad, 300000); // 300.000ms = 5 min
-        }
-        function logoutInactividad() {
-            alert("Sesión cerrada por inactividad (5 minutos).");
-            logout(); 
-        }
-        // Detectar actividad del usuario
-        window.onload = resetearTemporizador;
-        document.onmousemove = resetearTemporizador;
-        document.onkeypress = resetearTemporizador;
-        document.ontouchstart = resetearTemporizador; 
-        document.onclick = resetearTemporizador;
-        document.onscroll = resetearTemporizador;
+// --- Lógica de Auto-Cierre por Inactividad (5 Minutos) ---
+let tiempoInactividad;
 
-    </script>
+function resetearTemporizador() {
+    clearTimeout(tiempoInactividad);
+    tiempoInactividad = setTimeout(logoutInactividad, 300000); // 5 min
+}
+
+function logoutInactividad() {
+    // Solo avisar si el usuario sigue en la página
+    if (localStorage.getItem('user_session')) {
+        alert("Sesión cerrada por inactividad (5 minutos).");
+        logout(); 
+    }
+}
+
+// Escuchar eventos de interacción
+window.onload = resetearTemporizador;
+document.onmousemove = resetearTemporizador;
+document.onkeypress = resetearTemporizador;
+document.ontouchstart = resetearTemporizador; 
+document.onclick = resetearTemporizador;
+document.onscroll = resetearTemporizador;
+
+</script>
 </body>
 </html>
-
-
-
-
-
-
-        
-    </script>
-</body>
-</html>
+      

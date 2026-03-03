@@ -670,6 +670,30 @@
             }
         }
 
+        // --- Lógica de Auto-Cierre por Inactividad (Prueba 10 seg) ---
+        let tiempoInactividad;
+
+        function resetearTemporizador() {
+            clearTimeout(tiempoInactividad);
+            // 10000 milisegundos = 10 segundos para probar
+            tiempoInactividad = setTimeout(logoutInactividad, 10000); 
+        }
+
+        function logoutInactividad() {
+            if (localStorage.getItem('user_session')) {
+                alert("Sesión cerrada por inactividad (10 segundos de prueba).");
+                logout(); 
+            }
+        }
+
+        // Registrar actividad
+        window.onload = resetearTemporizador;
+        document.onmousemove = resetearTemporizador;
+        document.onkeypress = resetearTemporizador;
+        document.ontouchstart = resetearTemporizador; 
+        document.onclick = resetearTemporizador;
+        document.onscroll = resetearTemporizador;
+
         load();
     </script>
 </body>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE OK</title>
+    <title>DPIE</title>
     
     <script>
         (function() {
@@ -26,7 +26,6 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    
     <style>
         :root {
             --primary: #2563eb;
@@ -48,6 +47,14 @@
         }
 
         #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
+
+        /* --- AJUSTE DE ICONOS DE CÁMARAS --- */
+        .leaflet-marker-icon {
+            width: 25px !important;  /* Tamaño mucho más pequeño para que no tape calles */
+            height: 25px !important;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
 
         .center-pin {
             display: none;
@@ -143,8 +150,9 @@
         .btn-calc:hover { background: var(--accent); color: white; }
 
         .btn-city { border: none; background: transparent; color: #64748b; font-weight: 700; cursor: pointer; padding: 8px 12px; border-radius: 8px; transition: 0.3s;}
-        .btn-city.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
         
+        /* Resalte para botones de ciudad en escritorio */
+        .btn-city.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
         #btn-trevelin.active { background: var(--warning); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); }
 
         .btn-logout { 
@@ -162,6 +170,7 @@
             box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
         }
 
+        /* --- BARRA MÓVIL Y RESALTE --- */
         .bottom-nav {
             display: none;
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -178,9 +187,27 @@
             gap: 4px; color: #94a3b8; font-size: 11px; font-weight: 600;
             text-decoration: none; border: none; background: none; cursor: pointer;
             transition: all 0.3s ease; padding: 8px 12px; border-radius: 15px;
+            position: relative;
         }
         .nav-item i { font-size: 18px; }
-        .nav-item.active { color: white; background: rgba(255, 255, 255, 0.1); }
+
+        /* RESALTE DONDE ESTOY PARADO (MÓVIL) */
+        .nav-item.active { 
+            color: white !important; 
+            background: rgba(255, 255, 255, 0.15); 
+            transform: translateY(-5px); /* Eleva un poco el icono seleccionado */
+        }
+        
+        /* Puntito indicador debajo del activo */
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+        }
 
         @media (max-width: 768px) {
             .actions-group { display: none; }
@@ -191,6 +218,12 @@
             .bottom-nav { display: flex; }
             .btn-add-main { bottom: 100px; right: 20px; padding: 14px 22px; font-size: 14px; }
             .leaflet-bottom.leaflet-right { bottom: 160px !important; }
+            
+            /* Cámaras aún más pequeñas en móvil */
+            .leaflet-marker-icon {
+                width: 20px !important;
+                height: 20px !important;
+            }
         }
 
         .modal { 
@@ -212,7 +245,6 @@
         .modal label { font-size: 12px; font-weight: 700; color: #64748b; display: block; margin-top: 12px; margin-bottom: 4px; }
         .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; box-sizing: border-box; font-size: 16px; }
         
-        /* Estilos para los botones de tipo de cámara */
         .type-selector { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
         .type-btn { 
             background: white; border: 2px solid #e2e8f0; padding: 10px; border-radius: 12px; 

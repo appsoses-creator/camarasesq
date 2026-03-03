@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE OK</title>
+    <title>DPIE 323232</title>
     
     <script>
         (function() {
@@ -406,46 +406,27 @@
 
         function logout() { localStorage.removeItem('user_session'); window.location.replace('login.html'); }
 
-        function irA(coords, btnId) { 
+       function irA(coords, btnId) { 
+            // 1. Quitar marcador de búsqueda previo
             if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
+            
+            // 2. Mover el mapa
             map.flyTo(coords, 15); 
-            document.querySelectorAll('.btn-city').forEach(p => p.classList.remove('active'));
+            
+            // 3. Limpiar el resaltado claro de TODOS los botones de la barra
+            // Agregué '.nav-item' y 'button' por si acaso los usas en el móvil
+            document.querySelectorAll('.btn-city, .nav-item, button').forEach(p => {
+                p.classList.remove('active');
+            });
+
+            // 4. Poner el resaltado al que tocaste
             const btn = document.getElementById(btnId);
-            if(btn) btn.classList.add('active');
+            if (btn) {
+                btn.classList.add('active');
+            } else {
+                console.warn("No se encontró el botón con ID:", btnId);
+            }
         }
-
-        async function load() {
-            const user = verificarPrivilegios();
-            const rolUsuario = user?.rol;
-            items.forEach(i => map.removeLayer(i.m));
-            items = [];
-            const { data, error } = await _client.from('cameras').select('*');
-            if (error) return;
-
-            data?.forEach(c => {
-                const latlng = c.UBICACION?.split(',').map(parseFloat);
-                if (latlng && latlng.length === 2 && !isNaN(latlng[0])) {
-                    let color = '#10b981'; 
-                    if(c.TIPO === 'CENTRO DE MONITOREO') color = '#2563eb';
-                    else if(c.TIPO === 'PRIVADAS') color = '#0f172a';
-
-                    const icon = L.divIcon({
-                        className: 'custom-div-icon',
-                        html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`,
-                        iconSize: [30, 30], iconAnchor: [15, 15]
-                    });
-                    const marker = L.marker(latlng, { icon }).addTo(map);
-                    
-                    const btnEliminarHtml = rolUsuario === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}', '${c.DIRECCION}')"><i class="fa-solid fa-trash"></i> Eliminar</button>` : '';
-
-                    let dvrUserDisplay = '-';
-                    let obsDisplay = '-';
-                    if (c.otros_datos) {
-                        const parts = c.otros_datos.split('|');
-                        dvrUserDisplay = parts[0] ? parts[0].replace('User DVR: ', '').trim() : '-';
-                        obsDisplay = parts[1] ? parts[1].trim() : '-';
-                    }
-
                     const popupContent = `
                         <div class="pop-card">
                             <div class="pop-header">

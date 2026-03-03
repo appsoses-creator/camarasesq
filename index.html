@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE WE</title>
+    <title>DPIE 23</title>
     
     <script>
         (function() {
@@ -27,7 +27,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
-   <style>
+  <style>
         :root {
             --primary: #2563eb;
             --accent: #6366f1;
@@ -49,7 +49,7 @@
 
         #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
 
-        /* --- ANIMACIÓN DE SELECCIÓN --- */
+        /* --- ANIMACIÓN DE SELECCIÓN GENERAL --- */
         .btn-city, .nav-item {
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
@@ -126,27 +126,15 @@
         }
 
         .btn-search-trigger {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
+            background: var(--primary); color: white; border: none;
+            padding: 8px 15px; border-radius: 8px; font-size: 12px;
+            font-weight: 700; cursor: pointer; transition: 0.2s;
         }
 
         .btn-clear-search {
-            background: #f1f5f9;
-            color: #64748b;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.2s;
+            background: #f1f5f9; color: #64748b; border: none;
+            padding: 8px 12px; border-radius: 8px; font-size: 12px;
+            font-weight: 700; cursor: pointer; transition: 0.2s;
         }
 
         .actions-group { display: flex; align-items: center; gap: 8px; }
@@ -190,13 +178,40 @@
         }
         .nav-item i { font-size: 18px; }
 
+        /* --- ESTILOS EXCLUSIVOS MÓVIL --- */
         @media (max-width: 768px) {
             .actions-group { display: none; }
             .top-bar { top: 10px; width: 90%; padding: 6px 10px; }
-            .bottom-nav { display: flex; }
+            .bottom-nav { display: flex; gap: 5px; }
+            
+            .nav-item {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            /* Resaltado animado para móvil */
+            .nav-item.active { 
+                color: white !important; 
+                background: rgba(255, 255, 255, 0.15) !important; 
+                transform: translateY(-3px); /* Efecto de levante */
+            }
+
+            /* Indicador de punto inferior */
+            .nav-item.active::after {
+                content: '';
+                position: absolute;
+                bottom: 5px;
+                width: 4px;
+                height: 4px;
+                background: white;
+                border-radius: 50%;
+                animation: fadeIn 0.3s ease;
+            }
+
             .btn-add-main { bottom: 100px; right: 20px; }
             .leaflet-bottom.leaflet-right { bottom: 160px !important; }
         }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .modal { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 

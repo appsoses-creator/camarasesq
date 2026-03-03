@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE</title>
+    <title>DPIeeeeE</title>
     
     <script>
         (function() {
@@ -379,38 +379,41 @@
 
    <script>
         <script>
+        <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
         let items = [], seleccionando = false, marcadorBusqueda = null;
 
         // --- DEFINICIÓN DE CAPAS ---
         
-        // 1. Calles Estándar
+        // 1. Calles Estándar (OpenStreetMap)
         const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
         
-        // 2. Satélite solo (sin nombres)
+        // 2. Satélite Limpio (Esri)
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
         
-        // 3. Satélite + Nombres (Híbrido real de Esri)
-        const hybrid = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
-        const labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}');
-        const vistaHibrida = L.layerGroup([hybrid, labels]);
+        // 3. Satélite con Calles (Google Hybrid - Este no falla con los nombres)
+        const googleHybrid = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}');
 
-        // 4. Calles Alternativa (Vista clara pero con otro color - Estilo Retro/Gris claro)
-        const callesAlt = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{y}/{x}{r}.png', {
-            attribution: '© CartoDB'
+        // 4. Calles Alternativa (Vista clara "Toner Lite" - Blanca y Gris, muy profesional)
+        const callesAlt = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{y}/{x}{r}.png');
+
+        // --- INICIALIZACIÓN DEL MAPA ---
+        const map = L.map('map', { 
+            center: [-42.912, -71.316], 
+            zoom: 14, 
+            layers: [osm], 
+            zoomControl: false 
         });
-
-        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm], zoomControl: false });
         
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
         // --- SELECTOR DE CAPAS ---
         const baseMaps = { 
-            "Calles": osm, 
-            "Calles (Alt)": callesAlt,
-            "Satélite": satellite,
-            "Satélite con Calles": vistaHibrida 
+            "Calles Normal": osm, 
+            "Calles Gris Claro": callesAlt,
+            "Satélite Solo": satellite,
+            "Satélite con Nombres": googleHybrid 
         };
 
         L.control.layers(baseMaps, null, { position: 'bottomright' }).addTo(map);

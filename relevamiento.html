@@ -4,36 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relevamiento de Cámaras</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Estilos similares a tu index para que se vea igual */
-        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); }
-        input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 10px; border: none; }
-        button { background: #2563eb; color: white; font-weight: bold; cursor: pointer; }
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; padding: 40px 20px; }
+        .card { background: rgba(255, 255, 255, 0.05); padding: 30px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        h2 { margin-top: 0; color: #60a5fa; }
+        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 12px; border: 1px solid #334155; background: #1e293b; color: white; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; border-radius: 12px; border: none; background: #2563eb; color: white; font-weight: 700; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #1d4ed8; }
+        #resultados { margin-top: 20px; font-size: 14px; color: #94a3b8; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Relevamiento por Dirección</h2>
-    <input type="text" id="dir-input" placeholder="Ej: Avenida Fontana 365">
-    <select id="radio-select">
+<div class="card">
+    <h2>Relevamiento</h2>
+    <input type="text" id="direccion" placeholder="Ej: Avenida Fontana 365, Esquel">
+    <select id="radio">
         <option value="100">100 metros</option>
-        <option value="200">200 metros</option>
+        <option value="300">300 metros</option>
         <option value="500">500 metros</option>
     </select>
-    <button onclick="ejecutarRelevamiento()">Generar Informe</button>
-    <div id="resultado" style="margin-top: 20px;"></div>
+    <button onclick="buscar()">Generar Informe</button>
+    <div id="resultados"></div>
+    <button id="btn-descargar" style="display:none; background: #10b981;" onclick="descargarTxt()">Descargar .txt</button>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // Conexión a tu Supabase (la misma que en el index)
     const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+    let listaCamaras = [];
 
-    async function ejecutarRelevamiento() {
-        // Aquí conectaremos con la función get_camaras_cercanas que creamos antes
-        // Pero primero necesitamos geocodificar la dirección que puso el usuario
+    async function buscar() {
+        const dir = document.getElementById('direccion').value;
+        const radio = document.getElementById('radio').value;
+        const resDiv = document.getElementById('resultados');
+        
+        resDiv.innerText = "Buscando...";
+
+        // 1. Convertir dirección a coordenadas (usando Nominatim gratuito)
+        const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dir)}`);
+        const dataGeo = await geo.json();
+
+        if (dataGeo.length === 0) { resDiv.innerText = "No se encontró la dirección."; return; }
+
+        const { lat, lon } = dataGeo[0];
+
+        // 2. Llamar a la función RPC de Supabase
+        const { data, error } = await _client.rpc('get_camaras_cercanas', { 
+            lat: parseFloat(lat), 
+            lng: parseFloat(lon), 
+            radio_metros: parseInt(radio) 
+        });
+
+        if (error) { resDiv.innerText = "Error: " + error.message; return; }
+
+        listaCamaras = data;
+        resDiv.innerHTML = `Se encontraron <b>${data.length}</b> cámaras en un radio de ${radio}m.<br><br>`;
+        if (data.length > 0) document.getElementById('btn-descargar').style.display = 'block';
+    }
+
+    function descargarTxt() {
+        let contenido = listaCamaras.map(c => `CAMARA EN ${c.lugar_titular.toUpperCase()}`).join('\n');
+        const blob = new Blob([contenido], { type: 'text/plain' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'relevamiento.txt';
+        a.click();
     }
 </script>
 </body>

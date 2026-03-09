@@ -2,19 +2,40 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Relevamiento DPI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relevamiento - DPI Esquel</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: 'Inter', sans-serif; }
+        body, html { margin: 0; padding: 0; height: 100%; display: flex; font-family: 'Inter', sans-serif; }
         
         /* Panel Lateral */
-        #sidebar { width: 350px; background: #0f172a; color: white; padding: 20px; z-index: 1000; box-shadow: 2px 0 10px rgba(0,0,0,0.5); }
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; }
+        #sidebar { 
+            width: 350px; 
+            background: #0f172a; 
+            color: white; 
+            padding: 20px; 
+            z-index: 1000; 
+            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
         button { background: #2563eb; color: white; font-weight: bold; cursor: pointer; }
         
-        /* Mapa */
-        #map { flex-grow: 1; height: 100%; }
-        .pin-fijo { position: absolute; top: 50%; left: calc(50% + 175px); transform: translate(-50%, -100%); z-index: 1000; font-size: 40px; pointer-events: none; }
+        /* Contenedor del Mapa */
+        #map { flex-grow: 1; height: 100%; z-index: 1; }
+        
+        /* Pin central fijo */
+        .pin-fijo { 
+            position: absolute; 
+            top: 50%; 
+            left: calc(50% + 175px); 
+            transform: translate(-50%, -100%); 
+            z-index: 900; 
+            font-size: 40px; 
+            pointer-events: none; 
+        }
     </style>
 </head>
 <body>
@@ -29,8 +50,8 @@
         <option value="500">500 metros</option>
     </select>
     <button onclick="buscarCercanas()">Buscar Cámaras</button>
-    <div id="resultado"></div>
-    <button id="btn-pdf" style="display:none; background:#10b981" onclick="generarPDF()">Descargar Informe (.txt)</button>
+    <div id="resultado" style="margin-top: 10px; font-size: 0.9em;"></div>
+    <button id="btn-pdf" style="display:none; background:#10b981" onclick="generarTXT()">Descargar Informe (.txt)</button>
 </div>
 
 <div id="map"></div>
@@ -39,7 +60,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    const _client = supabase.createClient('URL', 'KEY');
+    // Configuración de Supabase
+    const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+    
+    // Inicializar mapa
     const map = L.map('map').setView([-42.912, -71.316], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
@@ -48,27 +72,48 @@
     async function buscarCercanas() {
         const centro = map.getCenter();
         const radio = document.getElementById('radio').value;
+        const resDiv = document.getElementById('resultado');
+        
+        resDiv.innerText = "Buscando...";
 
+        // Llamada a la función RPC
         const { data, error } = await _client.rpc('get_camaras_cercanas', { 
-            lat: centro.lat, lng: centro.lng, radio_metros: parseInt(radio) 
+            lat: centro.lat, 
+            lng: centro.lng, 
+            radio_metros: parseInt(radio) 
         });
 
-        if (error) { alert("Error: " + error.message); return; }
+        if (error) { 
+            resDiv.innerText = "Error: " + error.message; 
+            return; 
+        }
         
         ultimasCamaras = data;
-        document.getElementById('resultado').innerHTML = `Se encontraron <b>${data.length}</b> cámaras.`;
-        if(data.length > 0) document.getElementById('btn-pdf').style.display = 'block';
+        resDiv.innerHTML = `Se encontraron <b>${data.length}</b> cámaras en el radio seleccionado.`;
+        
+        if(data.length > 0) {
+            document.getElementById('btn-pdf').style.display = 'block';
+        } else {
+            document.getElementById('btn-pdf').style.display = 'none';
+        }
     }
 
-    function generarPDF() {
-        const legajo = document.getElementById('legajo').value;
-        const dir = document.getElementById('dir_hecho').value;
+    function generarTXT() {
+        const legajo = document.getElementById('legajo').value || "S/N";
+        const dir = document.getElementById('dir_hecho').value || "Sin dirección";
         
-        let texto = `INFORME DE RELEVAMIENTO - DPI\n`;
-        texto += `Legajo: ${legajo}\nLugar del hecho: ${dir}\n\nCámaras cercanas:\n`;
-        texto += ultimasCamaras.map(c => `- ${c.DIRECCION} | Titular: ${c['LUGAR / TITULAR']}`).join('\n');
+        let contenido = `INFORME DE RELEVAMIENTO - DPI ESQUEL\n`;
+        contenido += `====================================\n`;
+        contenido += `Legajo: ${legajo}\n`;
+        contenido += `Lugar del hecho: ${dir}\n`;
+        contenido += `Fecha: ${new Date().toLocaleString()}\n\n`;
+        contenido += `Cámaras detectadas:\n`;
         
-        const blob = new Blob([texto], { type: 'text/plain' });
+        ultimasCamaras.forEach(c => {
+            contenido += `- ${c.DIRECCION} | ${c['LUGAR / TITULAR'] || 'Sin titular'}\n`;
+        });
+        
+        const blob = new Blob([contenido], { type: 'text/plain' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
         a.download = `Informe_${legajo}.txt`;

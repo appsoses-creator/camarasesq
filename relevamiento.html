@@ -2,75 +2,52 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relevamiento de Cámaras</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <title>Nuevo Relevamiento</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { font-family: 'Inter', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; padding: 40px 20px; }
-        .card { background: rgba(255, 255, 255, 0.05); padding: 30px; border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1); width: 100%; max-width: 500px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        h2 { margin-top: 0; color: #60a5fa; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 12px; border: 1px solid #334155; background: #1e293b; color: white; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; border-radius: 12px; border: none; background: #2563eb; color: white; font-weight: 700; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #1d4ed8; }
-        #resultados { margin-top: 20px; font-size: 14px; color: #94a3b8; }
+        body, html { height: 100%; margin: 0; }
+        #map { height: 70vh; width: 100%; }
+        .panel { padding: 20px; background: #0f172a; color: white; height: 30vh; }
+        .pin-center { position: absolute; top: 35%; left: 50%; z-index: 1000; transform: translate(-50%, -50%); pointer-events: none; color: red; font-size: 30px; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <h2>Relevamiento</h2>
-    <input type="text" id="direccion" placeholder="Ej: Avenida Fontana 365, Esquel">
+<div id="map"></div>
+<div class="pin-center">📍</div> <div class="panel">
+    <h3>Seleccione el lugar del hecho</h3>
     <select id="radio">
         <option value="100">100 metros</option>
         <option value="300">300 metros</option>
-        <option value="500">500 metros</option>
     </select>
-    <button onclick="buscar()">Generar Informe</button>
-    <div id="resultados"></div>
-    <button id="btn-descargar" style="display:none; background: #10b981;" onclick="descargarTxt()">Descargar .txt</button>
+    <button onclick="generarRelevamiento()">Generar Informe de Cámaras</button>
+    <div id="resultado"></div>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
-    let listaCamaras = [];
+    const _client = supabase.createClient('URL', 'KEY'); // Usa tus credenciales
 
-    async function buscar() {
-        const dir = document.getElementById('direccion').value;
+    // Inicializar mapa sin cargar cámaras
+    const map = L.map('map').setView([-42.912, -71.316], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    async function generarRelevamiento() {
+        const centro = map.getCenter(); // Obtenemos las coordenadas del centro exacto
         const radio = document.getElementById('radio').value;
-        const resDiv = document.getElementById('resultados');
         
-        resDiv.innerText = "Buscando...";
-
-        // 1. Convertir dirección a coordenadas (usando Nominatim gratuito)
-        const geo = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(dir)}`);
-        const dataGeo = await geo.json();
-
-        if (dataGeo.length === 0) { resDiv.innerText = "No se encontró la dirección."; return; }
-
-        const { lat, lon } = dataGeo[0];
-
-        // 2. Llamar a la función RPC de Supabase
+        // Llamada a tu función de base de datos
         const { data, error } = await _client.rpc('get_camaras_cercanas', { 
-            lat: parseFloat(lat), 
-            lng: parseFloat(lon), 
+            lat: centro.lat, 
+            lng: centro.lng, 
             radio_metros: parseInt(radio) 
         });
 
-        if (error) { resDiv.innerText = "Error: " + error.message; return; }
-
-        listaCamaras = data;
-        resDiv.innerHTML = `Se encontraron <b>${data.length}</b> cámaras en un radio de ${radio}m.<br><br>`;
-        if (data.length > 0) document.getElementById('btn-descargar').style.display = 'block';
-    }
-
-    function descargarTxt() {
-        let contenido = listaCamaras.map(c => `CAMARA EN ${c.lugar_titular.toUpperCase()}`).join('\n');
-        const blob = new Blob([contenido], { type: 'text/plain' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'relevamiento.txt';
-        a.click();
+        if (error) { alert("Error"); return; }
+        
+        document.getElementById('resultado').innerText = `Se detectaron ${data.length} cámaras.`;
+        // Aquí podrías agregar un botón para descargar el .txt como hicimos antes
     }
 </script>
 </body>

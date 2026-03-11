@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RELEVAMIENTO CAM23</title>
+<title>RELEVAMIENTO eeee</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
@@ -28,16 +28,19 @@ width:100%;
 z-index:1;
 }
 
-/* contenedor del reporte */
+/* contenedor del reporte - Posicionado fuera pero renderizable */
 #capture-container{
-position:absolute;
-left:-9999px;
+position:fixed;
+top:0;
+left:0;
 width:1000px;
 background:white;
 padding:20px;
 display:flex;
 flex-direction:row;
 gap:20px;
+z-index:-1000;
+visibility:hidden;
 }
 
 .center-pin{
@@ -174,20 +177,11 @@ onclick="resetearInterfaz()">MARCAR NUEVO LUGAR</button>
 </div>
 
 <div id="capture-container">
-
-<div id="map-snapshot" style="width:650px;height:420px;"></div>
-
+<div id="map-snapshot" style="width:650px;height:420px;border:1px solid #eee;"></div>
 <div style="width:320px;font-family:sans-serif;font-size:14px;color:#333;">
 <h3 style="margin-top:0;">Referencias de cámaras</h3>
-
-<div id="list-content" style="
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-"></div>
-
+<div id="list-content" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
 </div>
-
 </div>
 
 <div id="map"></div>
@@ -195,243 +189,147 @@ gap:10px;
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
+// Desactivar animaciones para una captura limpia
+const map = L.map('map',{zoomControl:false, fadeAnimation: false, zoomAnimation: false}).setView([-42.912,-71.316],15);
+const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-const _client = supabase.createClient(
-'https://ubdlfcjcgdnzqwjvwsmn.supabase.co',
-'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu'
-);
-
-const map = L.map('map',{zoomControl:false})
-.setView([-42.912,-71.316],15);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { crossOrigin: true }).addTo(map);
 
 let markerHecho;
 let camarasLayer = L.layerGroup().addTo(map);
 
 function ajustarMapaAContenido(){
-
-const grupo=camarasLayer.getLayers();
-
-if(grupo.length>0){
-
-const bounds=L.featureGroup(grupo).getBounds();
-
-map.fitBounds(bounds,{padding:[50,50]});
-
-}
-
+    const grupo = camarasLayer.getLayers();
+    if(grupo.length > 0){
+        const bounds = L.featureGroup(grupo).getBounds();
+        // Usamos animate: false para que el zoom sea instantáneo y no salga movido en la captura
+        map.fitBounds(bounds, {padding:[50,50], animate: false});
+    }
 }
 
 function confirmarUbicacion(){
-
-const centro=map.getCenter();
-
-if(markerHecho)map.removeLayer(markerHecho);
-
-markerHecho=L.marker([centro.lat,centro.lng],{
-
-icon:L.divIcon({
-
-html:'<i class="fa fa-map-marker-alt" style="color:red;font-size:30px;"></i>',
-className:'custom-div-icon'
-
-})
-
-}).addTo(map);
-
+    const centro = map.getCenter();
+    if(markerHecho) map.removeLayer(markerHecho);
+    markerHecho = L.marker([centro.lat, centro.lng],{
+        icon:L.divIcon({
+            html:'<i class="fa fa-map-marker-alt" style="color:red;font-size:30px;"></i>',
+            className:'custom-div-icon'
+        })
+    }).addTo(map);
 }
 
 function cancelarMarcar(){
-
-if(markerHecho){
-
-map.removeLayer(markerHecho);
-markerHecho=null;
-
-}
-
+    if(markerHecho){ map.removeLayer(markerHecho); markerHecho = null; }
 }
 
 async function buscarCamaras(){
+    if(!markerHecho){ alert("Primero debe confirmar la ubicación del hecho."); return; }
+    
+    document.getElementById('topBar').style.display='none';
+    document.getElementById('centerPin').style.display='none';
+    document.getElementById('cont-botones').style.display='none';
 
-if(!markerHecho){
+    const cuadras = parseInt(document.getElementById('radio').value)||2;
+    const radioEnMetros = cuadras * 100;
+    const centro = markerHecho.getLatLng();
 
-alert("Primero debe confirmar la ubicación del hecho.");
-return;
+    const {data,error} = await _client.from('cameras').select('*');
+    if(error){ alert("Error de conexión."); return; }
 
-}
+    if(data){
+        camarasLayer.clearLayers();
+        let encontradas=0;
+        let numero=1;
 
-document.getElementById('topBar').style.display='none';
-document.getElementById('centerPin').style.display='none';
-document.getElementById('cont-botones').style.display='none';
+        data.forEach(cam=>{
+            const latlng = cam.UBICACION?.split(',').map(parseFloat);
+            if(latlng && latlng.length === 2){
+                const distMetros = map.distance([centro.lat, centro.lng], latlng);
+                if(distMetros <= radioEnMetros){
+                    let color='#10b981';
+                    if(cam.TIPO==='CENTRO DE MONITOREO') color='#2563eb';
+                    else if(cam.TIPO==='PRIVADAS') color='#0f172a';
 
-const cuadras=parseInt(document.getElementById('radio').value)||2;
-const radioEnMetros=cuadras*100;
-const centro=markerHecho.getLatLng();
+                    const icon=L.divIcon({
+                        className:'custom-div-icon',
+                        html:`<div style="background:white;border:3px solid ${color};color:${color};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;box-shadow:0 4px 10px rgba(0,0,0,0.3)">${numero}</div>`,
+                        iconSize:[32,32],
+                        iconAnchor:[16,16]
+                    });
 
-const {data,error}=await _client.from('cameras').select('*');
+                    L.marker(latlng,{icon}).addTo(camarasLayer)
+                    .bindPopup(`<b>${numero}. ${cam.DIRECCION}</b><br>${cam['LUGAR / TITULAR']}<br><i>${Math.round(distMetros)} metros</i>`);
+                    
+                    numero++; encontradas++;
+                }
+            }
+        });
 
-if(error){
-
-alert("Error de conexión.");
-return;
-
-}
-
-if(data){
-
-camarasLayer.clearLayers();
-let encontradas=0;
-let numero=1;
-
-data.forEach(cam=>{
-
-const latlng=cam.UBICACION?.split(',').map(parseFloat);
-
-if(latlng&&latlng.length===2){
-
-const distMetros=map.distance([centro.lat,centro.lng],latlng);
-
-if(distMetros<=radioEnMetros){
-
-let color='#10b981';
-
-if(cam.TIPO==='CENTRO DE MONITOREO')color='#2563eb';
-else if(cam.TIPO==='PRIVADAS')color='#0f172a';
-
-const icon=L.divIcon({
-
-className:'custom-div-icon',
-
-html:`<div style="background:white;border:3px solid ${color};color:${color};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;box-shadow:0 4px 10px rgba(0,0,0,0.3)">
-${numero}
-</div>`,
-
-iconSize:[32,32],
-iconAnchor:[16,16]
-
-});
-
-L.marker(latlng,{icon})
-.addTo(camarasLayer)
-.bindPopup(`<b>${numero}. ${cam.DIRECCION}</b><br>${cam['LUGAR / TITULAR']}<br><i>${Math.round(distMetros)} metros</i>`);
-
-numero++;
-encontradas++;
-
-}
-
-}
-
-});
-
-if(encontradas>0)
-document.getElementById('btn-reporte').style.display='block';
-else
-alert("No se encontraron cámaras.");
-
-}
-
+        if(encontradas>0) document.getElementById('btn-reporte').style.display='block';
+        else alert("No se encontraron cámaras.");
+    }
 }
 
 async function generarReporte(){
+    document.getElementById('sidebar').style.display='none';
+    document.getElementById('capture-container').style.visibility = 'visible';
 
-document.getElementById('sidebar').style.display='none';
+    ajustarMapaAContenido();
 
-ajustarMapaAContenido();
+    // Esperar a que el mapa se estabilice
+    await new Promise(resolve => {
+        map.once('moveend', () => {
+            setTimeout(resolve, 1500); // Tiempo extra para que carguen las imágenes de la calle (tiles)
+        });
+        setTimeout(resolve, 3000); // Fallback por si no detecta el movimiento
+    });
 
-await new Promise(resolve=>{
+    const canvasMapa = await html2canvas(document.getElementById('map'), {
+        useCORS: true,
+        backgroundColor: null,
+        scale: 3 // Aumentamos la escala para máxima nitidez
+    });
 
-map.once('moveend',()=>{
+    const listContent = document.getElementById('list-content');
+    listContent.innerHTML = "";
+    camarasLayer.eachLayer(layer => {
+        const content = layer.getPopup()?.getContent();
+        if(content) listContent.innerHTML += `<div style="border-bottom:1px solid #eee;padding-bottom:8px;font-size:11px;">${content}</div>`;
+    });
 
-map.invalidateSize();
+    const mapSnapshot = document.getElementById('map-snapshot');
+    mapSnapshot.innerHTML = "";
+    canvasMapa.style.width = "100%";
+    canvasMapa.style.height = "100%";
+    canvasMapa.style.objectFit = "cover";
+    mapSnapshot.appendChild(canvasMapa);
 
-setTimeout(resolve,1000);
+    html2canvas(document.getElementById('capture-container'), {
+        useCORS: true,
+        scale: 2
+    }).then(canvasFinal => {
+        const link = document.createElement('a');
+        link.download = `Reporte_${document.getElementById('legajo').value || 'Final'}.png`;
+        link.href = canvasFinal.toDataURL('image/png');
+        link.click();
 
-});
-
-setTimeout(resolve,3000);
-
-});
-
-const canvasMapa=await html2canvas(document.getElementById('map'),{
-
-useCORS:true,
-backgroundColor:null,
-scale:2
-
-});
-
-const listContent=document.getElementById('list-content');
-listContent.innerHTML="";
-
-camarasLayer.eachLayer(layer=>{
-
-const content=layer.getPopup()?.getContent();
-
-if(content)
-
-listContent.innerHTML+=
-`<div style="border-bottom:1px solid #eee;padding-bottom:8px;">${content}</div>`;
-
-});
-
-const mapSnapshot=document.getElementById('map-snapshot');
-
-mapSnapshot.innerHTML="";
-mapSnapshot.style.overflow="hidden";
-
-canvasMapa.style.width="100%";
-canvasMapa.style.height="100%";
-
-mapSnapshot.appendChild(canvasMapa);
-
-html2canvas(document.getElementById('capture-container'),{
-
-useCORS:true,
-scale:2
-
-}).then(canvasFinal=>{
-
-const link=document.createElement('a');
-
-link.download='reporte-final.png';
-link.href=canvasFinal.toDataURL('image/png');
-
-link.click();
-
-document.getElementById('sidebar').style.display='block';
-document.getElementById('btn-reporte').style.display='none';
-document.getElementById('btn-nuevo-lugar').style.display='block';
-
-});
-
+        document.getElementById('sidebar').style.display='block';
+        document.getElementById('btn-reporte').style.display='none';
+        document.getElementById('btn-nuevo-lugar').style.display='block';
+        document.getElementById('capture-container').style.visibility = 'hidden';
+    });
 }
 
 function resetearInterfaz(){
-
-document.getElementById('topBar').style.display='block';
-document.getElementById('centerPin').style.display='block';
-document.getElementById('cont-botones').style.display='flex';
-
-document.getElementById('btn-nuevo-lugar').style.display='none';
-document.getElementById('btn-reporte').style.display='none';
-
-if(markerHecho){
-
-map.removeLayer(markerHecho);
-markerHecho=null;
-
+    document.getElementById('topBar').style.display='block';
+    document.getElementById('centerPin').style.display='block';
+    document.getElementById('cont-botones').style.display='flex';
+    document.getElementById('btn-nuevo-lugar').style.display='none';
+    document.getElementById('btn-reporte').style.display='none';
+    if(markerHecho){ map.removeLayer(markerHecho); markerHecho = null; }
+    camarasLayer.clearLayers();
+    map.setView([-42.912,-71.316],15);
 }
-
-camarasLayer.clearLayers();
-
-map.setView([-42.912,-71.316],15);
-
-}
-
 </script>
-
 </body>
 </html>

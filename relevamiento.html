@@ -1,110 +1,191 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RELEVAMIENTO QQQQQQQ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>RELEVAMIENTO CAM23</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
+:root { --primary:#2563eb; --dark-bg:#0f172a; --glass-bg:rgba(255,255,255,0.95); --success:#10b981; --danger:#ef4444; }
 
 body{
 margin:0;
-font-family:Arial;
-background:#0f172a;
+font-family:'Inter',sans-serif;
+background:var(--dark-bg);
 overflow:hidden;
 }
 
 #map{
 height:100vh;
 width:100%;
+z-index:1;
+}
+
+/* contenedor del reporte */
+#capture-container{
+position:absolute;
+left:-9999px;
+width:1000px;
+background:white;
+padding:20px;
+display:flex;
+flex-direction:row;
+gap:20px;
+}
+
+.center-pin{
+position:fixed;
+top:50%;
+left:50%;
+transform:translate(-50%,-100%);
+z-index:2000;
+pointer-events:none;
+filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+}
+
+.top-bar{
+position:fixed;
+top:20px;
+left:50%;
+transform:translateX(-50%);
+z-index:1000;
+width:90%;
+max-width:400px;
+background:var(--glass-bg);
+padding:15px;
+border-radius:20px;
+text-align:center;
+font-weight:700;
+box-shadow:0 4px 15px rgba(0,0,0,0.2);
+}
+
+.container-btns{
+position:fixed;
+bottom:30px;
+left:50%;
+transform:translateX(-50%);
+display:flex;
+gap:10px;
+z-index:2000;
+}
+
+.btn-aceptar,.btn-cancelar{
+padding:15px 30px;
+border-radius:50px;
+cursor:pointer;
+font-weight:600;
+border:none;
+box-shadow:0 4px 6px rgba(0,0,0,0.2);
+}
+
+.btn-aceptar{
+background:var(--primary);
+color:white;
+}
+
+.btn-cancelar{
+background:var(--danger);
+color:white;
 }
 
 .sidebar{
 position:fixed;
-left:0;
 top:0;
+left:0;
 width:300px;
 height:100%;
-background:white;
+background:var(--glass-bg);
+z-index:3000;
 padding:20px;
-z-index:1000;
+box-shadow:2px 0 10px rgba(0,0,0,0.2);
 }
 
 .sidebar input{
 width:100%;
-padding:8px;
-margin-bottom:15px;
+padding:10px;
+margin:10px 0 20px;
+border:1px solid #ccc;
+border-radius:8px;
+box-sizing:border-box;
 }
 
-button{
+.btn-buscar{
 width:100%;
-padding:12px;
-margin-bottom:10px;
-border:none;
-background:#2563eb;
+padding:15px;
+background:var(--success);
 color:white;
-font-weight:bold;
+border:none;
+border-radius:8px;
 cursor:pointer;
+font-weight:600;
+margin-bottom:10px;
 }
 
-#capture-container{
-position:absolute;
-left:-9999px;
-width:1100px;
-background:white;
-padding:20px;
+.custom-div-icon{
 display:flex;
-gap:30px;
+align-items:center;
+justify-content:center;
 }
-
-#map-snapshot{
-width:650px;
-height:420px;
-}
-
-#list-content{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-font-size:14px;
-}
-
 </style>
 </head>
 
 <body>
 
-<div class="sidebar">
+<div class="top-bar" id="topBar">MARQUE EL LUGAR DEL HECHO</div>
 
+<img src="https://cdn-icons-png.flaticon.com/512/684/684908.png"
+class="center-pin" id="centerPin" width="45">
+
+<div class="container-btns" id="cont-botones">
+<button class="btn-aceptar" onclick="confirmarUbicacion()">ACEPTAR</button>
+<button class="btn-cancelar" onclick="cancelarMarcar()">CANCELAR</button>
+</div>
+
+<div id="sidebar" class="sidebar">
 <h3>Datos del hecho</h3>
 
-<label>Dirección</label>
-<input id="direccion">
+<label>Dirección:</label>
+<input type="text" id="direccion" placeholder="Calle y altura">
 
-<label>Cuadras</label>
-<input id="radio" type="number" value="2">
+<label>Cuadras a la redonda:</label>
+<input type="number" id="radio" value="2">
 
-<label>Legajo</label>
-<input id="legajo">
+<label>Legajo Fiscal:</label>
+<input type="text" id="legajo">
 
-<button onclick="buscarCamaras()">BUSCAR CAMARAS</button>
-<button onclick="generarReporte()">GENERAR REPORTE</button>
+<button class="btn-buscar" onclick="buscarCamaras()">BUSCAR CÁMARAS</button>
 
+<button id="btn-reporte"
+class="btn-buscar"
+style="background:#3b82f6;display:none;"
+onclick="generarReporte()">GENERAR REPORTE</button>
+
+<button id="btn-nuevo-lugar"
+class="btn-buscar"
+style="display:none;background:var(--primary);"
+onclick="resetearInterfaz()">MARCAR NUEVO LUGAR</button>
 </div>
 
 <div id="capture-container">
 
-<div id="map-snapshot"></div>
+<div id="map-snapshot" style="width:650px;height:420px;"></div>
 
-<div style="width:400px">
-<h3>Referencias de cámaras</h3>
-<div id="list-content"></div>
+<div style="width:320px;font-family:sans-serif;font-size:14px;color:#333;">
+<h3 style="margin-top:0;">Referencias de cámaras</h3>
+
+<div id="list-content" style="
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:10px;
+"></div>
+
 </div>
 
 </div>
@@ -115,137 +196,238 @@ font-size:14px;
 
 <script>
 
-const supa = supabase.createClient(
+const _client = supabase.createClient(
 'https://ubdlfcjcgdnzqwjvwsmn.supabase.co',
 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu'
 );
 
-const map = L.map('map').setView([-42.912,-71.316],15);
+const map = L.map('map',{zoomControl:false})
+.setView([-42.912,-71.316],15);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
 let markerHecho;
-let camarasLayer=L.layerGroup().addTo(map);
+let camarasLayer = L.layerGroup().addTo(map);
+
+function ajustarMapaAContenido(){
+
+const grupo=camarasLayer.getLayers();
+
+if(grupo.length>0){
+
+const bounds=L.featureGroup(grupo).getBounds();
+
+map.fitBounds(bounds,{padding:[50,50]});
+
+}
+
+}
 
 function confirmarUbicacion(){
 
 const centro=map.getCenter();
 
-if(markerHecho) map.removeLayer(markerHecho);
+if(markerHecho)map.removeLayer(markerHecho);
 
-markerHecho=L.marker([centro.lat,centro.lng]).addTo(map);
+markerHecho=L.marker([centro.lat,centro.lng],{
+
+icon:L.divIcon({
+
+html:'<i class="fa fa-map-marker-alt" style="color:red;font-size:30px;"></i>',
+className:'custom-div-icon'
+
+})
+
+}).addTo(map);
+
+}
+
+function cancelarMarcar(){
+
+if(markerHecho){
+
+map.removeLayer(markerHecho);
+markerHecho=null;
+
+}
 
 }
 
 async function buscarCamaras(){
 
 if(!markerHecho){
-alert("Marque el lugar primero");
+
+alert("Primero debe confirmar la ubicación del hecho.");
 return;
+
 }
 
-const cuadras=parseInt(document.getElementById("radio").value)||2;
+document.getElementById('topBar').style.display='none';
+document.getElementById('centerPin').style.display='none';
+document.getElementById('cont-botones').style.display='none';
 
-const radio=cuadras*100;
-
+const cuadras=parseInt(document.getElementById('radio').value)||2;
+const radioEnMetros=cuadras*100;
 const centro=markerHecho.getLatLng();
 
-const {data}=await supa.from("cameras").select("*");
+const {data,error}=await _client.from('cameras').select('*');
+
+if(error){
+
+alert("Error de conexión.");
+return;
+
+}
+
+if(data){
 
 camarasLayer.clearLayers();
-
+let encontradas=0;
 let numero=1;
 
 data.forEach(cam=>{
 
-const latlng=cam.UBICACION?.split(",").map(parseFloat);
+const latlng=cam.UBICACION?.split(',').map(parseFloat);
 
-if(!latlng)return;
+if(latlng&&latlng.length===2){
 
-const dist=map.distance([centro.lat,centro.lng],latlng);
+const distMetros=map.distance([centro.lat,centro.lng],latlng);
 
-if(dist<=radio){
+if(distMetros<=radioEnMetros){
 
-let color="#10b981";
+let color='#10b981';
 
-if(cam.TIPO==="CENTRO DE MONITOREO")color="#2563eb";
-if(cam.TIPO==="PRIVADAS")color="#000";
+if(cam.TIPO==='CENTRO DE MONITOREO')color='#2563eb';
+else if(cam.TIPO==='PRIVADAS')color='#0f172a';
 
 const icon=L.divIcon({
+
 className:'custom-div-icon',
-html:`<div style="
-background:white;
-border:3px solid ${color};
-width:36px;
-height:36px;
-border-radius:50%;
-display:flex;
-align-items:center;
-justify-content:center;
-font-weight:bold;
-color:${color};
-font-size:15px;
-box-shadow:0 4px 8px rgba(0,0,0,0.3)
-">${numero}</div>`
+
+html:`<div style="background:white;border:3px solid ${color};color:${color};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;box-shadow:0 4px 10px rgba(0,0,0,0.3)">
+${numero}
+</div>`,
+
+iconSize:[32,32],
+iconAnchor:[16,16]
+
 });
 
-L.marker(latlng,{icon}).addTo(camarasLayer)
-.bindPopup(`<b>${numero} - ${cam.DIRECCION}</b><br>${cam['LUGAR / TITULAR']}<br>${Math.round(dist)} metros`);
+L.marker(latlng,{icon})
+.addTo(camarasLayer)
+.bindPopup(`<b>${numero}. ${cam.DIRECCION}</b><br>${cam['LUGAR / TITULAR']}<br><i>${Math.round(distMetros)} metros</i>`);
 
 numero++;
+encontradas++;
+
+}
 
 }
 
 });
+
+if(encontradas>0)
+document.getElementById('btn-reporte').style.display='block';
+else
+alert("No se encontraron cámaras.");
+
+}
 
 }
 
 async function generarReporte(){
 
+document.getElementById('sidebar').style.display='none';
+
+ajustarMapaAContenido();
+
+await new Promise(resolve=>{
+
+map.once('moveend',()=>{
+
 map.invalidateSize();
 
-await new Promise(r=>setTimeout(r,800));
+setTimeout(resolve,1000);
 
-const canvasMapa=await html2canvas(document.getElementById("map"),{
-useCORS:true,
-scale:2
 });
 
-const mapSnapshot=document.getElementById("map-snapshot");
+setTimeout(resolve,3000);
 
-mapSnapshot.innerHTML="";
+});
 
-mapSnapshot.appendChild(canvasMapa);
+const canvasMapa=await html2canvas(document.getElementById('map'),{
 
-const list=document.getElementById("list-content");
+useCORS:true,
+backgroundColor:null,
+scale:2
 
-list.innerHTML="";
+});
 
-let i=1;
+const listContent=document.getElementById('list-content');
+listContent.innerHTML="";
 
 camarasLayer.eachLayer(layer=>{
 
-const txt=layer.getPopup().getContent();
+const content=layer.getPopup()?.getContent();
 
-list.innerHTML+=`<div>${txt}</div>`;
+if(content)
 
-i++;
+listContent.innerHTML+=
+`<div style="border-bottom:1px solid #eee;padding-bottom:8px;">${content}</div>`;
 
 });
 
-html2canvas(document.getElementById("capture-container"),{
+const mapSnapshot=document.getElementById('map-snapshot');
+
+mapSnapshot.innerHTML="";
+mapSnapshot.style.overflow="hidden";
+
+canvasMapa.style.width="100%";
+canvasMapa.style.height="100%";
+
+mapSnapshot.appendChild(canvasMapa);
+
+html2canvas(document.getElementById('capture-container'),{
+
+useCORS:true,
 scale:2
-}).then(canvas=>{
 
-const link=document.createElement("a");
+}).then(canvasFinal=>{
 
-link.download="reporte.png";
+const link=document.createElement('a');
 
-link.href=canvas.toDataURL();
+link.download='reporte-final.png';
+link.href=canvasFinal.toDataURL('image/png');
 
 link.click();
 
+document.getElementById('sidebar').style.display='block';
+document.getElementById('btn-reporte').style.display='none';
+document.getElementById('btn-nuevo-lugar').style.display='block';
+
 });
+
+}
+
+function resetearInterfaz(){
+
+document.getElementById('topBar').style.display='block';
+document.getElementById('centerPin').style.display='block';
+document.getElementById('cont-botones').style.display='flex';
+
+document.getElementById('btn-nuevo-lugar').style.display='none';
+document.getElementById('btn-reporte').style.display='none';
+
+if(markerHecho){
+
+map.removeLayer(markerHecho);
+markerHecho=null;
+
+}
+
+camarasLayer.clearLayers();
+
+map.setView([-42.912,-71.316],15);
 
 }
 
@@ -253,4 +435,3 @@ link.click();
 
 </body>
 </html>
-```

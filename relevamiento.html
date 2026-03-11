@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RELEVAMIENTO 23</title>
+    <title>RELEVAMIENTO CAM</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -57,7 +57,7 @@
     </div>
 
     <div id="capture-container">
-        <div id="map-snapshot" style="width: 500px; height: 500px;"></div>
+        <div id="map-snapshot" style="width: 500px; height: 300px;"></div>
         <div style="width: 350px; font-family: sans-serif; font-size: 14px; color: #333;">
             <h3 style="margin-top:0;">Referencias de cámaras</h3>
             <div id="list-content"></div>
@@ -135,12 +135,15 @@
             
             ajustarMapaAContenido();
             
-            // Esperar a que el mapa cargue las teselas correctamente
+            // 1. Esperar renderizado correcto del mapa
             await new Promise((resolve) => {
-                map.whenReady(() => setTimeout(resolve, 300));
+                map.whenReady(() => setTimeout(resolve, 500));
             });
             
-            const canvasMapa = await html2canvas(document.getElementById('map'), { useCORS: true });
+            const canvasMapa = await html2canvas(document.getElementById('map'), { 
+                useCORS: true, 
+                backgroundColor: null 
+            });
             
             const listContent = document.getElementById('list-content');
             listContent.innerHTML = "";
@@ -149,22 +152,19 @@
                 if(content) listContent.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">${content}</div>`;
             });
 
-            // Ajuste de proporciones para evitar deformación
-            const mapaElement = document.getElementById('map');
-            const anchoMapa = mapaElement.offsetWidth;
-            const altoMapa = mapaElement.offsetHeight;
-            const proporcion = altoMapa / anchoMapa;
-
+            // 2. Ajuste de dimensiones fijas para evitar deformación
             const mapSnapshot = document.getElementById('map-snapshot');
-            mapSnapshot.style.width = "500px";
-            mapSnapshot.style.height = (500 * proporcion) + "px";
             mapSnapshot.innerHTML = "";
-            mapSnapshot.appendChild(canvasMapa);
-            
+            mapSnapshot.style.width = "500px";
+            mapSnapshot.style.height = "300px";
+            mapSnapshot.style.overflow = "hidden";
+
             canvasMapa.style.width = "100%";
             canvasMapa.style.height = "100%";
-            canvasMapa.style.objectFit = "cover";
+            canvasMapa.style.objectFit = "cover"; 
+            mapSnapshot.appendChild(canvasMapa);
 
+            // 3. Captura final
             html2canvas(document.getElementById('capture-container'), { useCORS: true }).then(canvasFinal => {
                 const link = document.createElement('a');
                 link.download = 'reporte-final.png';

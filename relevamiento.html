@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Relevamiento 223</title>
+    <title>Relevamiento - 23</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -19,7 +19,7 @@
         .center-pin { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -100%); z-index: 2000; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
         .top-bar { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90%; max-width: 400px; background: var(--glass-bg); padding: 15px; border-radius: 20px; text-align: center; font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         
-        /* Contenedor de botones nuevo */
+        /* Contenedor de botones actualizado */
         .container-btns { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 2000; }
         .btn-aceptar, .btn-cancelar { padding: 15px 30px; border-radius: 50px; cursor: pointer; font-weight: 600; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .btn-aceptar { background: var(--primary); color: white; }
@@ -34,12 +34,12 @@
 </head>
 <body>
 
-    <div class="top-bar">MARQUE EL LUGAR DEL HECHO</div>
-    <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" class="center-pin" width="45">
+    <div class="top-bar" id="topBar">MARQUE EL LUGAR DEL HECHO</div>
+    <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" class="center-pin" id="centerPin" width="45">
     
-    <div class="container-btns">
-        <button class="btn-cancelar" onclick="cancelarMarcar()">CANCELAR</button>
+    <div class="container-btns" id="cont-botones">
         <button class="btn-aceptar" onclick="confirmarUbicacion()">ACEPTAR</button>
+        <button class="btn-cancelar" onclick="cancelarMarcar()">CANCELAR</button>
     </div>
 
     <div id="sidebar" class="sidebar">
@@ -58,7 +58,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
-
         const map = L.map('map', { zoomControl: false }).setView([-42.912, -71.316], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         
@@ -71,40 +70,44 @@
             markerHecho = L.marker([centro.lat, centro.lng], {
                 icon: L.divIcon({ html: '<i class="fa fa-map-marker-alt" style="color:red; font-size:30px;"></i>', className: 'custom-div-icon' })
             }).addTo(map);
+
+            // Ocultar elementos de UI
+            document.getElementById('topBar').style.display = 'none';
+            document.getElementById('centerPin').style.display = 'none';
+            document.getElementById('cont-botones').style.display = 'none';
+            
             document.getElementById('sidebar').classList.add('active');
         }
 
         function cancelarMarcar() {
-            if (markerHecho) {
-                map.removeLayer(markerHecho);
-                markerHecho = null;
-            }
+            if (markerHecho) { map.removeLayer(markerHecho); markerHecho = null; }
             document.getElementById('sidebar').classList.remove('active');
         }
 
         async function buscarCamaras() {
             document.getElementById('sidebar').classList.remove('active');
+            
+            // Restaurar UI al buscar
+            document.getElementById('topBar').style.display = 'block';
+            document.getElementById('centerPin').style.display = 'block';
+            document.getElementById('cont-botones').style.display = 'flex';
+
             const cuadras = parseInt(document.getElementById('radio').value) || 2;
             const radioEnMetros = cuadras * 100;
             const centro = markerHecho.getLatLng();
 
             const { data, error } = await _client.from('cameras').select('*'); 
 
-            if (error) {
-                alert("Error: Conexión a Supabase no encontrada.");
-                return;
-            }
+            if (error) { alert("Error: Conexión a Supabase no encontrada."); return; }
 
             if (data) {
                 camarasLayer.clearLayers();
                 let encontradas = 0;
-
                 data.forEach(cam => {
                     const latlng = cam.UBICACION?.split(',').map(parseFloat);
                     if (latlng && latlng.length === 2) {
                         const distMetros = map.distance([centro.lat, centro.lng], latlng);
                         if (distMetros <= radioEnMetros) {
-                            
                             let color = '#10b981'; 
                             if(cam.TIPO === 'CENTRO DE MONITOREO') color = '#2563eb';
                             else if(cam.TIPO === 'PRIVADAS') color = '#0f172a';
@@ -123,20 +126,12 @@
                                 </div>
                             `;
 
-                            L.marker(latlng, { icon })
-                             .addTo(camarasLayer)
-                             .bindPopup(contenidoPopup);
+                            L.marker(latlng, { icon }).addTo(camarasLayer).bindPopup(contenidoPopup);
                             encontradas++;
                         }
                     }
                 });
-
-                // Limpiar marcador central tras búsqueda exitosa
-                if (markerHecho) {
-                    map.removeLayer(markerHecho);
-                    markerHecho = null;
-                }
-
+                if (markerHecho) { map.removeLayer(markerHecho); markerHecho = null; }
                 if (encontradas === 0) alert("No se encontraron cámaras en ese radio.");
             }
         }

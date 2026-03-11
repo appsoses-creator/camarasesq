@@ -14,57 +14,79 @@
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--dark-bg); overflow: hidden; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* Pin central para relevamiento */
         .center-pin {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -100%);
-            z-index: 2000; pointer-events: none;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+            z-index: 2000; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
         }
 
-        .btn-confirmar {
-            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
-            z-index: 2000; background: var(--success); color: white;
-            border: none; padding: 16px 30px; border-radius: 50px;
-            font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        .btn-menu { position: fixed; top: 20px; left: 20px; z-index: 1000; padding: 15px; border-radius: 12px; border: none; background: var(--glass-bg); cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+
+        .sidebar {
+            position: fixed; top: 0; left: -350px; width: 320px; height: 100%;
+            background: var(--glass-bg); z-index: 3000; transition: 0.3s;
+            padding: 25px; box-shadow: 5px 0 15px rgba(0,0,0,0.2);
         }
+        .sidebar.active { left: 0; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .sidebar input { width: 100%; padding: 12px; margin: 8px 0 20px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-buscar { width: 100%; padding: 15px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
 
         .top-bar {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; width: 92%; max-width: 600px;
-            background: var(--glass-bg); padding: 15px; border-radius: 20px;
-            text-align: center; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            z-index: 1000; width: 90%; max-width: 400px;
+            background: var(--glass-bg); padding: 12px; border-radius: 20px;
+            text-align: center; font-size: 0.9rem; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        Modo Relevamiento: Ubique el punto en el mapa
+    <button class="btn-menu" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <h3>Filtro Relevamiento</h3>
+            <button onclick="toggleSidebar()" style="border:none; background:none; cursor:pointer;">✕</button>
+        </div>
+        <label>Dirección del hecho:</label>
+        <input type="text" id="direccion" placeholder="Nombre y altura">
+        
+        <label>Cuadras a la redonda:</label>
+        <input type="number" id="radio" value="2">
+        
+        <label>Legajo Fiscal / Preventivo:</label>
+        <input type="text" id="legajo" placeholder="Nº de legajo">
+        
+        <button class="btn-buscar" onclick="buscarCamaras()">BUSCAR CÁMARAS</button>
     </div>
 
+    <div class="top-bar">Modo Relevamiento: Ubique el punto en el mapa</div>
     <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" class="center-pin" width="45">
     
-    <button class="btn-confirmar" onclick="capturarUbicacion()">
-        <i class="fa-solid fa-check"></i> CONFIRMAR PUNTO
-    </button>
-
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Inicialización básica del mapa
         const map = L.map('map', { zoomControl: false }).setView([-42.912, -71.316], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        function capturarUbicacion() {
+        let camarasLayer = L.layerGroup().addTo(map);
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        async function buscarCamaras() {
             const centro = map.getCenter();
-            const latlng = `${centro.lat.toFixed(6)}, ${centro.lng.toFixed(6)}`;
+            // Lógica de búsqueda: Aquí integrarás tu consulta a Supabase
+            // Al hacer clic, ocultamos el sidebar para ver los resultados
+            toggleSidebar();
             
-            // Aquí puedes redirigir al formulario pasando las coordenadas
-            // o abrir el modal de carga directamente
-            alert("Coordenadas capturadas: " + latlng);
-            console.log("Guardar en Supabase:", latlng);
+            console.log("Buscando cámaras cerca de:", centro.lat, centro.lng);
+            alert("Buscando cámaras en un radio de " + document.getElementById('radio').value + " cuadras...");
+            
+            // Aquí iría tu llamado a Supabase (ej: _client.from('cameras').select(...))
         }
     </script>
 </body>

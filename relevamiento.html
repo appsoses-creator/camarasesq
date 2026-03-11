@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Relevamiento 3</title>
+    <title>Relevamiento - 23</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
         :root { --primary: #2563eb; --dark-bg: #0f172a; --glass-bg: rgba(255, 255, 255, 0.95); --success: #10b981; }
@@ -15,20 +17,8 @@
         #map { height: 100vh; width: 100%; z-index: 1; }
         
         .center-pin { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -100%); z-index: 2000; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
-
-        .top-bar {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; width: 90%; max-width: 400px;
-            background: var(--glass-bg); padding: 15px; border-radius: 20px;
-            text-align: center; font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-
-        .btn-aceptar {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            z-index: 2000; background: var(--primary); color: white;
-            border: none; padding: 15px 30px; border-radius: 50px; cursor: pointer; font-weight: 600;
-        }
-
+        .top-bar { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90%; max-width: 400px; background: var(--glass-bg); padding: 15px; border-radius: 20px; text-align: center; font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .btn-aceptar { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 2000; background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 50px; cursor: pointer; font-weight: 600; }
         .sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: var(--glass-bg); z-index: 3000; transition: 0.3s; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
         .sidebar.active { left: 0; }
         .sidebar input { width: 100%; padding: 10px; margin: 10px 0 20px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
@@ -56,6 +46,9 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
+        // Inicialización del cliente igual a tu index
+        const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+
         const map = L.map('map', { zoomControl: false }).setView([-42.912, -71.316], 15);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
         
@@ -68,24 +61,15 @@
             markerHecho = L.marker([centro.lat, centro.lng], {
                 icon: L.divIcon({ html: '<i class="fa fa-map-marker-alt" style="color:blue; font-size:30px;"></i>' })
             }).addTo(map);
-            
             document.getElementById('sidebar').classList.add('active');
         }
 
         async function buscarCamaras() {
-            // Verificar si _client existe (debes tenerlo definido en tu app)
-            if (typeof _client === 'undefined') {
-                alert("Error: Conexión a Supabase no encontrada.");
-                return;
-            }
-
             document.getElementById('sidebar').classList.remove('active');
-            
             const cuadras = parseInt(document.getElementById('radio').value) || 2;
             const radioEnMetros = cuadras * 100;
             const centro = markerHecho.getLatLng();
 
-            // Consulta a Supabase
             const { data, error } = await _client.from('cameras').select('*'); 
 
             if (error) {
@@ -98,14 +82,15 @@
                 let encontradas = 0;
 
                 data.forEach(cam => {
-                    // Calculamos distancia real en metros usando Leaflet
-                    const distMetros = map.distance([centro.lat, centro.lng], [cam.lat, cam.lng]);
-
-                    if (distMetros <= radioEnMetros) {
-                        L.marker([cam.lat, cam.lng])
-                         .addTo(camarasLayer)
-                         .bindPopup(`<b>${cam.nombre}</b><br>${Math.round(distMetros)} metros`);
-                        encontradas++;
+                    const latlng = cam.UBICACION?.split(',').map(parseFloat);
+                    if (latlng && latlng.length === 2) {
+                        const distMetros = map.distance([centro.lat, centro.lng], latlng);
+                        if (distMetros <= radioEnMetros) {
+                            L.marker(latlng)
+                             .addTo(camarasLayer)
+                             .bindPopup(`<b>${cam['LUGAR / TITULAR'] || 'Cámara'}</b><br>${Math.round(distMetros)} metros`);
+                            encontradas++;
+                        }
                     }
                 });
 

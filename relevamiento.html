@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Relevamiento - 222</title>
+    <title>Relevamiento - REPORTE</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -51,7 +51,7 @@
         <input type="text" id="legajo">
         <button class="btn-buscar" onclick="buscarCamaras()">BUSCAR CÁMARAS</button>
         <button id="btn-reporte" class="btn-buscar" style="background: #3b82f6; display: none;" onclick="generarReporte()">GENERAR REPORTE</button>
-        <button id="btn-nuevo-lugar" class="btn-buscar" style="display: none; background: var(--primary);" onclick="activarModoMarcado()">MARCAR NUEVO LUGAR</button>
+        <button id="btn-nuevo-lugar" class="btn-buscar" style="display: none; background: var(--primary);" onclick="resetearInterfaz()">MARCAR NUEVO LUGAR</button>
     </div>
 
     <div id="map"></div>
@@ -79,9 +79,16 @@
 
         async function buscarCamaras() {
             if (!markerHecho) { alert("Primero debe confirmar la ubicación del hecho."); return; }
+            
+            // Ocultar interfaz de marcado
+            document.getElementById('topBar').style.display = 'none';
+            document.getElementById('centerPin').style.display = 'none';
+            document.getElementById('cont-botones').style.display = 'none';
+
             const cuadras = parseInt(document.getElementById('radio').value) || 2;
             const radioEnMetros = cuadras * 100;
             const centro = markerHecho.getLatLng();
+
             const { data, error } = await _client.from('cameras').select('*'); 
             if (error) { alert("Error de conexión."); return; }
             if (data) {
@@ -112,16 +119,13 @@
                 link.download = 'reporte-camaras.png';
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                // Ocultar elementos de marcado al generar reporte
-                document.getElementById('topBar').style.display = 'none';
-                document.getElementById('centerPin').style.display = 'none';
-                document.getElementById('cont-botones').style.display = 'none';
+                
                 document.getElementById('btn-reporte').style.display = 'none';
                 document.getElementById('btn-nuevo-lugar').style.display = 'block';
             });
         }
 
-        function activarModoMarcado() {
+        function resetearInterfaz() {
             document.getElementById('topBar').style.display = 'block';
             document.getElementById('centerPin').style.display = 'block';
             document.getElementById('cont-botones').style.display = 'flex';

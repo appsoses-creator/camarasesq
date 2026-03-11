@@ -2,123 +2,70 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relevamiento - DPI Esquel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Relevamiento - DPIE 23</title>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; display: flex; font-family: 'Inter', sans-serif; }
+        :root { --primary: #2563eb; --dark-bg: #0f172a; --glass-bg: rgba(255, 255, 255, 0.95); --success: #10b981; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--dark-bg); overflow: hidden; }
+        #map { height: 100vh; width: 100%; z-index: 1; }
         
-        /* Panel Lateral */
-        #sidebar { 
-            width: 350px; 
-            background: #0f172a; 
-            color: white; 
-            padding: 20px; 
-            z-index: 1000; 
-            box-shadow: 2px 0 10px rgba(0,0,0,0.5);
-            display: flex;
-            flex-direction: column;
+        /* Pin central para relevamiento */
+        .center-pin {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -100%);
+            z-index: 2000; pointer-events: none;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
         }
-        
-        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
-        button { background: #2563eb; color: white; font-weight: bold; cursor: pointer; }
-        
-        /* Contenedor del Mapa */
-        #map { flex-grow: 1; height: 100%; z-index: 1; }
-        
-        /* Pin central fijo */
-        .pin-fijo { 
-            position: absolute; 
-            top: 50%; 
-            left: calc(50% + 175px); 
-            transform: translate(-50%, -100%); 
-            z-index: 900; 
-            font-size: 40px; 
-            pointer-events: none; 
+
+        .btn-confirmar {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            z-index: 2000; background: var(--success); color: white;
+            border: none; padding: 16px 30px; border-radius: 50px;
+            font-weight: 800; cursor: pointer; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .top-bar {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; width: 92%; max-width: 600px;
+            background: var(--glass-bg); padding: 15px; border-radius: 20px;
+            text-align: center; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
         }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <h3>Generar Informe</h3>
-    <input type="text" id="legajo" placeholder="Legajo Judicial N°">
-    <input type="text" id="dir_hecho" placeholder="Dirección del hecho">
-    <select id="radio">
-        <option value="100">100 metros</option>
-        <option value="300" selected>300 metros</option>
-        <option value="500">500 metros</option>
-    </select>
-    <button onclick="buscarCercanas()">Buscar Cámaras</button>
-    <div id="resultado" style="margin-top: 10px; font-size: 0.9em;"></div>
-    <button id="btn-pdf" style="display:none; background:#10b981" onclick="generarTXT()">Descargar Informe (.txt)</button>
-</div>
+    <div class="top-bar">
+        Modo Relevamiento: Ubique el punto en el mapa
+    </div>
 
-<div id="map"></div>
-<div class="pin-fijo">📍</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-    // Configuración de Supabase
-    const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+    <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" class="center-pin" width="45">
     
-    // Inicializar mapa
-    const map = L.map('map').setView([-42.912, -71.316], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    <button class="btn-confirmar" onclick="capturarUbicacion()">
+        <i class="fa-solid fa-check"></i> CONFIRMAR PUNTO
+    </button>
 
-    let ultimasCamaras = [];
+    <div id="map"></div>
 
-    async function buscarCercanas() {
-        const centro = map.getCenter();
-        const radio = document.getElementById('radio').value;
-        const resDiv = document.getElementById('resultado');
-        
-        resDiv.innerText = "Buscando...";
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Inicialización básica del mapa
+        const map = L.map('map', { zoomControl: false }).setView([-42.912, -71.316], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        // Llamada a la función RPC
-        const { data, error } = await _client.rpc('get_camaras_cercanas', { 
-            lat: centro.lat, 
-            lng: centro.lng, 
-            radio_metros: parseInt(radio) 
-        });
-
-        if (error) { 
-            resDiv.innerText = "Error: " + error.message; 
-            return; 
+        function capturarUbicacion() {
+            const centro = map.getCenter();
+            const latlng = `${centro.lat.toFixed(6)}, ${centro.lng.toFixed(6)}`;
+            
+            // Aquí puedes redirigir al formulario pasando las coordenadas
+            // o abrir el modal de carga directamente
+            alert("Coordenadas capturadas: " + latlng);
+            console.log("Guardar en Supabase:", latlng);
         }
-        
-        ultimasCamaras = data;
-        resDiv.innerHTML = `Se encontraron <b>${data.length}</b> cámaras en el radio seleccionado.`;
-        
-        if(data.length > 0) {
-            document.getElementById('btn-pdf').style.display = 'block';
-        } else {
-            document.getElementById('btn-pdf').style.display = 'none';
-        }
-    }
-
-    function generarTXT() {
-        const legajo = document.getElementById('legajo').value || "S/N";
-        const dir = document.getElementById('dir_hecho').value || "Sin dirección";
-        
-        let contenido = `INFORME DE RELEVAMIENTO - DPI ESQUEL\n`;
-        contenido += `====================================\n`;
-        contenido += `Legajo: ${legajo}\n`;
-        contenido += `Lugar del hecho: ${dir}\n`;
-        contenido += `Fecha: ${new Date().toLocaleString()}\n\n`;
-        contenido += `Cámaras detectadas:\n`;
-        
-        ultimasCamaras.forEach(c => {
-            contenido += `- ${c.DIRECCION} | ${c['LUGAR / TITULAR'] || 'Sin titular'}\n`;
-        });
-        
-        const blob = new Blob([contenido], { type: 'text/plain' });
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = `Informe_${legajo}.txt`;
-        a.click();
-    }
-</script>
+    </script>
 </body>
 </html>

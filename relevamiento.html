@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RELEVAMIENTO CAM</title>
+    <title>RELEVAMIENTO 23</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -133,37 +133,48 @@
         async function generarReporte() {
             document.getElementById('sidebar').style.display = 'none';
             
-            // 1. Ajustar el mapa al zoom de las cámaras
             ajustarMapaAContenido();
             
-            // 2. Esperar renderizado y capturar
-            setTimeout(async () => {
-                const canvasMapa = await html2canvas(document.getElementById('map'), { useCORS: true });
+            // Esperar a que el mapa cargue las teselas correctamente
+            await new Promise((resolve) => {
+                map.whenReady(() => setTimeout(resolve, 300));
+            });
+            
+            const canvasMapa = await html2canvas(document.getElementById('map'), { useCORS: true });
+            
+            const listContent = document.getElementById('list-content');
+            listContent.innerHTML = "";
+            camarasLayer.eachLayer(layer => {
+                const content = layer.getPopup()?.getContent();
+                if(content) listContent.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">${content}</div>`;
+            });
+
+            // Ajuste de proporciones para evitar deformación
+            const mapaElement = document.getElementById('map');
+            const anchoMapa = mapaElement.offsetWidth;
+            const altoMapa = mapaElement.offsetHeight;
+            const proporcion = altoMapa / anchoMapa;
+
+            const mapSnapshot = document.getElementById('map-snapshot');
+            mapSnapshot.style.width = "500px";
+            mapSnapshot.style.height = (500 * proporcion) + "px";
+            mapSnapshot.innerHTML = "";
+            mapSnapshot.appendChild(canvasMapa);
+            
+            canvasMapa.style.width = "100%";
+            canvasMapa.style.height = "100%";
+            canvasMapa.style.objectFit = "cover";
+
+            html2canvas(document.getElementById('capture-container'), { useCORS: true }).then(canvasFinal => {
+                const link = document.createElement('a');
+                link.download = 'reporte-final.png';
+                link.href = canvasFinal.toDataURL('image/png');
+                link.click();
                 
-                const listContent = document.getElementById('list-content');
-                listContent.innerHTML = "";
-                camarasLayer.eachLayer(layer => {
-                    const content = layer.getPopup().getContent();
-                    listContent.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">${content}</div>`;
-                });
-
-                const mapSnapshot = document.getElementById('map-snapshot');
-                mapSnapshot.innerHTML = "";
-                mapSnapshot.appendChild(canvasMapa);
-                canvasMapa.style.width = "100%";
-                canvasMapa.style.height = "100%";
-
-                html2canvas(document.getElementById('capture-container'), { useCORS: true }).then(canvasFinal => {
-                    const link = document.createElement('a');
-                    link.download = 'reporte-final.png';
-                    link.href = canvasFinal.toDataURL('image/png');
-                    link.click();
-                    
-                    document.getElementById('sidebar').style.display = 'block';
-                    document.getElementById('btn-reporte').style.display = 'none';
-                    document.getElementById('btn-nuevo-lugar').style.display = 'block';
-                });
-            }, 500);
+                document.getElementById('sidebar').style.display = 'block';
+                document.getElementById('btn-reporte').style.display = 'none';
+                document.getElementById('btn-nuevo-lugar').style.display = 'block';
+            });
         }
 
         function resetearInterfaz() {

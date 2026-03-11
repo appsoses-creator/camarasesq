@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>REPORTE</title>
+    <title>RELEVAMIENTO CAM</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -75,6 +75,14 @@
         let markerHecho;
         let camarasLayer = L.layerGroup().addTo(map);
 
+        function ajustarMapaAContenido() {
+            const grupo = camarasLayer.getLayers();
+            if (grupo.length > 0) {
+                const bounds = L.featureGroup(grupo).getBounds();
+                map.fitBounds(bounds, { padding: [50, 50] });
+            }
+        }
+
         function confirmarUbicacion() {
             const centro = map.getCenter();
             if(markerHecho) map.removeLayer(markerHecho);
@@ -125,35 +133,37 @@
         async function generarReporte() {
             document.getElementById('sidebar').style.display = 'none';
             
-            // 1. Capturar el mapa actual
-            const canvasMapa = await html2canvas(document.getElementById('map'), { useCORS: true });
+            // 1. Ajustar el mapa al zoom de las cámaras
+            ajustarMapaAContenido();
             
-            // 2. Llenar lista lateral
-            const listContent = document.getElementById('list-content');
-            listContent.innerHTML = "";
-            camarasLayer.eachLayer(layer => {
-                const content = layer.getPopup().getContent();
-                listContent.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">${content}</div>`;
-            });
-
-            // 3. Insertar imagen de mapa en reporte
-            const mapSnapshot = document.getElementById('map-snapshot');
-            mapSnapshot.innerHTML = "";
-            mapSnapshot.appendChild(canvasMapa);
-            canvasMapa.style.width = "100%";
-            canvasMapa.style.height = "100%";
-
-            // 4. Capturar reporte final
-            html2canvas(document.getElementById('capture-container'), { useCORS: true }).then(canvasFinal => {
-                const link = document.createElement('a');
-                link.download = 'reporte-final.png';
-                link.href = canvasFinal.toDataURL('image/png');
-                link.click();
+            // 2. Esperar renderizado y capturar
+            setTimeout(async () => {
+                const canvasMapa = await html2canvas(document.getElementById('map'), { useCORS: true });
                 
-                document.getElementById('sidebar').style.display = 'block';
-                document.getElementById('btn-reporte').style.display = 'none';
-                document.getElementById('btn-nuevo-lugar').style.display = 'block';
-            });
+                const listContent = document.getElementById('list-content');
+                listContent.innerHTML = "";
+                camarasLayer.eachLayer(layer => {
+                    const content = layer.getPopup().getContent();
+                    listContent.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">${content}</div>`;
+                });
+
+                const mapSnapshot = document.getElementById('map-snapshot');
+                mapSnapshot.innerHTML = "";
+                mapSnapshot.appendChild(canvasMapa);
+                canvasMapa.style.width = "100%";
+                canvasMapa.style.height = "100%";
+
+                html2canvas(document.getElementById('capture-container'), { useCORS: true }).then(canvasFinal => {
+                    const link = document.createElement('a');
+                    link.download = 'reporte-final.png';
+                    link.href = canvasFinal.toDataURL('image/png');
+                    link.click();
+                    
+                    document.getElementById('sidebar').style.display = 'block';
+                    document.getElementById('btn-reporte').style.display = 'none';
+                    document.getElementById('btn-nuevo-lugar').style.display = 'block';
+                });
+            }, 500);
         }
 
         function resetearInterfaz() {

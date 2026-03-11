@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RELEVAMIENTO ewe</title>
+<title>RELEVAMIENTO</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
@@ -108,9 +108,6 @@ background:var(--glass-bg);
 z-index:3000;
 padding:20px;
 box-shadow:2px 0 10px rgba(0,0,0,0.2);
-display: none; /* INICIA OCULTA COMO PEDISTE */
-box-sizing: border-box;
-overflow-y: auto;
 }
 
 .sidebar input{
@@ -138,11 +135,6 @@ margin-bottom:10px;
 display:flex;
 align-items:center;
 justify-content:center;
-}
-
-/* Ajuste para que en celu la barra no tape todo */
-@media (max-width: 768px) {
-    .sidebar { width: 85%; }
 }
 </style>
 </head>
@@ -200,10 +192,11 @@ onclick="resetearInterfaz()">MARCAR NUEVO LUGAR</button>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
+// Desactivar animaciones para una captura limpia
 const map = L.map('map',{zoomControl:false, fadeAnimation: false, zoomAnimation: false}).setView([-42.912,-71.316],15);
 const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{y}.png', { crossOrigin: true }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { crossOrigin: true }).addTo(map);
 
 let markerHecho;
 let camarasLayer = L.layerGroup().addTo(map);
@@ -212,6 +205,7 @@ function ajustarMapaAContenido(){
     const grupo = camarasLayer.getLayers();
     if(grupo.length > 0){
         const bounds = L.featureGroup(grupo).getBounds();
+        // Usamos animate: false para que el zoom sea instantáneo y no salga movido en la captura
         map.fitBounds(bounds, {padding:[50,50], animate: false});
     }
 }
@@ -225,12 +219,6 @@ function confirmarUbicacion(){
             className:'custom-div-icon'
         })
     }).addTo(map);
-
-    // AL CONFIRMAR: Mostramos la barra y ocultamos el pin/botones de arriba
-    document.getElementById('sidebar').style.display = 'block';
-    document.getElementById('topBar').style.display = 'none';
-    document.getElementById('centerPin').style.display = 'none';
-    document.getElementById('cont-botones').style.display = 'none';
 }
 
 function cancelarMarcar(){
@@ -240,6 +228,10 @@ function cancelarMarcar(){
 async function buscarCamaras(){
     if(!markerHecho){ alert("Primero debe confirmar la ubicación del hecho."); return; }
     
+    document.getElementById('topBar').style.display='none';
+    document.getElementById('centerPin').style.display='none';
+    document.getElementById('cont-botones').style.display='none';
+
     const cuadras = parseInt(document.getElementById('radio').value)||2;
     const radioEnMetros = cuadras * 100;
     const centro = markerHecho.getLatLng();
@@ -287,14 +279,18 @@ async function generarReporte(){
 
     ajustarMapaAContenido();
 
+    // Esperar a que el mapa se estabilice
     await new Promise(resolve => {
-        map.once('moveend', () => { setTimeout(resolve, 1500); });
-        setTimeout(resolve, 3000);
+        map.once('moveend', () => {
+            setTimeout(resolve, 1500); // Tiempo extra para que carguen las imágenes de la calle (tiles)
+        });
+        setTimeout(resolve, 3000); // Fallback por si no detecta el movimiento
     });
 
     const canvasMapa = await html2canvas(document.getElementById('map'), {
         useCORS: true,
-        scale: 3 
+        backgroundColor: null,
+        scale: 3 // Aumentamos la escala para máxima nitidez
     });
 
     const listContent = document.getElementById('list-content');
@@ -331,15 +327,8 @@ function resetearInterfaz(){
     document.getElementById('topBar').style.display='block';
     document.getElementById('centerPin').style.display='block';
     document.getElementById('cont-botones').style.display='flex';
-    document.getElementById('sidebar').style.display='none'; // LA OCULTAMOS DE NUEVO
     document.getElementById('btn-nuevo-lugar').style.display='none';
     document.getElementById('btn-reporte').style.display='none';
-    
-    // Limpiamos campos
-    document.getElementById('direccion').value = "";
-    document.getElementById('legajo').value = "";
-    document.getElementById('caratula').value = "";
-
     if(markerHecho){ map.removeLayer(markerHecho); markerHecho = null; }
     camarasLayer.clearLayers();
     map.setView([-42.912,-71.316],15);

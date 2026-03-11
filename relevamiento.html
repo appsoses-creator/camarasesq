@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RELEVAMIENTO ww</title>
+<title>RELEVAMIENTO wqwqw</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
@@ -300,7 +300,40 @@ document.getElementById('rep-fecha').innerText=new Date().toLocaleDateString();
 
 ajustarMapaAContenido();
 
-await new Promise(r=>setTimeout(r,1500));
+await new Promise(resolve => {
+
+let tilesLoaded = 0;
+let totalTiles = 0;
+
+map.eachLayer(layer => {
+
+if(layer._tiles){
+
+const tiles = Object.values(layer._tiles);
+
+totalTiles += tiles.length;
+
+tiles.forEach(tile => {
+
+if(tile.loaded) tilesLoaded++;
+
+else tile.el.addEventListener('load', () => {
+
+tilesLoaded++;
+
+if(tilesLoaded >= totalTiles) resolve();
+
+});
+
+});
+
+}
+
+});
+
+if(totalTiles === 0) resolve();
+
+});
 
 const canvasMapa=await html2canvas(document.getElementById('map'),{scale:2});
 

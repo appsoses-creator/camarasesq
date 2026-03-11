@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Relevamiento </title>
+    <title>Relevamiento - 23</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -23,7 +23,6 @@
         .sidebar.active { left: 0; }
         .sidebar input { width: 100%; padding: 10px; margin: 10px 0 20px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         .btn-buscar { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
-        /* Estilo para los iconos personalizados */
         .custom-div-icon { display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
@@ -74,7 +73,7 @@
             const { data, error } = await _client.from('cameras').select('*'); 
 
             if (error) {
-                alert("Error al cargar cámaras: " + error.message);
+                alert("Error: Conexión a Supabase no encontrada.");
                 return;
             }
 
@@ -88,7 +87,6 @@
                         const distMetros = map.distance([centro.lat, centro.lng], latlng);
                         if (distMetros <= radioEnMetros) {
                             
-                            // Lógica de colores igual a tu index.html
                             let color = '#10b981'; 
                             if(cam.TIPO === 'CENTRO DE MONITOREO') color = '#2563eb';
                             else if(cam.TIPO === 'PRIVADAS') color = '#0f172a';
@@ -99,9 +97,18 @@
                                 iconSize: [30, 30], iconAnchor: [15, 15]
                             });
 
+                            // --- Ajuste solicitado para el Popup ---
+                            const contenidoPopup = `
+                                <div style="font-family: sans-serif; line-height: 1.2;">
+                                    <div style="font-weight: 700; color: #0f172a; font-size: 14px;">${cam.DIRECCION || 'Sin dirección'}</div>
+                                    <div style="color: #64748b; font-size: 13px;">${cam['LUGAR / TITULAR'] || 'Sin titular'}</div>
+                                    <div style="margin-top: 5px; font-weight: 600; font-size: 13px;">${Math.round(distMetros)} metros</div>
+                                </div>
+                            `;
+
                             L.marker(latlng, { icon })
                              .addTo(camarasLayer)
-                             .bindPopup(`<b>${cam['LUGAR / TITULAR'] || 'Cámara'}</b><br>${cam.TIPO}<br>${Math.round(distMetros)} metros`);
+                             .bindPopup(contenidoPopup);
                             encontradas++;
                         }
                     }

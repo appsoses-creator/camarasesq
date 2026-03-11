@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Relevamiento</title>
+    <title>Relevamiento -REPOTE</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <style>
         :root { --primary: #2563eb; --dark-bg: #0f172a; --glass-bg: rgba(255, 255, 255, 0.95); --success: #10b981; --danger: #ef4444; }
@@ -24,13 +25,10 @@
         .btn-aceptar { background: var(--primary); color: white; }
         .btn-cancelar { background: var(--danger); color: white; }
 
-        /* Estilo para el nuevo botón */
-        #btn-nuevo-lugar { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; }
-
-        .sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: var(--glass-bg); z-index: 3000; transition: 0.3s; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
-        .sidebar.active { left: 0; }
+        /* Barra visible por defecto */
+        .sidebar { position: fixed; top: 0; left: 0; width: 300px; height: 100%; background: var(--glass-bg); z-index: 3000; transition: 0.3s; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
         .sidebar input { width: 100%; padding: 10px; margin: 10px 0 20px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
-        .btn-buscar { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-buscar { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 10px; }
         .custom-div-icon { display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
@@ -44,10 +42,6 @@
         <button class="btn-cancelar" onclick="cancelarMarcar()">CANCELAR</button>
     </div>
 
-    <button id="btn-nuevo-lugar" class="btn-aceptar" style="display: none;" onclick="reiniciarMarcado()">
-        MARCAR NUEVO LUGAR
-    </button>
-
     <div id="sidebar" class="sidebar">
         <h3>Datos del hecho</h3>
         <label>Dirección:</label>
@@ -57,6 +51,7 @@
         <label>Legajo Fiscal:</label>
         <input type="text" id="legajo">
         <button class="btn-buscar" onclick="buscarCamaras()">BUSCAR CÁMARAS</button>
+        <button id="btn-reporte" class="btn-buscar" style="background: #3b82f6; display: none;" onclick="generarReporte()">GENERAR REPORTE</button>
     </div>
 
     <div id="map"></div>
@@ -76,32 +71,14 @@
             markerHecho = L.marker([centro.lat, centro.lng], {
                 icon: L.divIcon({ html: '<i class="fa fa-map-marker-alt" style="color:red; font-size:30px;"></i>', className: 'custom-div-icon' })
             }).addTo(map);
-
-            // Ocultar UI de marcado permanentemente
-            document.getElementById('topBar').style.display = 'none';
-            document.getElementById('centerPin').style.display = 'none';
-            document.getElementById('cont-botones').style.display = 'none';
-            
-            document.getElementById('sidebar').classList.add('active');
-        }
-
-        function reiniciarMarcado() {
-            document.getElementById('topBar').style.display = 'block';
-            document.getElementById('centerPin').style.display = 'block';
-            document.getElementById('cont-botones').style.display = 'flex';
-            document.getElementById('btn-nuevo-lugar').style.display = 'none';
         }
 
         function cancelarMarcar() {
             if (markerHecho) { map.removeLayer(markerHecho); markerHecho = null; }
-            document.getElementById('sidebar').classList.remove('active');
         }
 
         async function buscarCamaras() {
-            document.getElementById('sidebar').classList.remove('active');
-            
-            // Activar botón de nuevo lugar en lugar de restaurar la UI inicial
-            document.getElementById('btn-nuevo-lugar').style.display = 'block';
+            if (!markerHecho) { alert("Primero debe confirmar la ubicación del hecho."); return; }
 
             const cuadras = parseInt(document.getElementById('radio').value) || 2;
             const radioEnMetros = cuadras * 100;
@@ -142,10 +119,26 @@
                         }
                     }
                 });
-                // Quitamos el marcador rojo tras buscar
-                if (markerHecho) { map.removeLayer(markerHecho); markerHecho = null; }
-                if (encontradas === 0) alert("No se encontraron cámaras en ese radio.");
+                
+                if (encontradas > 0) {
+                    document.getElementById('btn-reporte').style.display = 'block';
+                } else {
+                    alert("No se encontraron cámaras en ese radio.");
+                }
             }
+        }
+
+        // Función para generar la captura
+        function generarReporte() {
+            html2canvas(document.getElementById('map'), {
+                useCORS: true,
+                allowTaint: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'reporte-camaras.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            });
         }
     </script>
 </body>

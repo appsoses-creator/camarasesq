@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RELEVAMIENTO CAARAS</title>
+    <title>REPORTE</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -17,12 +17,16 @@
         body { margin: 0; font-family: 'Inter', sans-serif; background: var(--dark-bg); overflow: hidden; }
         #map { height: 100vh; width: 100%; z-index: 1; }
         
+        /* Contenedor de captura (fuera de vista) */
+        #capture-container { position: absolute; left: -9999px; width: 850px; background: white; padding: 20px; display: flex; flex-direction: row; gap: 20px; }
+        
         .center-pin { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -100%); z-index: 2000; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
         .top-bar { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90%; max-width: 400px; background: var(--glass-bg); padding: 15px; border-radius: 20px; text-align: center; font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .container-btns { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 2000; }
         .btn-aceptar, .btn-cancelar { padding: 15px 30px; border-radius: 50px; cursor: pointer; font-weight: 600; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .btn-aceptar { background: var(--primary); color: white; }
         .btn-cancelar { background: var(--danger); color: white; }
+
         .sidebar { position: fixed; top: 0; left: 0; width: 300px; height: 100%; background: var(--glass-bg); z-index: 3000; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
         .sidebar input { width: 100%; padding: 10px; margin: 10px 0 20px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         .btn-buscar { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 10px; }
@@ -52,9 +56,9 @@
         <button id="btn-nuevo-lugar" class="btn-buscar" style="display: none; background: var(--primary);" onclick="resetearInterfaz()">MARCAR NUEVO LUGAR</button>
     </div>
 
-    <div id="capture-container" style="display:none; width: 850px; background: white; padding: 20px; flex-direction: row; gap: 20px;">
+    <div id="capture-container">
         <div id="map-snapshot" style="width: 500px; height: 500px;"></div>
-        <div id="list-snapshot" style="width: 350px; font-family: sans-serif; font-size: 14px; color: #333;">
+        <div style="width: 350px; font-family: sans-serif; font-size: 14px; color: #333;">
             <h3 style="margin-top:0;">Referencias de cámaras</h3>
             <div id="list-content"></div>
         </div>
@@ -119,28 +123,36 @@
         }
 
         async function generarReporte() {
-            const listContent = document.getElementById('list-content');
-            const mapSnapshot = document.getElementById('map-snapshot');
-            listContent.innerHTML = "";
+            document.getElementById('sidebar').style.display = 'none';
             
-            // 1. Llenar referencias con distancia
+            // 1. Capturar el mapa actual
+            const canvasMapa = await html2canvas(document.getElementById('map'), { useCORS: true });
+            
+            // 2. Llenar lista lateral
+            const listContent = document.getElementById('list-content');
+            listContent.innerHTML = "";
             camarasLayer.eachLayer(layer => {
                 const content = layer.getPopup().getContent();
                 listContent.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">${content}</div>`;
             });
 
-            // 2. Mostrar contenedor para captura
-            const container = document.getElementById('capture-container');
-            container.style.display = 'flex';
-            
-            // Nota: Para capturar el mapa Leaflet, se recomienda usar el contenedor del mapa o recrear la vista.
-            // Aquí usamos html2canvas sobre el contenedor completo.
-            html2canvas(container, { useCORS: true, allowTaint: true }).then(canvas => {
+            // 3. Insertar imagen de mapa en reporte
+            const mapSnapshot = document.getElementById('map-snapshot');
+            mapSnapshot.innerHTML = "";
+            mapSnapshot.appendChild(canvasMapa);
+            canvasMapa.style.width = "100%";
+            canvasMapa.style.height = "100%";
+
+            // 4. Capturar reporte final
+            html2canvas(document.getElementById('capture-container'), { useCORS: true }).then(canvasFinal => {
                 const link = document.createElement('a');
                 link.download = 'reporte-final.png';
-                link.href = canvas.toDataURL('image/png');
+                link.href = canvasFinal.toDataURL('image/png');
                 link.click();
-                container.style.display = 'none';
+                
+                document.getElementById('sidebar').style.display = 'block';
+                document.getElementById('btn-reporte').style.display = 'none';
+                document.getElementById('btn-nuevo-lugar').style.display = 'block';
             });
         }
 

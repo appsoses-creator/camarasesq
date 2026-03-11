@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Relevamiento - REPORTE</title>
+    <title>REPORTE </title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -80,7 +80,6 @@
         async function buscarCamaras() {
             if (!markerHecho) { alert("Primero debe confirmar la ubicación del hecho."); return; }
             
-            // Ocultar interfaz de marcado
             document.getElementById('topBar').style.display = 'none';
             document.getElementById('centerPin').style.display = 'none';
             document.getElementById('cont-botones').style.display = 'none';
@@ -114,15 +113,26 @@
         }
 
         function generarReporte() {
-            html2canvas(document.getElementById('map')).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'reporte-camaras.png';
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                document.getElementById('btn-reporte').style.display = 'none';
-                document.getElementById('btn-nuevo-lugar').style.display = 'block';
-            });
+            // Elementos a ocultar para la captura limpia
+            const elementsToHide = [
+                document.getElementById('sidebar')
+            ];
+            
+            elementsToHide.forEach(el => el.style.display = 'none');
+
+            setTimeout(() => {
+                html2canvas(document.getElementById('map'), { useCORS: true, allowTaint: true }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'reporte-camaras.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    
+                    // Restaurar elementos
+                    elementsToHide.forEach(el => el.style.display = 'block');
+                    document.getElementById('btn-reporte').style.display = 'none';
+                    document.getElementById('btn-nuevo-lugar').style.display = 'block';
+                });
+            }, 100);
         }
 
         function resetearInterfaz() {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Relevamiento - DPIE 23</title>
+    <title>Relevamiento 3</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -73,30 +73,43 @@
         }
 
         async function buscarCamaras() {
+            // Verificar si _client existe (debes tenerlo definido en tu app)
+            if (typeof _client === 'undefined') {
+                alert("Error: Conexión a Supabase no encontrada.");
+                return;
+            }
+
             document.getElementById('sidebar').classList.remove('active');
             
             const cuadras = parseInt(document.getElementById('radio').value) || 2;
             const radioEnMetros = cuadras * 100;
             const centro = markerHecho.getLatLng();
 
-            const { data, error } = await _client
-                .from('cameras')
-                .select('*'); 
+            // Consulta a Supabase
+            const { data, error } = await _client.from('cameras').select('*'); 
+
+            if (error) {
+                alert("Error al cargar cámaras: " + error.message);
+                return;
+            }
 
             if (data) {
                 camarasLayer.clearLayers();
-                data.forEach(cam => {
-                    // Cálculo preciso en metros usando Leaflet
-                    const distanciaMetros = map.distance([centro.lat, centro.lng], [cam.lat, cam.lng]);
+                let encontradas = 0;
 
-                    if (distanciaMetros <= radioEnMetros) {
+                data.forEach(cam => {
+                    // Calculamos distancia real en metros usando Leaflet
+                    const distMetros = map.distance([centro.lat, centro.lng], [cam.lat, cam.lng]);
+
+                    if (distMetros <= radioEnMetros) {
                         L.marker([cam.lat, cam.lng])
                          .addTo(camarasLayer)
-                         .bindPopup(`<b>${cam.nombre}</b><br>${Math.round(distanciaMetros)}m del hecho`);
+                         .bindPopup(`<b>${cam.nombre}</b><br>${Math.round(distMetros)} metros`);
+                        encontradas++;
                     }
                 });
-            } else if (error) {
-                console.error("Error al buscar:", error);
+
+                if (encontradas === 0) alert("No se encontraron cámaras en ese radio.");
             }
         }
     </script>

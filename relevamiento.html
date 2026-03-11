@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>REPORTE </title>
+    <title>RELEVAMIENTO CAARAS</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -19,12 +19,10 @@
         
         .center-pin { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -100%); z-index: 2000; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
         .top-bar { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90%; max-width: 400px; background: var(--glass-bg); padding: 15px; border-radius: 20px; text-align: center; font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        
         .container-btns { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 2000; }
         .btn-aceptar, .btn-cancelar { padding: 15px 30px; border-radius: 50px; cursor: pointer; font-weight: 600; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .btn-aceptar { background: var(--primary); color: white; }
         .btn-cancelar { background: var(--danger); color: white; }
-
         .sidebar { position: fixed; top: 0; left: 0; width: 300px; height: 100%; background: var(--glass-bg); z-index: 3000; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
         .sidebar input { width: 100%; padding: 10px; margin: 10px 0 20px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         .btn-buscar { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; margin-bottom: 10px; }
@@ -52,6 +50,14 @@
         <button class="btn-buscar" onclick="buscarCamaras()">BUSCAR CÁMARAS</button>
         <button id="btn-reporte" class="btn-buscar" style="background: #3b82f6; display: none;" onclick="generarReporte()">GENERAR REPORTE</button>
         <button id="btn-nuevo-lugar" class="btn-buscar" style="display: none; background: var(--primary);" onclick="resetearInterfaz()">MARCAR NUEVO LUGAR</button>
+    </div>
+
+    <div id="capture-container" style="display:none; width: 850px; background: white; padding: 20px; flex-direction: row; gap: 20px;">
+        <div id="map-snapshot" style="width: 500px; height: 500px;"></div>
+        <div id="list-snapshot" style="width: 350px; font-family: sans-serif; font-size: 14px; color: #333;">
+            <h3 style="margin-top:0;">Referencias de cámaras</h3>
+            <div id="list-content"></div>
+        </div>
     </div>
 
     <div id="map"></div>
@@ -102,7 +108,7 @@
                             if(cam.TIPO === 'CENTRO DE MONITOREO') color = '#2563eb';
                             else if(cam.TIPO === 'PRIVADAS') color = '#0f172a';
                             const icon = L.divIcon({ className: 'custom-div-icon', html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`, iconSize: [30, 30], iconAnchor: [15, 15] });
-                            L.marker(latlng, { icon }).addTo(camarasLayer).bindPopup(`<b>${cam.DIRECCION}</b><br>${cam['LUGAR / TITULAR']}`);
+                            L.marker(latlng, { icon }).addTo(camarasLayer).bindPopup(`<b>${cam.DIRECCION}</b><br>${cam['LUGAR / TITULAR']}<br><i>${Math.round(distMetros)} metros</i>`);
                             encontradas++;
                         }
                     }
@@ -112,27 +118,30 @@
             }
         }
 
-        function generarReporte() {
-            // Elementos a ocultar para la captura limpia
-            const elementsToHide = [
-                document.getElementById('sidebar')
-            ];
+        async function generarReporte() {
+            const listContent = document.getElementById('list-content');
+            const mapSnapshot = document.getElementById('map-snapshot');
+            listContent.innerHTML = "";
             
-            elementsToHide.forEach(el => el.style.display = 'none');
+            // 1. Llenar referencias con distancia
+            camarasLayer.eachLayer(layer => {
+                const content = layer.getPopup().getContent();
+                listContent.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">${content}</div>`;
+            });
 
-            setTimeout(() => {
-                html2canvas(document.getElementById('map'), { useCORS: true, allowTaint: true }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = 'reporte-camaras.png';
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                    
-                    // Restaurar elementos
-                    elementsToHide.forEach(el => el.style.display = 'block');
-                    document.getElementById('btn-reporte').style.display = 'none';
-                    document.getElementById('btn-nuevo-lugar').style.display = 'block';
-                });
-            }, 100);
+            // 2. Mostrar contenedor para captura
+            const container = document.getElementById('capture-container');
+            container.style.display = 'flex';
+            
+            // Nota: Para capturar el mapa Leaflet, se recomienda usar el contenedor del mapa o recrear la vista.
+            // Aquí usamos html2canvas sobre el contenedor completo.
+            html2canvas(container, { useCORS: true, allowTaint: true }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'reporte-final.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                container.style.display = 'none';
+            });
         }
 
         function resetearInterfaz() {
@@ -140,6 +149,7 @@
             document.getElementById('centerPin').style.display = 'block';
             document.getElementById('cont-botones').style.display = 'flex';
             document.getElementById('btn-nuevo-lugar').style.display = 'none';
+            document.getElementById('btn-reporte').style.display = 'none';
             if(markerHecho) { map.removeLayer(markerHecho); markerHecho = null; }
             camarasLayer.clearLayers();
         }

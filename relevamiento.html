@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RELEVAMIENTO ok</title>
+<title>RELEVAMIENTO ww</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
@@ -28,7 +28,6 @@ width:100%;
 z-index:1;
 }
 
-/* contenedor del reporte */
 #capture-container{
 position:absolute;
 left:-9999px;
@@ -47,7 +46,6 @@ left:50%;
 transform:translate(-50%,-100%);
 z-index:2000;
 pointer-events:none;
-filter:drop-shadow(0 4px 6px rgba(0,0,0,0.3));
 }
 
 .top-bar{
@@ -63,7 +61,6 @@ padding:15px;
 border-radius:20px;
 text-align:center;
 font-weight:700;
-box-shadow:0 4px 15px rgba(0,0,0,0.2);
 }
 
 .container-btns{
@@ -82,18 +79,10 @@ border-radius:50px;
 cursor:pointer;
 font-weight:600;
 border:none;
-box-shadow:0 4px 6px rgba(0,0,0,0.2);
 }
 
-.btn-aceptar{
-background:var(--primary);
-color:white;
-}
-
-.btn-cancelar{
-background:var(--danger);
-color:white;
-}
+.btn-aceptar{background:var(--primary);color:white;}
+.btn-cancelar{background:var(--danger);color:white;}
 
 .sidebar{
 position:fixed;
@@ -104,7 +93,6 @@ height:100%;
 background:var(--glass-bg);
 z-index:3000;
 padding:20px;
-box-shadow:2px 0 10px rgba(0,0,0,0.2);
 }
 
 .sidebar input{
@@ -113,7 +101,6 @@ padding:10px;
 margin:10px 0 20px;
 border:1px solid #ccc;
 border-radius:8px;
-box-sizing:border-box;
 }
 
 .btn-buscar{
@@ -152,13 +139,16 @@ class="center-pin" id="centerPin" width="45">
 <h3>Datos del hecho</h3>
 
 <label>Dirección:</label>
-<input type="text" id="direccion" placeholder="Calle y altura">
+<input type="text" id="direccion">
 
 <label>Cuadras a la redonda:</label>
 <input type="number" id="radio" value="2">
 
 <label>Legajo Fiscal:</label>
 <input type="text" id="legajo">
+
+<label>Carátula:</label>
+<input type="text" id="caratula">
 
 <button class="btn-buscar" onclick="buscarCamaras()">BUSCAR CÁMARAS</button>
 
@@ -175,17 +165,18 @@ onclick="resetearInterfaz()">MARCAR NUEVO LUGAR</button>
 
 <div id="capture-container">
 
-<div id="map-snapshot" style="width:650px;height:420px;"></div>
+<div style="position:absolute;top:10px;width:100%;font-size:13px;">
+<b>Dirección:</b> <span id="rep-direccion"></span> |
+<b>Legajo:</b> <span id="rep-legajo"></span> |
+<b>Carátula:</b> <span id="rep-caratula"></span> |
+<b>Fecha:</b> <span id="rep-fecha"></span>
+</div>
 
-<div style="width:260px;font-family:sans-serif;font-size:10px;color:#333;">
-<h3 style="margin-top:0;">Referencias de cámaras</h3>
+<div id="map-snapshot" style="margin-top:40px;width:720px;height:450px;"></div>
 
-<div id="list-content" style="
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:10px;
-"></div>
-
+<div style="width:250px;font-size:11px;line-height:1.2;">
+<h3>Referencias de cámaras</h3>
+<div id="list-content" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
 </div>
 
 </div>
@@ -210,56 +201,37 @@ let markerHecho;
 let camarasLayer = L.layerGroup().addTo(map);
 
 function ajustarMapaAContenido(){
-
 const grupo=camarasLayer.getLayers();
-
 if(grupo.length>0){
-
 const bounds=L.featureGroup(grupo).getBounds();
-
 map.fitBounds(bounds,{padding:[50,50]});
-
 }
-
 }
 
 function confirmarUbicacion(){
-
 const centro=map.getCenter();
-
 if(markerHecho)map.removeLayer(markerHecho);
 
 markerHecho=L.marker([centro.lat,centro.lng],{
-
 icon:L.divIcon({
-
 html:'<i class="fa fa-map-marker-alt" style="color:red;font-size:30px;"></i>',
 className:'custom-div-icon'
-
 })
-
 }).addTo(map);
-
 }
 
 function cancelarMarcar(){
-
 if(markerHecho){
-
 map.removeLayer(markerHecho);
 markerHecho=null;
-
 }
-
 }
 
 async function buscarCamaras(){
 
 if(!markerHecho){
-
 alert("Primero debe confirmar la ubicación del hecho.");
 return;
-
 }
 
 document.getElementById('topBar').style.display='none';
@@ -273,16 +245,13 @@ const centro=markerHecho.getLatLng();
 const {data,error}=await _client.from('cameras').select('*');
 
 if(error){
-
 alert("Error de conexión.");
 return;
-
 }
 
 if(data){
 
 camarasLayer.clearLayers();
-let encontradas=0;
 let numero=1;
 
 data.forEach(cam=>{
@@ -295,22 +264,11 @@ const distMetros=map.distance([centro.lat,centro.lng],latlng);
 
 if(distMetros<=radioEnMetros){
 
-let color='#10b981';
-
-if(cam.TIPO==='CENTRO DE MONITOREO')color='#2563eb';
-else if(cam.TIPO==='PRIVADAS')color='#0f172a';
-
 const icon=L.divIcon({
-
 className:'custom-div-icon',
-
-html:`<div style="background:white;border:3px solid ${color};color:${color};width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:14px;box-shadow:0 4px 10px rgba(0,0,0,0.3)">
-${numero}
-</div>`,
-
-iconSize:[32,32],
-iconAnchor:[16,16]
-
+html:`<div style="background:white;border:3px solid #000;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold">${numero}</div>`,
+iconSize:[30,30],
+iconAnchor:[15,15]
 });
 
 L.marker(latlng,{icon})
@@ -318,7 +276,6 @@ L.marker(latlng,{icon})
 .bindPopup(`<b>${numero}. ${cam.DIRECCION}</b><br>${cam['LUGAR / TITULAR']}<br><i>${Math.round(distMetros)} metros</i>`);
 
 numero++;
-encontradas++;
 
 }
 
@@ -326,10 +283,7 @@ encontradas++;
 
 });
 
-if(encontradas>0)
 document.getElementById('btn-reporte').style.display='block';
-else
-alert("No se encontraron cámaras.");
 
 }
 
@@ -339,70 +293,38 @@ async function generarReporte(){
 
 document.getElementById('sidebar').style.display='none';
 
+document.getElementById('rep-direccion').innerText=document.getElementById('direccion').value;
+document.getElementById('rep-legajo').innerText=document.getElementById('legajo').value;
+document.getElementById('rep-caratula').innerText=document.getElementById('caratula').value;
+document.getElementById('rep-fecha').innerText=new Date().toLocaleDateString();
+
 ajustarMapaAContenido();
 
-await new Promise(resolve=>{
+await new Promise(r=>setTimeout(r,1500));
 
-map.once('moveend',()=>{
-
-map.invalidateSize();
-
-setTimeout(resolve,1000);
-
-});
-
-setTimeout(resolve,3000);
-
-});
-
-const canvasMapa=await html2canvas(document.getElementById('map'),{
-
-useCORS:true,
-backgroundColor:null,
-scale:2
-
-});
+const canvasMapa=await html2canvas(document.getElementById('map'),{scale:2});
 
 const listContent=document.getElementById('list-content');
 listContent.innerHTML="";
 
 camarasLayer.eachLayer(layer=>{
-
 const content=layer.getPopup()?.getContent();
-
 if(content)
-
-listContent.innerHTML+=
-`<div style="border-bottom:1px solid #eee;padding-bottom:4px;margin-bottom:4px;">${content}</div>`;
-
+listContent.innerHTML+=`<div style="border-bottom:1px solid #ddd;padding-bottom:3px;margin-bottom:3px;">${content}</div>`;
 });
 
 const mapSnapshot=document.getElementById('map-snapshot');
-
 mapSnapshot.innerHTML="";
-mapSnapshot.style.overflow="hidden";
-
-canvasMapa.style.width="100%";
-canvasMapa.style.height="100%";
-
 mapSnapshot.appendChild(canvasMapa);
 
-html2canvas(document.getElementById('capture-container'),{
-
-useCORS:true,
-scale:2
-
-}).then(canvasFinal=>{
+html2canvas(document.getElementById('capture-container'),{scale:2}).then(canvasFinal=>{
 
 const link=document.createElement('a');
-
-link.download='reporte-final.png';
-link.href=canvasFinal.toDataURL('image/png');
-
+link.download='reporte-camaras.png';
+link.href=canvasFinal.toDataURL();
 link.click();
 
 document.getElementById('sidebar').style.display='block';
-document.getElementById('btn-reporte').style.display='none';
 document.getElementById('btn-nuevo-lugar').style.display='block';
 
 });
@@ -419,10 +341,8 @@ document.getElementById('btn-nuevo-lugar').style.display='none';
 document.getElementById('btn-reporte').style.display='none';
 
 if(markerHecho){
-
 map.removeLayer(markerHecho);
 markerHecho=null;
-
 }
 
 camarasLayer.clearLayers();

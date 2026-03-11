@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RELEVAMIENTO CAM</title>
+    <title>RELEVAMIENTO CAMARAS</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -133,13 +133,18 @@
         async function generarReporte() {
             document.getElementById('sidebar').style.display = 'none';
             
+            // 1. Iniciamos el ajuste de zoom
             ajustarMapaAContenido();
             
-            // 1. Esperar renderizado correcto del mapa
+            // 2. ESPERAR A QUE EL ZOOM TERMINE (el mapa se detiene completamente)
             await new Promise((resolve) => {
-                map.whenReady(() => setTimeout(resolve, 500));
+                map.once('moveend', () => {
+                    // Esperamos 500ms extra para asegurar que las teselas carguen visualmente
+                    setTimeout(resolve, 500);
+                });
             });
             
+            // 3. Capturar el mapa solo después de que el zoom terminó
             const canvasMapa = await html2canvas(document.getElementById('map'), { 
                 useCORS: true, 
                 backgroundColor: null 
@@ -152,7 +157,7 @@
                 if(content) listContent.innerHTML += `<div style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">${content}</div>`;
             });
 
-            // 2. Ajuste de dimensiones fijas para evitar deformación
+            // 4. Ajuste de dimensiones fijas para evitar deformación
             const mapSnapshot = document.getElementById('map-snapshot');
             mapSnapshot.innerHTML = "";
             mapSnapshot.style.width = "500px";
@@ -164,7 +169,7 @@
             canvasMapa.style.objectFit = "cover"; 
             mapSnapshot.appendChild(canvasMapa);
 
-            // 3. Captura final
+            // 5. Captura final
             html2canvas(document.getElementById('capture-container'), { useCORS: true }).then(canvasFinal => {
                 const link = document.createElement('a');
                 link.download = 'reporte-final.png';

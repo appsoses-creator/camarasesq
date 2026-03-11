@@ -23,6 +23,8 @@
         .sidebar.active { left: 0; }
         .sidebar input { width: 100%; padding: 10px; margin: 10px 0 20px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         .btn-buscar { width: 100%; padding: 15px; background: var(--success); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        /* Estilo para los iconos personalizados */
+        .custom-div-icon { display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
@@ -46,7 +48,6 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Inicialización del cliente igual a tu index
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
         const map = L.map('map', { zoomControl: false }).setView([-42.912, -71.316], 15);
@@ -59,7 +60,7 @@
             const centro = map.getCenter();
             if(markerHecho) map.removeLayer(markerHecho);
             markerHecho = L.marker([centro.lat, centro.lng], {
-                icon: L.divIcon({ html: '<i class="fa fa-map-marker-alt" style="color:blue; font-size:30px;"></i>' })
+                icon: L.divIcon({ html: '<i class="fa fa-map-marker-alt" style="color:red; font-size:30px;"></i>', className: 'custom-div-icon' })
             }).addTo(map);
             document.getElementById('sidebar').classList.add('active');
         }
@@ -86,9 +87,21 @@
                     if (latlng && latlng.length === 2) {
                         const distMetros = map.distance([centro.lat, centro.lng], latlng);
                         if (distMetros <= radioEnMetros) {
-                            L.marker(latlng)
+                            
+                            // Lógica de colores igual a tu index.html
+                            let color = '#10b981'; 
+                            if(cam.TIPO === 'CENTRO DE MONITOREO') color = '#2563eb';
+                            else if(cam.TIPO === 'PRIVADAS') color = '#0f172a';
+
+                            const icon = L.divIcon({
+                                className: 'custom-div-icon',
+                                html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`,
+                                iconSize: [30, 30], iconAnchor: [15, 15]
+                            });
+
+                            L.marker(latlng, { icon })
                              .addTo(camarasLayer)
-                             .bindPopup(`<b>${cam['LUGAR / TITULAR'] || 'Cámara'}</b><br>${Math.round(distMetros)} metros`);
+                             .bindPopup(`<b>${cam['LUGAR / TITULAR'] || 'Cámara'}</b><br>${cam.TIPO}<br>${Math.round(distMetros)} metros`);
                             encontradas++;
                         }
                     }

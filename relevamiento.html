@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Relevamiento - 23</title>
+    <title>Relevamiento</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
@@ -19,11 +19,13 @@
         .center-pin { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -100%); z-index: 2000; pointer-events: none; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
         .top-bar { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90%; max-width: 400px; background: var(--glass-bg); padding: 15px; border-radius: 20px; text-align: center; font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         
-        /* Contenedor de botones actualizado */
         .container-btns { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 2000; }
         .btn-aceptar, .btn-cancelar { padding: 15px 30px; border-radius: 50px; cursor: pointer; font-weight: 600; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
         .btn-aceptar { background: var(--primary); color: white; }
         .btn-cancelar { background: var(--danger); color: white; }
+
+        /* Estilo para el nuevo botón */
+        #btn-nuevo-lugar { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; }
 
         .sidebar { position: fixed; top: 0; left: -320px; width: 300px; height: 100%; background: var(--glass-bg); z-index: 3000; transition: 0.3s; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
         .sidebar.active { left: 0; }
@@ -41,6 +43,10 @@
         <button class="btn-aceptar" onclick="confirmarUbicacion()">ACEPTAR</button>
         <button class="btn-cancelar" onclick="cancelarMarcar()">CANCELAR</button>
     </div>
+
+    <button id="btn-nuevo-lugar" class="btn-aceptar" style="display: none;" onclick="reiniciarMarcado()">
+        MARCAR NUEVO LUGAR
+    </button>
 
     <div id="sidebar" class="sidebar">
         <h3>Datos del hecho</h3>
@@ -71,12 +77,19 @@
                 icon: L.divIcon({ html: '<i class="fa fa-map-marker-alt" style="color:red; font-size:30px;"></i>', className: 'custom-div-icon' })
             }).addTo(map);
 
-            // Ocultar elementos de UI
+            // Ocultar UI de marcado permanentemente
             document.getElementById('topBar').style.display = 'none';
             document.getElementById('centerPin').style.display = 'none';
             document.getElementById('cont-botones').style.display = 'none';
             
             document.getElementById('sidebar').classList.add('active');
+        }
+
+        function reiniciarMarcado() {
+            document.getElementById('topBar').style.display = 'block';
+            document.getElementById('centerPin').style.display = 'block';
+            document.getElementById('cont-botones').style.display = 'flex';
+            document.getElementById('btn-nuevo-lugar').style.display = 'none';
         }
 
         function cancelarMarcar() {
@@ -87,10 +100,8 @@
         async function buscarCamaras() {
             document.getElementById('sidebar').classList.remove('active');
             
-            // Restaurar UI al buscar
-            document.getElementById('topBar').style.display = 'block';
-            document.getElementById('centerPin').style.display = 'block';
-            document.getElementById('cont-botones').style.display = 'flex';
+            // Activar botón de nuevo lugar en lugar de restaurar la UI inicial
+            document.getElementById('btn-nuevo-lugar').style.display = 'block';
 
             const cuadras = parseInt(document.getElementById('radio').value) || 2;
             const radioEnMetros = cuadras * 100;
@@ -131,6 +142,7 @@
                         }
                     }
                 });
+                // Quitamos el marcador rojo tras buscar
                 if (markerHecho) { map.removeLayer(markerHecho); markerHecho = null; }
                 if (encontradas === 0) alert("No se encontraron cámaras en ese radio.");
             }

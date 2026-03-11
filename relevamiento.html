@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>RELEVAMIENTO</title>
+<title>RELEVAMIENTO - DPI</title>
 
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
@@ -28,7 +28,7 @@ width:100%;
 z-index:1;
 }
 
-/* contenedor del reporte - Posicionado fuera pero renderizable */
+/* contenedor del reporte - Fijo para captura nítida */
 #capture-container{
 position:fixed;
 top:0;
@@ -77,6 +77,7 @@ transform:translateX(-50%);
 display:flex;
 gap:10px;
 z-index:2000;
+transition: bottom 0.3s ease;
 }
 
 .btn-aceptar,.btn-cancelar{
@@ -86,17 +87,11 @@ cursor:pointer;
 font-weight:600;
 border:none;
 box-shadow:0 4px 6px rgba(0,0,0,0.2);
+white-space: nowrap;
 }
 
-.btn-aceptar{
-background:var(--primary);
-color:white;
-}
-
-.btn-cancelar{
-background:var(--danger);
-color:white;
-}
+.btn-aceptar{ background:var(--primary); color:white; }
+.btn-cancelar{ background:var(--danger); color:white; }
 
 .sidebar{
 position:fixed;
@@ -108,15 +103,21 @@ background:var(--glass-bg);
 z-index:3000;
 padding:20px;
 box-shadow:2px 0 10px rgba(0,0,0,0.2);
+box-sizing: border-box;
+overflow-y: auto;
 }
+
+/* Decoración para el panel móvil */
+.mobile-handle { display: none; }
 
 .sidebar input{
 width:100%;
-padding:10px;
-margin:10px 0 20px;
+padding:12px;
+margin:8px 0 18px;
 border:1px solid #ccc;
 border-radius:8px;
 box-sizing:border-box;
+font-size: 16px; /* Evita zoom automático en iPhone */
 }
 
 .btn-buscar{
@@ -131,10 +132,39 @@ font-weight:600;
 margin-bottom:10px;
 }
 
-.custom-div-icon{
-display:flex;
-align-items:center;
-justify-content:center;
+.custom-div-icon{ display:flex; align-items:center; justify-content:center; }
+
+/* --- VISTA MÓVIL --- */
+@media (max-width: 768px) {
+    .sidebar {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: auto;
+        max-height: 50vh; /* Ocupa la mitad inferior */
+        border-radius: 25px 25px 0 0;
+        padding: 15px 25px 30px;
+        box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+    }
+
+    .mobile-handle {
+        display: block;
+        width: 40px;
+        height: 5px;
+        background: #ccc;
+        border-radius: 10px;
+        margin: 0 auto 15px;
+    }
+
+    .container-btns {
+        bottom: 52vh; /* Se suben para no pisar el formulario */
+    }
+
+    .top-bar {
+        font-size: 14px;
+        padding: 10px;
+    }
 }
 </style>
 </head>
@@ -152,39 +182,40 @@ class="center-pin" id="centerPin" width="45">
 </div>
 
 <div id="sidebar" class="sidebar">
-<h3>Datos del hecho</h3>
+    <div class="mobile-handle"></div>
+    <h3 style="margin-top:0;">Datos del hecho</h3>
 
-<label>Dirección:</label>
-<input type="text" id="direccion" placeholder="Calle y altura">
+    <label>Dirección:</label>
+    <input type="text" id="direccion" placeholder="Calle y altura">
 
-<label>Cuadras a la redonda:</label>
-<input type="number" id="radio" value="2">
+    <label>Cuadras a la redonda:</label>
+    <input type="number" id="radio" value="2">
 
-<label>Legajo Fiscal / Preventivo:</label>
-<input type="text" id="legajo">
+    <label>Legajo Fiscal / Preventivo:</label>
+    <input type="text" id="legajo" placeholder="Ej: 123/26">
 
-<label>Caratula:</label>
-<input type="text" id="caratula">
+    <label>Carátula:</label>
+    <input type="text" id="caratula" placeholder="Ej: Robo">
 
-<button class="btn-buscar" onclick="buscarCamaras()">BUSCAR CÁMARAS</button>
+    <button class="btn-buscar" onclick="buscarCamaras()">BUSCAR CÁMARAS</button>
 
-<button id="btn-reporte"
-class="btn-buscar"
-style="background:#3b82f6;display:none;"
-onclick="generarReporte()">GENERAR REPORTE</button>
+    <button id="btn-reporte"
+    class="btn-buscar"
+    style="background:#3b82f6;display:none;"
+    onclick="generarReporte()">GENERAR REPORTE</button>
 
-<button id="btn-nuevo-lugar"
-class="btn-buscar"
-style="display:none;background:var(--primary);"
-onclick="resetearInterfaz()">MARCAR NUEVO LUGAR</button>
+    <button id="btn-nuevo-lugar"
+    class="btn-buscar"
+    style="display:none;background:var(--primary);"
+    onclick="resetearInterfaz()">MARCAR NUEVO LUGAR</button>
 </div>
 
 <div id="capture-container">
-<div id="map-snapshot" style="width:650px;height:420px;border:1px solid #eee;"></div>
-<div style="width:320px;font-family:sans-serif;font-size:14px;color:#333;">
-<h3 style="margin-top:0;">Referencias de cámaras</h3>
-<div id="list-content" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
-</div>
+    <div id="map-snapshot" style="width:650px;height:420px;border:1px solid #eee;"></div>
+    <div style="width:320px;font-family:sans-serif;font-size:14px;color:#333;">
+    <h3 style="margin-top:0;">Referencias de cámaras</h3>
+    <div id="list-content" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+    </div>
 </div>
 
 <div id="map"></div>
@@ -192,7 +223,6 @@ onclick="resetearInterfaz()">MARCAR NUEVO LUGAR</button>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-// Desactivar animaciones para una captura limpia
 const map = L.map('map',{zoomControl:false, fadeAnimation: false, zoomAnimation: false}).setView([-42.912,-71.316],15);
 const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
@@ -205,7 +235,6 @@ function ajustarMapaAContenido(){
     const grupo = camarasLayer.getLayers();
     if(grupo.length > 0){
         const bounds = L.featureGroup(grupo).getBounds();
-        // Usamos animate: false para que el zoom sea instantáneo y no salga movido en la captura
         map.fitBounds(bounds, {padding:[50,50], animate: false});
     }
 }
@@ -279,18 +308,14 @@ async function generarReporte(){
 
     ajustarMapaAContenido();
 
-    // Esperar a que el mapa se estabilice
     await new Promise(resolve => {
-        map.once('moveend', () => {
-            setTimeout(resolve, 1500); // Tiempo extra para que carguen las imágenes de la calle (tiles)
-        });
-        setTimeout(resolve, 3000); // Fallback por si no detecta el movimiento
+        map.once('moveend', () => { setTimeout(resolve, 1500); });
+        setTimeout(resolve, 3000);
     });
 
     const canvasMapa = await html2canvas(document.getElementById('map'), {
         useCORS: true,
-        backgroundColor: null,
-        scale: 3 // Aumentamos la escala para máxima nitidez
+        scale: 3 
     });
 
     const listContent = document.getElementById('list-content');
@@ -329,6 +354,9 @@ function resetearInterfaz(){
     document.getElementById('cont-botones').style.display='flex';
     document.getElementById('btn-nuevo-lugar').style.display='none';
     document.getElementById('btn-reporte').style.display='none';
+    document.getElementById('legajo').value = "";
+    document.getElementById('caratula').value = "";
+    document.getElementById('direccion').value = "";
     if(markerHecho){ map.removeLayer(markerHecho); markerHecho = null; }
     camarasLayer.clearLayers();
     map.setView([-42.912,-71.316],15);

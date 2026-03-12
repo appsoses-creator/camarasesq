@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel V4</title>
+<title>Panel Admin Mejorado</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -238,6 +238,12 @@ color:#94a3b8;
 
 <div class="card">
 <h3>Usuarios</h3>
+<div style="margin-bottom:10px;">
+<button onclick="abrirCrearUsuario()" style="background:#3b82f6;border:none;color:white;padding:8px 12px;border-radius:8px;cursor:pointer;">
+<i class="fa-solid fa-user-plus"></i> Crear usuario
+</button>
+</div>
+
 
 <table class="table">
 <thead>
@@ -269,7 +275,74 @@ color:#94a3b8;
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+// ---- CREAR USUARIO ----
+
+function abrirCrearUsuario(){
+document.getElementById("modalCrear").style.display="flex";
+}
+
+function cerrarCrear(){
+document.getElementById("modalCrear").style.display="none";
+}
+
+async function crearUsuario(){
+
+const usuario = document.getElementById("nuevoUsuario").value.trim();
+const pass = document.getElementById("nuevoPass").value.trim();
+
+if(!usuario || !pass){
+alert("Completar usuario y contraseña");
+return;
+}
+
+const {error} = await supabaseClient
+.from('usuarios')
+.insert({
+usuario:usuario,
+password:pass,
+rol:'user',
+created_at:new Date().toISOString()
+});
+
+if(error){
+alert("Error creando usuario");
+console.error(error);
+return;
+}
+
+alert("Usuario creado");
+cerrarCrear();
+cargar();
+
+}
+
+// ---- FIX CONTADOR CAMARAS HOY ----
+
+async function cargarEstadisticas(){
+
+let hoy = new Date().toISOString().split('T')[0];
+
+// ahora contamos desde la tabla cameras
+const {count:creadas} = await supabaseClient
+.from('cameras')
+.select('*',{count:'exact',head:true})
+.gte('created_at',hoy);
+
+const {count:edits} = await supabaseClient
+.from('logs_actividad')
+.select('*',{count:'exact',head:true})
+.ilike('accion','%editar%')
+.gte('fecha',hoy);
+
+document.getElementById("stat-creadas").innerText=creadas||0;
+document.getElementById("stat-edits").innerText=edits||0;
+
+}
+
+
+</script>
 
 <script>
 
@@ -311,7 +384,7 @@ if(online) onlineCount++;
 const {count:userCams} = await supabaseClient
 .from('cameras')
 .select('*',{count:'exact',head:true})
-.eq('usuario',u.usuario);
+.or(`usuario.eq.${u.usuario},user.eq.${u.usuario}`);
 
 tbody.innerHTML+=`
 <tr>
@@ -375,7 +448,8 @@ logbox.innerHTML+=`
 
 }
 
-async function cargarEstadisticas(){
+// replaced
+async function cargarEstadisticas_old(){
 
 let hoy = new Date().toISOString().split('T')[0];
 
@@ -464,7 +538,97 @@ cargar();
 
 cargar();
 
+
+
+// ---- CREAR USUARIO ----
+
+function abrirCrearUsuario(){
+document.getElementById("modalCrear").style.display="flex";
+}
+
+function cerrarCrear(){
+document.getElementById("modalCrear").style.display="none";
+}
+
+async function crearUsuario(){
+
+const usuario = document.getElementById("nuevoUsuario").value.trim();
+const pass = document.getElementById("nuevoPass").value.trim();
+
+if(!usuario || !pass){
+alert("Completar usuario y contraseña");
+return;
+}
+
+const {error} = await supabaseClient
+.from('usuarios')
+.insert({
+usuario:usuario,
+password:pass,
+rol:'user',
+created_at:new Date().toISOString()
+});
+
+if(error){
+alert("Error creando usuario");
+console.error(error);
+return;
+}
+
+alert("Usuario creado");
+cerrarCrear();
+cargar();
+
+}
+
+// ---- FIX CONTADOR CAMARAS HOY ----
+
+async function cargarEstadisticas(){
+
+let hoy = new Date().toISOString().split('T')[0];
+
+// ahora contamos desde la tabla cameras
+const {count:creadas} = await supabaseClient
+.from('cameras')
+.select('*',{count:'exact',head:true})
+.gte('created_at',hoy);
+
+const {count:edits} = await supabaseClient
+.from('logs_actividad')
+.select('*',{count:'exact',head:true})
+.ilike('accion','%editar%')
+.gte('fecha',hoy);
+
+document.getElementById("stat-creadas").innerText=creadas||0;
+document.getElementById("stat-edits").innerText=edits||0;
+
+}
+
+
 </script>
+
+
+<div class="modal" id="modalCrear">
+<div class="modal-content">
+<span class="close" onclick="cerrarCrear()"><i class="fa-solid fa-xmark"></i></span>
+<h3>Crear usuario</h3>
+
+<div style="margin-top:15px;">
+<label>Usuario</label>
+<input id="nuevoUsuario" style="width:100%;padding:8px;margin-top:5px;background:#0f172a;border:1px solid #334155;color:white;border-radius:6px;">
+</div>
+
+<div style="margin-top:15px;">
+<label>Contraseña</label>
+<input type="password" id="nuevoPass" style="width:100%;padding:8px;margin-top:5px;background:#0f172a;border:1px solid #334155;color:white;border-radius:6px;">
+</div>
+
+<button onclick="crearUsuario()" style="margin-top:20px;background:#10b981;border:none;color:white;padding:10px 14px;border-radius:8px;cursor:pointer;">
+Guardar usuario
+</button>
+
+</div>
+</div>
 
 </body>
 </html>

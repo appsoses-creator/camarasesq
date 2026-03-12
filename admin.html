@@ -4,65 +4,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Admin Mejorado</title>
+<title>Admin PRO</title>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-:root{
---accent:#3b82f6;
---bg:#0f172a;
---card:#1e293b;
---text:#f8fafc;
---dim:#94a3b8;
---success:#10b981;
---danger:#f43f5e;
-}
 
 body{
-font-family:'Plus Jakarta Sans',sans-serif;
-background:var(--bg);
-color:var(--text);
+font-family:Arial,Helvetica,sans-serif;
 margin:0;
-display:flex;
-height:100vh;
-}
-
-.sidebar{
-width:230px;
-background:#020617;
-border-right:1px solid #334155;
-padding:20px;
-display:flex;
-flex-direction:column;
-}
-
-.logo{
-font-weight:800;
-color:var(--accent);
-margin-bottom:30px;
-}
-
-.nav a{
-display:flex;
-gap:10px;
-padding:10px;
-border-radius:8px;
-text-decoration:none;
-color:var(--dim);
-margin-bottom:5px;
-}
-
-.nav a:hover{
-background:rgba(255,255,255,0.05);
+background:#0f172a;
 color:white;
 }
 
-.main{
-flex:1;
-padding:25px;
-overflow:auto;
+.header{
+padding:15px 25px;
+background:#020617;
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+button{
+background:#2563eb;
+border:none;
+padding:8px 14px;
+border-radius:6px;
+color:white;
+cursor:pointer;
+}
+
+.container{
+padding:20px;
 }
 
 .stats{
@@ -73,88 +48,49 @@ margin-bottom:20px;
 }
 
 .card{
-background:var(--card);
-padding:18px;
-border-radius:16px;
-border:1px solid #334155;
+background:#1e293b;
+padding:15px;
+border-radius:12px;
 }
 
-.stat-val{
+.stat{
 font-size:26px;
-font-weight:700;
+font-weight:bold;
 }
 
-.stat-label{
-font-size:11px;
-color:var(--dim);
-text-transform:uppercase;
-}
-
-.table{
+table{
 width:100%;
 border-collapse:collapse;
-margin-top:10px;
+background:#1e293b;
+border-radius:10px;
+overflow:hidden;
 }
 
-.table th{
-text-align:left;
-font-size:11px;
-color:var(--dim);
-border-bottom:1px solid #334155;
+th,td{
 padding:10px;
-}
-
-.table td{
-padding:12px 10px;
 border-bottom:1px solid #334155;
 font-size:13px;
 }
 
-.status-dot{
-width:8px;
-height:8px;
-border-radius:50%;
-display:inline-block;
-margin-right:6px;
+th{
+color:#94a3b8;
+text-align:left;
 }
 
 .online{
-background:var(--success);
-box-shadow:0 0 6px var(--success);
+color:#10b981;
+font-weight:bold;
 }
 
 .offline{
-background:#475569;
+color:#64748b;
 }
 
-.edit-input{
-background:#0f172a;
-border:1px solid #334155;
-color:white;
-padding:5px 8px;
-border-radius:6px;
-width:80px;
-}
-
-select{
-background:#0f172a;
-border:1px solid #334155;
-color:white;
-border-radius:6px;
-padding:4px;
-}
-
-.logbox{
-max-height:350px;
-overflow:auto;
-margin-top:10px;
-}
-
-.log{
-border-left:2px solid var(--accent);
-padding-left:10px;
-margin-bottom:10px;
-font-size:12px;
+#map{
+height:400px;
+margin-top:20px;
+border-radius:12px;
+overflow:hidden;
 }
 
 </style>
@@ -162,65 +98,53 @@ font-size:12px;
 
 <body>
 
-<div class="sidebar">
-<div class="logo"><i class="fa-solid fa-shield-halved"></i> ADMIN</div>
-
-<div class="nav">
-<a href="index.html"><i class="fa-solid fa-map"></i> Volver al mapa</a>
-<a href="javascript:location.reload()"><i class="fa-solid fa-rotate"></i> Actualizar</a>
-</div>
+<div class="header">
+<h2>Panel Admin</h2>
+<button onclick="cargar()">Actualizar</button>
 </div>
 
-<div class="main">
+<div class="container">
 
 <div class="stats">
+
 <div class="card">
-<div class="stat-label">Cámaras</div>
-<div class="stat-val" id="stat-cams">-</div>
+<div>Usuarios</div>
+<div class="stat" id="stat_users">-</div>
 </div>
 
 <div class="card">
-<div class="stat-label">Usuarios</div>
-<div class="stat-val" id="stat-users">-</div>
+<div>Usuarios Online</div>
+<div class="stat" id="stat_online">-</div>
 </div>
 
 <div class="card">
-<div class="stat-label">Usuarios Online</div>
-<div class="stat-val" id="stat-online">-</div>
+<div>Cámaras</div>
+<div class="stat" id="stat_cams">-</div>
 </div>
 
 <div class="card">
-<div class="stat-label">Logs</div>
-<div class="stat-val" id="stat-logs">-</div>
-</div>
+<div>Logs</div>
+<div class="stat" id="stat_logs">-</div>
 </div>
 
-<div class="card">
-<h3>Usuarios</h3>
-<table class="table">
+</div>
+
+<table>
 <thead>
 <tr>
 <th>Usuario</th>
 <th>Estado</th>
-<th>Actividad</th>
-<th>Cámaras</th>
+<th>Última actividad</th>
+<th>Última conexión</th>
 <th>Rol</th>
-<th>Clave</th>
-<th></th>
 </tr>
 </thead>
-<tbody id="tabla-users"></tbody>
+<tbody id="tabla"></tbody>
 </table>
-</div>
 
-<div class="card" style="margin-top:20px;">
-<h3>Actividad reciente</h3>
-<div class="logbox" id="logs"></div>
-</div>
+<div id="map"></div>
 
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
@@ -229,137 +153,107 @@ const supabaseClient = supabase.createClient(
 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu'
 );
 
+let map = L.map('map').setView([-42.9,-71.3],5);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:19
+}).addTo(map);
+
+let markers=[];
+
+function limpiarMarkers(){
+
+markers.forEach(m=>map.removeLayer(m));
+markers=[];
+
+}
+
 function tiempoRelativo(fecha){
 
-if(!fecha) return "Sin actividad";
+if(!fecha) return "Sin datos";
 
-const diff = (new Date() - new Date(fecha))/1000;
+let diff=(new Date()-new Date(fecha))/1000;
 
 if(diff<60) return "Hace segundos";
 if(diff<3600) return "Hace "+Math.floor(diff/60)+" min";
 if(diff<86400) return "Hace "+Math.floor(diff/3600)+" h";
 
-return new Date(fecha).toLocaleDateString();
+return Math.floor(diff/86400)+" días";
+
+}
+
+function horaExacta(fecha){
+
+if(!fecha) return "-";
+
+let f=new Date(fecha);
+
+return f.toLocaleDateString()+" "+f.toLocaleTimeString();
 
 }
 
 async function cargar(){
 
-const ahora = new Date();
+limpiarMarkers();
 
-const {data:users} = await supabaseClient.from('usuarios').select('*').order('usuario');
+const ahora=new Date();
 
-const {count:cams} = await supabaseClient.from('cameras').select('*',{count:'exact',head:true});
-const {count:logs} = await supabaseClient.from('logs_actividad').select('*',{count:'exact',head:true});
+const {data:users}=await supabaseClient
+.from('usuarios')
+.select('*')
+.order('usuario');
 
-document.getElementById("stat-cams").innerText=cams||0;
-document.getElementById("stat-users").innerText=users.length;
-document.getElementById("stat-logs").innerText=logs||0;
+const {count:cams}=await supabaseClient
+.from('cameras')
+.select('*',{count:'exact',head:true});
+
+const {count:logs}=await supabaseClient
+.from('logs_actividad')
+.select('*',{count:'exact',head:true});
+
+document.getElementById("stat_users").innerText=users.length;
+document.getElementById("stat_cams").innerText=cams||0;
+document.getElementById("stat_logs").innerText=logs||0;
 
 let onlineCount=0;
 
-const tbody=document.getElementById("tabla-users");
-tbody.innerHTML="";
+const tabla=document.getElementById("tabla");
+tabla.innerHTML="";
 
 for(const u of users){
 
-let ultima = u.last_login ? new Date(u.last_login) : null;
-let online = ultima && (ahora-ultima)<70000;
+let ultima=u.last_login?new Date(u.last_login):null;
+let online=ultima&&(ahora-ultima)<70000;
 
 if(online) onlineCount++;
 
-const {count:userCams} = await supabaseClient
-.from('cameras')
-.select('*',{count:'exact',head:true})
-.eq('usuario',u.usuario);
-
-tbody.innerHTML+=`
+tabla.innerHTML+=`
 <tr>
 <td>${u.usuario}</td>
-
-<td>
-<span class="status-dot ${online?'online':'offline'}"></span>
-${online?'En línea':'Offline'}
-</td>
-
+<td class="${online?'online':'offline'}">${online?'En línea':'Offline'}</td>
 <td>${tiempoRelativo(u.last_login)}</td>
-
-<td>${userCams||0}</td>
-
-<td>
-<select onchange="updateUser('${u.id}','rol',this.value)">
-<option value="user" ${u.rol==='user'?'selected':''}>OPERADOR</option>
-<option value="admin" ${u.rol==='admin'?'selected':''}>ADMIN</option>
-</select>
-</td>
-
-<td>
-<input class="edit-input" value="${u.clave}" onchange="updateUser('${u.id}','clave',this.value)">
-</td>
-
-<td>
-<i class="fa-solid fa-trash" style="color:#f43f5e;cursor:pointer"
-onclick="eliminar('${u.id}','${u.usuario}')"></i>
-</td>
-
+<td>${horaExacta(u.last_login)}</td>
+<td>${u.rol||'-'}</td>
 </tr>
 `;
 
-}
+if(online && u.lat && u.lng){
 
-document.getElementById("stat-online").innerText=onlineCount;
+let marker=L.marker([u.lat,u.lng])
+.addTo(map)
+.bindPopup("<b>"+u.usuario+"</b><br>Conectado");
 
-const {data:logData} = await supabaseClient
-.from('logs_actividad')
-.select('*')
-.order('fecha',{ascending:false})
-.limit(20);
-
-const logbox=document.getElementById("logs");
-logbox.innerHTML="";
-
-logData.forEach(l=>{
-
-logbox.innerHTML+=`
-<div class="log">
-<b>${l.usuario}</b> ${l.accion}<br>
-<span style="color:#94a3b8">${l.detalle}</span>
-</div>
-`;
-
-});
+markers.push(marker);
 
 }
 
-async function updateUser(id,campo,valor){
-
-let obj={};
-obj[campo]=valor;
-
-await supabaseClient
-.from('usuarios')
-.update(obj)
-.eq('id',id);
-
 }
 
-async function eliminar(id,nom){
-
-if(confirm("Eliminar usuario "+nom+" ?")){
-
-await supabaseClient
-.from('usuarios')
-.delete()
-.eq('id',id);
-
-cargar();
-
-}
+document.getElementById("stat_online").innerText=onlineCount;
 
 }
 
 cargar();
-setInterval(cargar,10000);
 
 </script>
 

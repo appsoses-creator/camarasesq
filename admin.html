@@ -4,14 +4,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin PRO</title>
+<title>Admin Panel</title>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-
 body{
 font-family:Arial,Helvetica,sans-serif;
 margin:0;
@@ -86,13 +83,26 @@ font-weight:bold;
 color:#64748b;
 }
 
-#map{
-height:400px;
-margin-top:20px;
+.audit{
+margin-top:25px;
+background:#1e293b;
 border-radius:12px;
-overflow:hidden;
+padding:15px;
+max-height:350px;
+overflow:auto;
 }
 
+.log{
+border-left:3px solid #3b82f6;
+padding-left:10px;
+margin-bottom:10px;
+font-size:13px;
+}
+
+.time{
+color:#94a3b8;
+font-size:11px;
+}
 </style>
 </head>
 
@@ -134,7 +144,7 @@ overflow:hidden;
 <tr>
 <th>Usuario</th>
 <th>Estado</th>
-<th>Última actividad</th>
+<th>Actividad</th>
 <th>Última conexión</th>
 <th>Rol</th>
 </tr>
@@ -142,7 +152,10 @@ overflow:hidden;
 <tbody id="tabla"></tbody>
 </table>
 
-<div id="map"></div>
+<div class="audit">
+<h3>Auditoría reciente</h3>
+<div id="logs"></div>
+</div>
 
 </div>
 
@@ -152,21 +165,6 @@ const supabaseClient = supabase.createClient(
 'https://ubdlfcjcgdnzqwjvwsmn.supabase.co',
 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu'
 );
-
-let map = L.map('map').setView([-42.9,-71.3],5);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-maxZoom:19
-}).addTo(map);
-
-let markers=[];
-
-function limpiarMarkers(){
-
-markers.forEach(m=>map.removeLayer(m));
-markers=[];
-
-}
 
 function tiempoRelativo(fecha){
 
@@ -194,8 +192,6 @@ return f.toLocaleDateString()+" "+f.toLocaleTimeString();
 
 async function cargar(){
 
-limpiarMarkers();
-
 const ahora=new Date();
 
 const {data:users}=await supabaseClient
@@ -207,13 +203,13 @@ const {count:cams}=await supabaseClient
 .from('cameras')
 .select('*',{count:'exact',head:true});
 
-const {count:logs}=await supabaseClient
+const {count:logsCount}=await supabaseClient
 .from('logs_actividad')
 .select('*',{count:'exact',head:true});
 
 document.getElementById("stat_users").innerText=users.length;
 document.getElementById("stat_cams").innerText=cams||0;
-document.getElementById("stat_logs").innerText=logs||0;
+document.getElementById("stat_logs").innerText=logsCount||0;
 
 let onlineCount=0;
 
@@ -237,19 +233,31 @@ tabla.innerHTML+=`
 </tr>
 `;
 
-if(online && u.lat && u.lng){
-
-let marker=L.marker([u.lat,u.lng])
-.addTo(map)
-.bindPopup("<b>"+u.usuario+"</b><br>Conectado");
-
-markers.push(marker);
-
-}
-
 }
 
 document.getElementById("stat_online").innerText=onlineCount;
+
+
+const {data:logs}=await supabaseClient
+.from('logs_actividad')
+.select('*')
+.order('fecha',{ascending:false})
+.limit(30);
+
+const logBox=document.getElementById("logs");
+logBox.innerHTML="";
+
+logs.forEach(l=>{
+
+logBox.innerHTML+=`
+<div class="log">
+<b>${l.usuario}</b> ${l.accion}<br>
+<span>${l.detalle||''}</span><br>
+<span class="time">${horaExacta(l.fecha)}</span>
+</div>
+`;
+
+});
 
 }
 

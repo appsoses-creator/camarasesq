@@ -2,276 +2,766 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DPIE </title>
     
+    <script>
+        (function() {
+            const session = localStorage.getItem('user_session');
+            let esValida = false;
+            try {
+                if (session) {
+                    const parsed = JSON.parse(session);
+                    if (parsed && parsed.usuario) esValida = true;
+                }
+            } catch (e) { esValida = false; }
+            if (!esValida) {
+                localStorage.removeItem('user_session');
+                window.location.replace('login.html');
+                document.documentElement.style.display = 'none';
+            }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --accent: #3b82f6; --bg-dark: #0f172a; --card-dark: #1e293b;
-            --text-main: #f8fafc; --text-dim: #94a3b8; --danger: #f43f5e; --success: #10b981;
+            --primary: #2563eb;
+            --accent: #6366f1;
+            --dark-bg: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
         }
 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-dark); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        body { 
+            margin: 0; 
+            font-family: 'Inter', sans-serif; 
+            background: var(--dark-bg); 
+            overflow: hidden; 
+            color: #1e293b;
+        }
+
+        #map { height: 100vh; width: 100%; z-index: 1; filter: grayscale(0.2) contrast(1.1); }
+
+        /* --- AJUSTE DE ICONOS DE CÁMARAS --- */
+        .leaflet-marker-icon {
+            width: 18px !important;  /* Tamaño mucho más pequeño para que no tape calles */
+            height: 18px !important;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .center-pin {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            z-index: 2000;
+            pointer-events: none;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
+        }
+
+        #btn-confirmar-pin {
+            display: none;
+            position: fixed;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2000;
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 16px 30px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 14px;
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+            cursor: pointer;
+            letter-spacing: 0.5px;
+        }
+
+        .top-bar {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; width: 92%; max-width: 1200px;
+            display: flex; align-items: center; gap: 10px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 8px 15px; border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .search-group { 
+            flex: 1; display: flex; align-items: center; 
+            background: rgba(0,0,0,0.05); border-radius: 12px; 
+            padding: 0 5px 0 12px; border: 1px solid rgba(0,0,0,0.05);
+            transition: 0.3s;
+            gap: 5px;
+        }
+        .search-group:focus-within { background: white; border-color: var(--primary); }
+        .search-group input { 
+            width: 100%; border: none; padding: 10px; outline: none; 
+            background: transparent; font-size: 16px; font-weight: 500;
+        }
+
+        .btn-search-trigger {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-search-trigger:active { transform: scale(0.95); }
+
+        .btn-clear-search {
+            background: #f1f5f9;
+            color: #64748b;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-clear-search:hover { background: #e2e8f0; color: var(--danger); }
+
+        .actions-group { display: flex; align-items: center; gap: 8px; }
+
+        .btn-nav {
+            background: white; color: #475569; border: 1px solid #e2e8f0;
+            padding: 10px 16px; border-radius: 10px; font-weight: 600; font-size: 13px;
+            cursor: pointer; display: flex; align-items: center; gap: 8px; transition: 0.2s;
+        }
+        .btn-nav:hover { background: #f8fafc; border-color: var(--primary); color: var(--primary); }
         
-        .sidebar { width: 240px; background: #020617; border-right: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; transition: 0.3s; }
-        .logo-area { font-size: 18px; font-weight: 800; color: var(--accent); margin-bottom: 30px; }
-        .nav-link { text-decoration: none; color: var(--text-dim); padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; font-size: 14px; transition: 0.3s; margin-bottom: 5px; }
-        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-link.active { background: var(--accent); color: white; }
+        .btn-calc { background: #eef2ff; color: var(--accent); border-color: #c7d2fe; }
+        .btn-calc:hover { background: var(--accent); color: white; }
 
-        .sidebar-sep { margin: 20px 0; border-top: 1px solid #334155; padding-top: 20px; }
-        .sidebar-form h4 { font-size: 11px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 15px; letter-spacing: 1px; }
-
-        .main-content { flex: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .btn-city { border: none; background: transparent; color: #64748b; font-weight: 700; cursor: pointer; padding: 8px 12px; border-radius: 8px; transition: 0.3s;}
         
-        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .stat-box { background: var(--card-dark); padding: 15px 20px; border-radius: 16px; border: 1px solid #334155; }
-        .stat-val { font-size: 24px; font-weight: 700; display: block; }
-        .stat-label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+        /* Resalte para botones de ciudad en escritorio */
+        .btn-city.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+        #btn-trevelin.active { background: var(--warning); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4); }
 
-        .work-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; min-height: 0; }
-        .glass-card { background: var(--card-dark); border-radius: 20px; border: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; }
+        .btn-logout { 
+            background: #fee2e2; color: var(--danger); border: none; 
+            width: 40px; height: 40px; border-radius: 10px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .btn-logout:hover { background: var(--danger); color: white; }
+
+        .btn-add-main { 
+            position: fixed; bottom: 30px; right: 30px; z-index: 1000; 
+            background: var(--dark-bg); color: white; border: none; 
+            padding: 16px 28px; border-radius: 16px; font-weight: 700; 
+            cursor: pointer; display: flex; align-items: center; gap: 10px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); transition: 0.3s;
+        }
+
+        /* --- BARRA MÓVIL Y RESALTE --- */
+        .bottom-nav {
+            display: none;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 92%; max-width: 500px;
+            background: var(--dark-bg); 
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            z-index: 1001; padding: 10px; justify-content: space-around;
+            border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            gap: 4px; color: #94a3b8; font-size: 11px; font-weight: 600;
+            text-decoration: none; border: none; background: none; cursor: pointer;
+            transition: all 0.3s ease; padding: 8px 12px; border-radius: 15px;
+            position: relative;
+        }
+        .nav-item i { font-size: 18px; }
+
+        /* RESALTE DONDE ESTOY PARADO (MÓVIL) */
+        .nav-item.active { 
+            color: white !important; 
+            background: rgba(255, 255, 255, 0.15); 
+            transform: translateY(-5px); /* Eleva un poco el icono seleccionado */
+        }
         
-        .table-container { overflow-x: auto; width: 100%; }
-        .table-wrap { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px; }
-        .table-wrap th { text-align: left; padding: 10px; color: var(--text-dim); font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #334155; position: sticky; top: 0; background: var(--card-dark); }
-        .table-wrap td { padding: 12px 10px; border-bottom: 1px solid #334155; }
-        
-        .user-clickable { color: var(--accent); cursor: pointer; font-weight: 700; }
-        .edit-input { background: #0f172a; border: 1px solid #334155; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; width: 80px; }
-        .edit-select { background: #0f172a; border: 1px solid #334155; color: white; padding: 3px; border-radius: 6px; font-size: 11px; }
-
-        #log-list { overflow-y: auto; max-height: 400px; }
-        .log-v-item { border-left: 2px solid var(--accent); padding: 0 0 12px 15px; margin-left: 5px; position: relative; }
-        .log-v-item::before { content: ''; position: absolute; left: -5px; top: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
-
-        .detail-panel { position: fixed; right: -100%; top: 0; width: 100%; max-width: 380px; height: 100vh; background: #020617; border-left: 1px solid #334155; z-index: 2000; transition: 0.4s; padding: 30px; box-sizing: border-box; }
-        .detail-panel.active { right: 0; }
-        .close-btn { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 24px; color: var(--text-dim); }
-
-        .form-dark input, .form-dark select { background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 10px; width: 100%; margin-bottom: 10px; font-size: 13px; box-sizing: border-box; }
-        .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer; }
-        
-        .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-        .online { background: var(--success); box-shadow: 0 0 5px var(--success); }
-        .offline { background: #475569; }
-        .logout-btn { color: var(--danger) !important; margin-top: auto; border-top: 1px solid #334155; padding-top: 15px !important; }
+        /* Puntito indicador debajo del activo */
+        .nav-item.active::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+        }
 
         @media (max-width: 768px) {
-            body { flex-direction: column; overflow-y: auto; height: auto; }
-            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #334155; height: auto; }
-            .main-content { padding: 15px; overflow-y: visible; }
-            .stats-row { grid-template-columns: 1fr; }
-            .work-grid { grid-template-columns: 1fr; }
-            .table-wrap thead { display: none; }
-            .table-wrap, .table-wrap tbody, .table-wrap tr, .table-wrap td { display: block; width: 100%; }
-            .table-wrap tr { margin-bottom: 15px; background: rgba(255,255,255,0.02); border: 1px solid #334155; border-radius: 12px; padding: 10px; box-sizing: border-box; }
-            .table-wrap td { border: none; padding: 8px 5px; display: flex; justify-content: space-between; align-items: center; }
-            .table-wrap td::before { content: attr(data-label); font-weight: 600; color: var(--text-dim); font-size: 11px; }
+            .actions-group { display: none; }
+            .top-bar { top: 10px; width: 90%; padding: 6px 10px; }
+            .search-group { padding: 0 4px 0 10px; }
+            .search-group input { padding: 8px; font-size: 16px; }
+            .btn-search-trigger { padding: 6px 10px; font-size: 11px; }
+            .bottom-nav { display: flex; }
+            .btn-add-main { bottom: 100px; right: 20px; padding: 14px 22px; font-size: 14px; }
+            .leaflet-bottom.leaflet-right { bottom: 160px !important; }
+            
+            /* Cámaras aún más pequeñas en móvil */
+            .leaflet-marker-icon {
+                width: 20px !important;
+                height: 20px !important;
+            }
         }
+
+        .modal { 
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            z-index: 2001; background: white; width: 90%; max-width: 440px; 
+            border-radius: 24px; padding: 30px; box-shadow: 0 30px 60px rgba(0,0,0,0.4); 
+            max-height: 85vh; overflow-y: auto;
+        }
+
+        .btn-modal-close {
+            position: absolute; top: 20px; right: 20px;
+            background: #f1f5f9; color: #64748b; border: none;
+            padding: 8px 15px; border-radius: 10px; font-weight: 700;
+            font-size: 12px; cursor: pointer; transition: 0.2s;
+        }
+        .btn-modal-close:hover { background: #fee2e2; color: var(--danger); }
+
+        .modal h3 { font-weight: 800; color: var(--dark-bg); font-size: 20px; margin-bottom: 20px; }
+        .modal label { font-size: 12px; font-weight: 700; color: #64748b; display: block; margin-top: 12px; margin-bottom: 4px; }
+        .modal input, .modal select, .modal textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; box-sizing: border-box; font-size: 16px; }
+        
+        .type-selector { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        .type-btn { 
+            background: white; border: 2px solid #e2e8f0; padding: 10px; border-radius: 12px; 
+            text-align: left; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column;
+        }
+        .type-btn b { font-size: 14px; color: var(--dark-bg); }
+        .type-btn span { font-size: 11px; color: #64748b; }
+        .type-btn.selected { border-color: var(--primary); background: #eff6ff; }
+        .type-btn.selected b { color: var(--primary); }
+
+        .btn-save { 
+            width: 100%; padding: 15px; background: var(--primary); color: white; 
+            border: none; border-radius: 12px; font-weight: 700; margin-top: 25px; cursor: pointer; 
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+        }
+
+        .overlay { 
+            display: none; position: fixed; inset: 0; 
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(6px); z-index: 2000; 
+        }
+
+        #instruccion { 
+            display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); 
+            z-index: 2000; background: var(--primary); color: white; padding: 12px 25px; 
+            border-radius: 50px; font-weight: 700; box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            text-align: center; font-size: 13px;
+        }
+
+        .pop-card { min-width: 220px; font-family: 'Inter', sans-serif; }
+        .pop-title { font-size: 14px; display: block; color: var(--dark-bg); }
+        .pop-subtitle { font-size: 12px; color: #64748b; margin-bottom: 10px; display: block; }
+        .pop-info { font-size: 11px; margin-bottom: 4px; display: flex; align-items: flex-start; gap: 8px; }
+        .pop-info i { margin-top: 3px; width: 12px; text-align: center; color: var(--primary); }
+        .pop-footer { margin-top: 12px; padding-top: 10px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; }
+        .pop-btn { background: none; border: none; font-weight: 700; font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 5px; }
     </style>
 </head>
 <body>
 
-    <aside class="sidebar">
-        <div class="logo-area"><i class="fa-solid fa-shield-halved"></i> SMCee ADMIN</div>
-        <nav style="display: flex; flex-direction: column; gap: 5px;">
-            <a href="index.html" class="nav-link"><i class="fa-solid fa-map-location-dot"></i> Volver al Mapa</a>
-            <a href="#" class="nav-link active"><i class="fa-solid fa-users-gear"></i> Usuarios</a>
-            <a href="javascript:location.reload()" class="nav-link"><i class="fa-solid fa-rotate"></i> Refresh</a>
+    <img src="https://cdn-icons-png.flaticon.com/512/684/684908.png" class="center-pin" id="pin-central" width="45">
+    
+    <button id="btn-confirmar-pin" onclick="confirmarPosicionPin()">
+        <i class="fa-solid fa-check"></i> CONFIRMAR UBICACIÓN
+    </button>
+
+    <div id="instruccion"><i class="fa-solid fa-arrows-up-down-left-right"></i> Mueve el mapa hasta situar el pin</div>
+
+    <div class="top-bar">
+        <div class="search-group">
+            <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8"></i>
+            <input type="text" id="q" placeholder="Buscar cámara o calle..." onkeyup="if(event.key==='Enter') buscarLugar()">
+            <button class="btn-clear-search" onclick="limpiarBusqueda()"><i class="fa-solid fa-xmark"></i></button>
+            <button class="btn-search-trigger" onclick="buscarLugar()">BUSCAR</button>
+        </div>
+
+        <div class="actions-group">
+            <button class="btn-city active" id="btn-esquel" onclick="irA([-42.912, -71.316], 'btn-esquel')">Esquel</button>
+            <button class="btn-city" id="btn-trevelin" onclick="irA([-43.085, -71.463], 'btn-trevelin')">Trevelin</button>
             
-            <div class="sidebar-sep">
-                <div class="sidebar-form">
-                    <h4>Nuevo Usuario</h4>
-                    <div class="form-dark">
-                        <input type="text" id="new-user" placeholder="Usuario">
-                        <input type="text" id="new-pass" placeholder="Contraseña">
-                        <select id="new-rol">
-                            <option value="user">Operador</option>
-                            <option value="admin">Administrador</option>
-                        </select>
-                        <button class="btn-primary" onclick="crearUsuario()">VINCULAR</button>
-                    </div>
-                </div>
-            </div>
+            <button class="btn-nav btn-calc" onclick="window.location.href='calculadora.html'">
+                <i class="fa-solid fa-calculator"></i> Calculadora
+            </button>
 
-            <a href="#" class="nav-link logout-btn" onclick="cerrarSesion()">
-                <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
-            </a>
-        </nav>
-    </aside>
+            <button class="btn-nav" onclick="abrirModalClave()">
+                <i class="fa-solid fa-key"></i> Cambiar clave
+            </button>
 
-    <main class="main-content">
-        <div class="stats-row">
-            <div class="stat-box"><span class="stat-label">Cámaras Totales</span><span class="stat-val" id="stat-cameras">-</span></div>
-            <div class="stat-box"><span class="stat-label">Usuarios</span><span class="stat-val" id="stat-users">-</span></div>
-            <div class="stat-box"><span class="stat-label">Logs Hoy</span><span class="stat-val" id="stat-logs">-</span></div>
+            <button id="btn-admin-panel" class="btn-nav" style="background: #f1f5f9; border: none; display: none;" onclick="window.location.href='admin.html'">
+                <i class="fa-solid fa-user-gear"></i> Panel
+            </button>
+
+            <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
         </div>
-
-        <div class="work-grid">
-            <div class="glass-card">
-                <h3 style="font-size:16px; margin-bottom:15px">Gestión de Accesos</h3>
-                <div class="table-container">
-                    <table class="table-wrap">
-                        <thead>
-                            <tr>
-                                <th>Operador</th>
-                                <th>Conexión</th>
-                                <th>Rol</th>
-                                <th>Clave</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-usuarios"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="glass-card">
-                <h4 style="margin:0 0 15px 0; font-size:14px">Auditoría Reciente</h4>
-                <div id="log-list"></div>
-            </div>
-        </div>
-    </main>
-
-    <div id="detail-panel" class="detail-panel">
-        <i class="fa-solid fa-xmark close-btn" onclick="toggleDetail()"></i>
-        <h3 id="detail-user-name" style="color:var(--accent); margin-bottom:5px;">-</h3>
-        <p style="font-size:12px; color:var(--text-dim); margin-bottom:20px;">Cámaras registradas en el mapa</p>
-        <div id="detail-content" style="display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 80vh;"></div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const sessionData = JSON.parse(localStorage.getItem('user_session'));
-        if (!sessionData || sessionData.rol !== 'admin') {
-            window.location.replace('login.html');
-        }
+    <nav class="bottom-nav">
+        <button class="nav-item active" id="m-btn-esquel" onclick="irA([-42.912, -71.316], 'btn-esquel')">
+            <i class="fa-solid fa-mountain-city"></i> Esquel
+        </button>
+        <button class="nav-item" id="m-btn-trevelin" onclick="irA([-43.085, -71.463], 'btn-trevelin')">
+            <i class="fa-solid fa-tree"></i> Trevelin
+        </button>
+        <button class="nav-item" onclick="window.location.href='calculadora.html'">
+            <i class="fa-solid fa-calculator"></i> Calc
+        </button>
+        <button class="nav-item" onclick="abrirModalClave()">
+            <i class="fa-solid fa-key"></i> Clave
+        </button>
+        <button id="btn-admin-mobile" class="nav-item" style="display:none" onclick="window.location.href='admin.html'">
+            <i class="fa-solid fa-user-gear"></i> Admin
+        </button>
+        <button class="nav-item" style="color:var(--danger)" onclick="logout()">
+            <i class="fa-solid fa-power-off"></i> Salir
+        </button>
+    </nav>
 
+    <button class="btn-add-main" id="main-btn" onclick="activarModoSeleccion()">
+        <i class="fa-solid fa-plus"></i> Nueva Cámara
+    </button>
+
+    <div class="overlay" id="blur" onclick="cerrarTodo()"></div>
+    
+    <div class="modal" id="modal-clave">
+        <button class="btn-modal-close" onclick="cerrarTodo()">Cancelar</button>
+        <h3>Actualizar Contraseña</h3>
+        <label>Nueva Contraseña</label>
+        <input type="password" id="pass-nueva" placeholder="Mínimo 4 caracteres">
+        <label>Confirmar Contraseña</label>
+        <input type="password" id="pass-confirma" placeholder="Repite la contraseña">
+        <button class="btn-save" id="btn-confirmar-clave" onclick="actualizarMiClave()">Guardar Cambios</button>
+    </div>
+
+    <div class="modal" id="form">
+        <button class="btn-modal-close" onclick="cerrarTodo()">Cancelar</button>
+        <h3 id="form-title">Detalles Técnicos</h3>
+        <input type="hidden" id="edit-id">
+        <input type="hidden" id="t" value=""> <label>Ciudad</label>
+        <select id="ciudad_select">
+            <option value="Esquel">Esquel</option>
+            <option value="Trevelin">Trevelin</option>
+        </select>
+
+        <label>Tipo de Cámara (Selección Obligatoria)</label>
+        <div class="type-selector">
+            <button type="button" class="type-btn" onclick="seleccionarTipo('CENTRO DE MONITOREO', this)">
+                <b>MONITOREO</b>
+                <span>Cámaras oficiales municipales</span>
+            </button>
+            <button type="button" class="type-btn" onclick="seleccionarTipo('PRIVADAS', this)">
+                <b>PRIVADA</b>
+                <span>Comercios, empresas, depósitos, etc.</span>
+            </button>
+            <button type="button" class="type-btn" onclick="seleccionarTipo('PARTICULARES', this)">
+                <b>PARTICULARES</b>
+                <span>Casas particulares / Residencias</span>
+            </button>
+        </div>
+
+        <label>Ubicación Geográfica</label>
+        <input type="text" id="u" readonly style="background:#f8fafc; color:#64748b">
+        <label>Dirección Exacta</label>
+        <input type="text" id="d" placeholder="Ej: Av. Alvear 1234">
+        <label>Titular / Comercio</label>
+        <input type="text" id="n" placeholder="Nombre del responsable">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
+            <div><label>Teléfono</label><input type="text" id="tel"></div>
+            <div><label>Modelo DVR</label><input type="text" id="sis" placeholder="Hikvision, Dahua..."></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px">
+            <div><label>Usuario DVR</label><input type="text" id="usu"></div>
+            <div><label>Clave DVR</label><input type="text" id="pas"></div>
+        </div>
+        <label>Días de Grabación</label>
+        <input type="number" id="alm" value="">
+        <label>Observaciones</label>
+        <textarea id="ot" rows="2" placeholder="Llevar monitor, mouse, oficio, etc..."></textarea>
+        <button class="btn-save" id="btn-submit-camera" onclick="enviar()">Guardar en Base de Datos</button>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
         const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
 
-        async function cargarData() {
-            try {
-                const { count: cC } = await _client.from('cameras').select('*', { count: 'exact', head: true });
-                const { count: uC } = await _client.from('usuarios').select('*', { count: 'exact', head: true });
-                const { count: lC } = await _client.from('logs_actividad').select('*', { count: 'exact', head: true });
-                
-                document.getElementById('stat-cameras').innerText = cC || 0;
-                document.getElementById('stat-users').innerText = uC || 0;
-                document.getElementById('stat-logs').innerText = lC || 0;
+        let items = [], seleccionando = false, marcadorBusqueda = null;
 
-                const { data: users } = await _client.from('usuarios').select('*').order('usuario');
-                const tbody = document.getElementById('lista-usuarios');
-                tbody.innerHTML = '';
-                
-                const ahora = new Date();
-                users?.forEach(u => {
-                    // Lógica de validación: Usamos 'last_login' e 'is_online' de tu DB
-                    const ultimaVez = u.last_login ? new Date(u.last_login) : null;
-                    const estaEnLinea = u.is_online === true || (ultimaVez && (ahora - ultimaVez) < 120000);
+        const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+        const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
+        const map = L.map('map', { center: [-42.912, -71.316], zoom: 14, layers: [osm], zoomControl: false });
+        
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        L.control.layers({ "Calles": osm, "Satélite": satellite }, null, { position: 'bottomright' }).addTo(map);
+
+        function verificarPrivilegios() {
+            const session = localStorage.getItem('user_session');
+            if (session) {
+                const userData = JSON.parse(session);
+                const btnPanel = document.getElementById('btn-admin-panel');
+                const btnPanelMob = document.getElementById('btn-admin-mobile');
+                if (userData.rol === 'admin') {
+                    if(btnPanel) btnPanel.style.display = 'flex';
+                    if(btnPanelMob) btnPanelMob.style.display = 'flex';
+                }
+                return userData;
+            }
+            return null;
+        }
+
+        function logout() { localStorage.removeItem('user_session'); window.location.replace('login.html'); }
+
+        function irA(coords, btnId) { 
+            if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
+            map.flyTo(coords, 15); 
+            document.querySelectorAll('.btn-city').forEach(p => p.classList.remove('active'));
+            const btn = document.getElementById(btnId);
+            if(btn) btn.classList.add('active');
+        }
+
+        async function load() {
+            const user = verificarPrivilegios();
+            const rolUsuario = user?.rol;
+            items.forEach(i => map.removeLayer(i.m));
+            items = [];
+            const { data, error } = await _client.from('cameras').select('*');
+            if (error) return;
+
+            data?.forEach(c => {
+                const latlng = c.UBICACION?.split(',').map(parseFloat);
+                if (latlng && latlng.length === 2 && !isNaN(latlng[0])) {
+                    let color = '#10b981'; 
+                    if(c.TIPO === 'CENTRO DE MONITOREO') color = '#2563eb';
+                    else if(c.TIPO === 'PRIVADAS') color = '#0f172a';
+
+                    const icon = L.divIcon({
+                        className: 'custom-div-icon',
+                        html: `<div style="background:white; border:3px solid ${color}; color:${color}; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,0.2)"><i class="fa-solid fa-video" style="font-size:12px"></i></div>`,
+                        iconSize: [30, 30], iconAnchor: [15, 15]
+                    });
+                    const marker = L.marker(latlng, { icon }).addTo(map);
                     
-                    const statusClass = estaEnLinea ? 'online' : 'offline';
-                    const statusText = estaEnLinea ? 'En línea' : (u.last_login ? `Hoy ${ultimaVez.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 'Sin registros');
+                    const btnEliminarHtml = rolUsuario === 'admin' ? `<button class="pop-btn" style="color:var(--danger)" onclick="eliminar('${c.id}', '${c.DIRECCION}')"><i class="fa-solid fa-trash"></i> Eliminar</button>` : '';
 
-                    tbody.innerHTML += `
-                        <tr>
-                            <td data-label="Operador" class="user-clickable" onclick="verCargasUsuario('${u.usuario}')">
-                                <i class="fa-solid fa-user" style="font-size:10px; margin-right:5px"></i>${u.usuario}
-                            </td>
-                            <td data-label="Estado">
-                                <span class="status-dot ${statusClass}"></span>
-                                <span style="font-size:10px; color:var(--text-dim)">${statusText}</span>
-                            </td>
-                            <td data-label="Rol">
-                                <select class="edit-select" onchange="updateUser('${u.id}', 'rol', this.value)">
-                                    <option value="user" ${u.rol==='user'?'selected':''}>OPERADOR</option>
-                                    <option value="admin" ${u.rol==='admin'?'selected':''}>ADMIN</option>
-                                </select>
-                            </td>
-                            <td data-label="Pass"><input type="text" class="edit-input" value="${u.clave}" onchange="updateUser('${u.id}', 'clave', this.value)"></td>
-                            <td style="text-align:right"><i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer; font-size:16px" onclick="eliminarUsuario('${u.id}', '${u.usuario}')"></i></td>
-                        </tr>`;
-                });
+                    let dvrUserDisplay = '-';
+                    let obsDisplay = '-';
+                    if (c.otros_datos) {
+                        const parts = c.otros_datos.split('|');
+                        dvrUserDisplay = parts[0] ? parts[0].replace('User DVR: ', '').trim() : '-';
+                        obsDisplay = parts[1] ? parts[1].trim() : '-';
+                    }
 
-                const { data: logs } = await _client.from('logs_actividad').select('*').order('fecha', {ascending: false}).limit(15);
-                const lContainer = document.getElementById('log-list');
-                lContainer.innerHTML = '';
-                logs?.forEach(l => {
-                    lContainer.innerHTML += `
-                        <div class="log-v-item">
-                            <div style="font-weight:700; font-size:12px;">${l.usuario} <span style="color:var(--accent); font-size:10px">${l.accion}</span></div>
-                            <div style="font-size:10px; color:var(--text-dim)">${l.detalle}</div>
-                            <span style="font-size:9px; color:var(--text-dim)">${new Date(l.fecha).toLocaleTimeString()}</span>
+                    const popupContent = `
+                        <div class="pop-card">
+                            <div class="pop-header">
+                                <b class="pop-title">${c.DIRECCION || 'Sin dirección'}</b>
+                                <span class="pop-subtitle">${c['LUGAR / TITULAR'] || '-'}</span>
+                            </div>
+                            <div class="pop-body">
+                                <div class="pop-info"><i class="fa-solid fa-city"></i> <span><b>Ciudad:</b> ${c.ciudad || '-'}</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-layer-group"></i> <span><b>Tipo:</b> ${c.TIPO || '-'}</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-phone"></i> <span><b>Tel:</b> ${c.telefono || '-'}</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-microchip"></i> <span><b>Sistema:</b> ${c.sistema || '-'}</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-user-shield"></i> <span><b>Usuario:</b> ${dvrUserDisplay}</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-key"></i> <span><b>Clave:</b> ${c.clave || '-'}</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-calendar-day"></i> <span><b>Respaldo:</b> ${c.dias_almacenamiento || '-'} días</span></div>
+                                <div class="pop-info"><i class="fa-solid fa-comment-dots"></i> <span><b>Obs:</b> ${obsDisplay}</span></div>
+                            </div>
+                            <div class="pop-footer">
+                                <button class="pop-btn" style="color:var(--primary)" onclick="abrirEditar('${c.id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
+                                ${btnEliminarHtml}
+                            </div>
                         </div>`;
-                });
-            } catch (e) { console.error("Error:", e); }
+
+                    marker.bindPopup(popupContent);
+                    items.push({ id: c.id, m: marker, data: c, info: `${c.DIRECCION} ${c['LUGAR / TITULAR']}`.toLowerCase() });
+                }
+            });
         }
 
-        async function updateUser(id, campo, valor) {
-            const upd = {}; upd[campo] = valor;
-            await _client.from('usuarios').update(upd).eq('id', id);
+        // Nueva función para manejar los botones de tipo
+        function seleccionarTipo(valor, elemento) {
+            document.getElementById('t').value = valor;
+            document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('selected'));
+            elemento.classList.add('selected');
         }
 
-        async function verCargasUsuario(userName) {
-            const cleanName = userName.trim();
-            document.getElementById('detail-user-name').innerText = cleanName;
-            const container = document.getElementById('detail-content');
-            container.innerHTML = '<p style="font-size:12px; color:var(--accent);">Filtrando mapa...</p>';
-            toggleDetail(true);
-
-            const { data: cams, error } = await _client.from('cameras').select('*').eq('usuario', cleanName);
+        async function enviar() {
+            const id = document.getElementById('edit-id').value;
+            const tipo = document.getElementById('t').value;
             
-            if (error) {
-                container.innerHTML = `<p style="color:var(--danger); font-size:12px;">Error: ${error.message}</p>`;
+            // Validación: Obligatorio elegir tipo
+            if (!tipo) {
+                alert("DEBES SELECCIONAR EL TIPO DE CÁMARA PARA CONTINUAR");
                 return;
             }
 
-            if(!cams || cams.length === 0) {
-                container.innerHTML = `<p style="font-size:12px; color:var(--text-dim);">"${cleanName}" aún no ha creado cámaras.</p>`;
+            const userSession = JSON.parse(localStorage.getItem('user_session'));
+            const cam = { 
+                "DIRECCION": document.getElementById('d').value, 
+                "UBICACION": document.getElementById('u').value,
+                "LUGAR / TITULAR": document.getElementById('n').value,
+                "TIPO": tipo,
+                "ciudad": document.getElementById('ciudad_select').value,
+                "telefono": document.getElementById('tel').value,
+                "sistema": document.getElementById('sis').value,
+                "clave": document.getElementById('pas').value,
+                "dias_almacenamiento": document.getElementById('alm').value ? parseInt(document.getElementById('alm').value) : null,
+                "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`
+            };
+            
+            const btn = document.getElementById('btn-submit-camera');
+            btn.disabled = true; btn.innerText = "Guardando...";
+            let res = id ? await _client.from('cameras').update(cam).eq('id', id) : await _client.from('cameras').insert([cam]);
+            
+            if (!res.error) { 
+                await registrarLog(userSession.usuario, id ? 'EDITO' : 'CREO', cam.DIRECCION);
+                cerrarTodo(); 
+                load(); 
+            } else alert("Error: " + res.error.message);
+            
+            btn.disabled = false; btn.innerText = "Guardar en Base de Datos";
+        }
+
+        async function eliminar(id, direccion) {
+            if (!confirm(`¿Estás seguro de eliminar la cámara en ${direccion}?`)) return;
+            const userSession = JSON.parse(localStorage.getItem('user_session'));
+            const { error } = await _client.from('cameras').delete().eq('id', id);
+            if (!error) {
+                await registrarLog(userSession.usuario, 'ELIMINO', direccion);
+                load();
             } else {
-                container.innerHTML = cams.map(c => `
-                    <div style="background:#1a2233; padding:12px; border-radius:10px; border:1px solid #334155;">
-                        <div style="font-weight:700; font-size:13px; color:var(--accent);">${c['LUGAR / TITULAR'] || 'Sin Nombre'}</div>
-                        <div style="font-size:11px; color:var(--text-dim); margin-top:5px;">
-                            <i class="fa-solid fa-location-dot" style="margin-right:5px"></i>${c.DIRECCION || 'Sin dirección'}
-                        </div>
-                    </div>
-                `).join('');
+                alert("Error al eliminar: " + error.message);
             }
         }
 
-        function toggleDetail(show = false) {
-            document.getElementById('detail-panel').classList.toggle('active', show);
+        function activarModoSeleccion() {
+            seleccionando = true;
+            document.getElementById('pin-central').style.display = 'block';
+            document.getElementById('btn-confirmar-pin').style.display = 'block';
+            document.getElementById('instruccion').style.display = 'block';
+            document.getElementById('main-btn').style.display = 'none';
+            document.querySelector('.bottom-nav').style.display = 'none';
         }
 
-        async function crearUsuario() {
-            const u = document.getElementById('new-user').value.trim();
-            const p = document.getElementById('new-pass').value.trim();
-            const r = document.getElementById('new-rol').value;
-            if(!u || !p) return alert("Faltan datos");
-            await _client.from('usuarios').insert([{ usuario: u, clave: p, rol: r, is_online: false }]);
-            document.getElementById('new-user').value = '';
-            document.getElementById('new-pass').value = '';
-            cargarData();
+        function confirmarPosicionPin() {
+            const centro = map.getCenter();
+            document.getElementById('edit-id').value = "";
+            document.getElementById('d').value = "";
+            document.getElementById('n').value = "";
+            document.getElementById('t').value = ""; // Reset de tipo para obligar elección
+            document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('tel').value = "";
+            document.getElementById('sis').value = "";
+            document.getElementById('usu').value = "";
+            document.getElementById('pas').value = "";
+            document.getElementById('ot').value = "";
+            document.getElementById('alm').value = "";
+            document.getElementById('u').value = `${centro.lat.toFixed(6)}, ${centro.lng.toFixed(6)}`;
+            document.getElementById('form').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+            document.getElementById('pin-central').style.display = 'none';
+            document.getElementById('btn-confirmar-pin').style.display = 'none';
         }
 
-        async function eliminarUsuario(id, nom) {
-            if(confirm(`¿Eliminar acceso de ${nom}?`)) {
-                await _client.from('usuarios').delete().eq('id', id);
-                cargarData();
+        function cerrarTodo() {
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+            document.getElementById('blur').style.display = 'none';
+            document.getElementById('main-btn').style.display = 'flex';
+            document.getElementById('instruccion').style.display = 'none';
+            document.getElementById('pin-central').style.display = 'none';
+            document.getElementById('btn-confirmar-pin').style.display = 'none';
+            document.getElementById('form-title').innerText = "Detalles Técnicos";
+            if (window.innerWidth <= 768) {
+                document.querySelector('.bottom-nav').style.display = 'flex';
+            }
+            seleccionando = false;
+        }
+
+        function abrirEditar(id) {
+            const cam = items.find(i => i.id == id).data;
+            document.getElementById('edit-id').value = cam.id;
+            document.getElementById('d').value = cam.DIRECCION || "";
+            document.getElementById('u').value = cam.UBICACION || "";
+            document.getElementById('n').value = cam['LUGAR / TITULAR'] || "";
+            
+            // Lógica para marcar el botón correcto al editar
+            const tipo = cam.TIPO || "";
+            document.getElementById('t').value = tipo;
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if(btn.innerText.includes(tipo)) btn.classList.add('selected');
+            });
+
+            document.getElementById('ciudad_select').value = cam.ciudad || "Esquel";
+            document.getElementById('tel').value = cam.telefono || "";
+            document.getElementById('sis').value = cam.sistema || "";
+            document.getElementById('pas').value = cam.clave || "";
+            document.getElementById('alm').value = cam.dias_almacenamiento || "";
+            if(cam.otros_datos) {
+                const parts = cam.otros_datos.split('|');
+                document.getElementById('usu').value = parts[0] ? parts[0].replace('User DVR: ', '').trim() : "";
+                document.getElementById('ot').value = parts[1] ? parts[1].trim() : "";
+            }
+            document.getElementById('form-title').innerText = "Editar Cámara";
+            document.getElementById('form').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+        }
+
+        function abrirModalClave() {
+            document.getElementById('modal-clave').style.display = 'block';
+            document.getElementById('blur').style.display = 'block';
+        }
+
+        async function actualizarMiClave() {
+            const n1 = document.getElementById('pass-nueva').value.trim();
+            const n2 = document.getElementById('pass-confirma').value.trim();
+            const user = verificarPrivilegios();
+            if (n1.length < 4 || n1 !== n2) return alert("Error en los datos.");
+            const { error } = await _client.from('usuarios').update({ clave: n1 }).eq('usuario', user.usuario);
+            if (!error) {
+                await registrarLog(user.usuario, 'CAMBIO CLAVE', 'Actualizó contraseña');
+                alert("✅ Contraseña actualizada");
+                cerrarTodo();
             }
         }
 
-        function cerrarSesion() {
-            localStorage.removeItem('user_session');
-            window.location.replace('login.html');
+        async function registrarLog(usuario, accion, detalle) {
+            try { await _client.from('logs_actividad').insert([{ usuario, accion, detalle }]); } catch (e) {}
         }
 
-        cargarData();
-        setInterval(cargarData, 20000);
+        function limpiarBusqueda() {
+            document.getElementById('q').value = "";
+            if (marcadorBusqueda) {
+                map.removeLayer(marcadorBusqueda);
+                marcadorBusqueda = null;
+            }
+            irA([-42.912, -71.316], 'btn-esquel');
+        }
+
+        async function buscarLugar() {
+            const q = document.getElementById('q').value.trim();
+            if (!q) return;
+
+            const item = items.find(i => i.info.includes(q.toLowerCase()));
+            
+            if (item) {
+                if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
+                map.flyTo(item.m.getLatLng(), 18);
+                item.m.openPopup();
+            } else {
+                try {
+                    const resp = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q + ", Chubut, Argentina")}`);
+                    const data = await resp.json();
+                    
+                    if (data && data.length > 0) {
+                        const { lat, lon, display_name } = data[0];
+                        const pos = [parseFloat(lat), parseFloat(lon)];
+                        
+                        if (marcadorBusqueda) map.removeLayer(marcadorBusqueda);
+                        
+                        marcadorBusqueda = L.marker(pos).addTo(map)
+                            .bindPopup(`<b>Ubicación encontrada:</b><br>${display_name}`)
+                            .openPopup();
+                        
+                        map.flyTo(pos, 17);
+                    } else {
+                        alert("No se encontró la dirección ni cámaras relacionadas.");
+                    }
+                } catch (err) {
+                    console.error("Error buscando en mapa:", err);
+                    alert("No se encontró ninguna cámara cargada.");
+                }
+            }
+        }
+
+        // --- Lógica de Auto-Cierre por Inactividad (Prueba 10 seg) ---
+        let tiempoInactividad;
+
+        function resetearTemporizador() {
+            clearTimeout(tiempoInactividad);
+            // 10000 milisegundos = 60 segundos para probar
+            tiempoInactividad = setTimeout(logoutInactividad, 600000); 
+        }
+
+        function logoutInactividad() {
+            if (localStorage.getItem('user_session')) {
+                alert("Sesión cerrada por inactividad (10 segundos de prueba).");
+                logout(); 
+            }
+        }
+
+        // Registrar actividad
+        window.onload = resetearTemporizador;
+        document.onmousemove = resetearTemporizador;
+        document.onkeypress = resetearTemporizador;
+        document.ontouchstart = resetearTemporizador; 
+        document.onclick = resetearTemporizador;
+        document.onscroll = resetearTemporizador;
+
+        load();
     </script>
+
+<script>
+async function actualizarActividad(){
+    try{
+        const session = JSON.parse(localStorage.getItem('user_session'));
+        if(!session) return;
+
+        await _client
+            .from('usuarios')
+            .update({
+                last_login: new Date().toISOString(),
+                is_online: true
+            })
+            .eq('usuario', session.usuario);
+    }catch(e){
+        console.log("Actividad error", e);
+    }
+}
+
+setInterval(actualizarActividad,30000);
+actualizarActividad();
+
+window.addEventListener("beforeunload", async () => {
+    try{
+        const session = JSON.parse(localStorage.getItem('user_session'));
+        if(!session) return;
+
+        await _client
+            .from('usuarios')
+            .update({ is_online:false })
+            .eq('usuario', session.usuario);
+    }catch(e){}
+});
+</script>
+
 </body>
 </html>

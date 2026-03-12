@@ -16,7 +16,6 @@
 
         body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-dark); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar responsiva */
         .sidebar { width: 240px; background: #020617; border-right: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; transition: 0.3s; }
         .logo-area { font-size: 18px; font-weight: 800; color: var(--accent); margin-bottom: 30px; }
         .nav-link { text-decoration: none; color: var(--text-dim); padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; font-size: 14px; transition: 0.3s; margin-bottom: 5px; }
@@ -28,13 +27,11 @@
 
         .main-content { flex: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
         
-        /* Stats Grid */
         .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .stat-box { background: var(--card-dark); padding: 15px 20px; border-radius: 16px; border: 1px solid #334155; }
         .stat-val { font-size: 24px; font-weight: 700; display: block; }
         .stat-label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* Work Grid responsiva */
         .work-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; min-height: 0; }
         .glass-card { background: var(--card-dark); border-radius: 20px; border: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; }
         
@@ -63,22 +60,17 @@
         .offline { background: #475569; }
         .logout-btn { color: var(--danger) !important; margin-top: auto; border-top: 1px solid #334155; padding-top: 15px !important; }
 
-        /* --- MEDIA QUERIES (MÓVIL) --- */
         @media (max-width: 768px) {
             body { flex-direction: column; overflow-y: auto; height: auto; }
             .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #334155; height: auto; }
             .main-content { padding: 15px; overflow-y: visible; }
-            .stats-row { grid-template-columns: 1fr; } /* Uno abajo del otro */
-            .work-grid { grid-template-columns: 1fr; } /* Uno abajo del otro */
-            
-            .table-wrap min-width { min-width: 100%; }
-            .table-wrap thead { display: none; } /* Escondemos cabecera en móvil */
+            .stats-row { grid-template-columns: 1fr; }
+            .work-grid { grid-template-columns: 1fr; }
+            .table-wrap thead { display: none; }
             .table-wrap, .table-wrap tbody, .table-wrap tr, .table-wrap td { display: block; width: 100%; }
             .table-wrap tr { margin-bottom: 15px; background: rgba(255,255,255,0.02); border: 1px solid #334155; border-radius: 12px; padding: 10px; box-sizing: border-box; }
             .table-wrap td { border: none; padding: 8px 5px; display: flex; justify-content: space-between; align-items: center; }
             .table-wrap td::before { content: attr(data-label); font-weight: 600; color: var(--text-dim); font-size: 11px; }
-            
-            .edit-input { width: 120px; }
         }
     </style>
 </head>
@@ -175,9 +167,13 @@
                 const tbody = document.getElementById('lista-usuarios');
                 tbody.innerHTML = '';
                 
+                const now = new Date();
                 users?.forEach(u => {
-                    const statusClass = u.is_online ? 'online' : 'offline';
-                    const fecha = u.last_login ? new Date(u.last_login).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+                    const lastSeen = u.last_seen ? new Date(u.last_seen) : null;
+                    const isOnline = lastSeen && (now - lastSeen) < 120000; // 2 min threshold
+                    const statusClass = isOnline ? 'online' : 'offline';
+                    const statusText = isOnline ? 'En línea' : (lastSeen ? 'Ult: ' + lastSeen.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Sin datos');
+
                     tbody.innerHTML += `
                         <tr>
                             <td data-label="Operador" class="user-clickable" onclick="verCargasUsuario('${u.usuario}')">
@@ -185,7 +181,7 @@
                             </td>
                             <td data-label="Estado">
                                 <span class="status-dot ${statusClass}"></span>
-                                <span style="font-size:10px; color:var(--text-dim)">Hoy ${fecha}</span>
+                                <span style="font-size:10px; color:var(--text-dim)">${statusText}</span>
                             </td>
                             <td data-label="Rol">
                                 <select class="edit-select" onchange="updateUser('${u.id}', 'rol', this.value)">
@@ -254,7 +250,7 @@
             const p = document.getElementById('new-pass').value.trim();
             const r = document.getElementById('new-rol').value;
             if(!u || !p) return alert("Faltan datos");
-            await _client.from('usuarios').insert([{ usuario: u, clave: p, rol: r, is_online: false }]);
+            await _client.from('usuarios').insert([{ usuario: u, clave: p, rol: r }]);
             document.getElementById('new-user').value = '';
             document.getElementById('new-pass').value = '';
             cargarData();

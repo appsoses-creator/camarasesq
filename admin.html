@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Admin Mejorado</title>
+<title>Panel V6</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -30,6 +30,7 @@ height:100vh;
 }
 
 .sidebar{
+width:260px;
 width:230px;
 background:#020617;
 border-right:1px solid #334155;
@@ -73,6 +74,8 @@ margin-bottom:20px;
 }
 
 .card{
+box-shadow:0 10px 25px rgba(0,0,0,0.25);
+
 background:var(--card);
 padding:18px;
 border-radius:16px;
@@ -201,6 +204,21 @@ color:#94a3b8;
 </div>
 
 <div class="main">
+<div class="topbar" style="
+position:sticky;
+top:0;
+background:#020617;
+border-bottom:1px solid #334155;
+padding:12px 20px;
+margin:-25px -25px 20px -25px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+">
+<div style="font-weight:700;font-size:16px;">Panel de Administración</div>
+<div style="font-size:12px;color:#94a3b8;">Sistema de cámaras</div>
+</div>
+
 
 <div class="stats">
 
@@ -251,7 +269,7 @@ color:#94a3b8;
 <th>Usuario</th>
 <th>Estado</th>
 <th>Última conexión</th>
-<th>Cámaras creadas</th>
+
 <th>Rol</th>
 <th></th>
 </tr>
@@ -291,6 +309,7 @@ async function crearUsuario(){
 
 const usuario = document.getElementById("nuevoUsuario").value.trim();
 const pass = document.getElementById("nuevoPass").value.trim();
+const rol = document.getElementById("nuevoRol").value;
 
 if(!usuario || !pass){
 alert("Completar usuario y contraseña");
@@ -301,9 +320,10 @@ const {error} = await supabaseClient
 .from('usuarios')
 .insert({
 usuario:usuario,
-password:pass,
-rol:'user',
-created_at:new Date().toISOString()
+clave:pass,
+rol:rol,
+created_at:new Date().toISOString(),
+is_online:false
 });
 
 if(error){
@@ -398,7 +418,7 @@ ${online?'En línea':'Fuera de línea'}
 
 <td>${formatoHora(u.last_login)}</td>
 
-<td>${userCams||0}</td>
+
 
 <td>
 <select onchange="cambiarRol('${u.id}',this.value)">
@@ -554,6 +574,7 @@ async function crearUsuario(){
 
 const usuario = document.getElementById("nuevoUsuario").value.trim();
 const pass = document.getElementById("nuevoPass").value.trim();
+const rol = document.getElementById("nuevoRol").value;
 
 if(!usuario || !pass){
 alert("Completar usuario y contraseña");
@@ -564,9 +585,10 @@ const {error} = await supabaseClient
 .from('usuarios')
 .insert({
 usuario:usuario,
-password:pass,
-rol:'user',
-created_at:new Date().toISOString()
+clave:pass,
+rol:rol,
+created_at:new Date().toISOString(),
+is_online:false
 });
 
 if(error){
@@ -612,6 +634,14 @@ document.getElementById("stat-edits").innerText=edits||0;
 <div class="modal-content">
 <span class="close" onclick="cerrarCrear()"><i class="fa-solid fa-xmark"></i></span>
 <h3>Crear usuario</h3>
+
+<div style="margin-top:10px;">
+<label>Rol</label>
+<select id="nuevoRol" style="width:100%;padding:8px;margin-top:5px;background:#0f172a;border:1px solid #334155;color:white;border-radius:6px;">
+<option value="user">USER</option>
+<option value="admin">ADMIN</option>
+</select>
+</div>
 
 <div style="margin-top:15px;">
 <label>Usuario</label>

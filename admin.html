@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Control</title>
+    <title>SMC - Admin Panel</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -163,36 +163,21 @@
                 document.getElementById('stat-users').innerText = uC || 0;
                 document.getElementById('stat-logs').innerText = lC || 0;
 
-                // Modificación: Traer relación con tabla de actividad
-                const { data: users } = await _client
-                    .from('usuarios')
-                    .select('id, usuario, is_online, rol, clave, resumen_actividad_usuarios(ultima_actividad)')
-                    .order('usuario');
-
+                const { data: users } = await _client.from('usuarios').select('*').order('usuario');
                 const tbody = document.getElementById('lista-usuarios');
                 tbody.innerHTML = '';
                 
-                const ahora = new Date();
-
+                const now = new Date();
                 users?.forEach(u => {
-                    // Lógica: Está online si la DB dice TRUE Y tuvo actividad en < 5 min
-                    const ultimaActividad = u.resumen_actividad_usuarios && u.resumen_actividad_usuarios.length > 0 
-                                            ? new Date(u.resumen_actividad_usuarios[0].ultima_actividad) 
-                                            : null;
+                    const lastSeen = u.last_seen ? new Date(u.last_seen) : null;
+                    const isOnline = lastSeen && (now - lastSeen) < 120000; // 2 min threshold
+                    const statusClass = isOnline ? 'online' : 'offline';
                     
-                    const diferenciaMinutos = ultimaActividad ? (ahora - ultimaActividad) / 60000 : 9999;
-                    const estaRealmenteEnLinea = u.is_online === true && diferenciaMinutos < 5;
-
-                    const statusClass = estaRealmenteEnLinea ? 'online' : 'offline';
-                    
-                    let statusText = '';
-                    if (estaRealmenteEnLinea) {
-                        statusText = 'En línea';
-                    } else {
-                        statusText = ultimaActividad 
-                            ? 'Ult: ' + ultimaActividad.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
-                            : 'Sin registros';
+                    let displayTime = 'Sin datos';
+                    if (lastSeen) {
+                        displayTime = lastSeen.toLocaleDateString() + ' ' + lastSeen.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                     }
+                    const statusText = isOnline ? 'En línea' : 'Ult: ' + displayTime;
 
                     tbody.innerHTML += `
                         <tr>

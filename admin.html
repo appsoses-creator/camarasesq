@@ -1,277 +1,367 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel</title>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --accent: #3b82f6; --bg-dark: #0f172a; --card-dark: #1e293b;
-            --text-main: #f8fafc; --text-dim: #94a3b8; --danger: #f43f5e; --success: #10b981;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Admin Mejorado</title>
 
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg-dark); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
-        .sidebar { width: 240px; background: #020617; border-right: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; flex-shrink: 0; transition: 0.3s; }
-        .logo-area { font-size: 18px; font-weight: 800; color: var(--accent); margin-bottom: 30px; }
-        .nav-link { text-decoration: none; color: var(--text-dim); padding: 10px; border-radius: 8px; display: flex; align-items: center; gap: 10px; font-size: 14px; transition: 0.3s; margin-bottom: 5px; }
-        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-link.active { background: var(--accent); color: white; }
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
-        .sidebar-sep { margin: 20px 0; border-top: 1px solid #334155; padding-top: 20px; }
-        .sidebar-form h4 { font-size: 11px; text-transform: uppercase; color: var(--text-dim); margin-bottom: 15px; letter-spacing: 1px; }
+<style>
+:root{
+--accent:#3b82f6;
+--bg:#0f172a;
+--card:#1e293b;
+--text:#f8fafc;
+--dim:#94a3b8;
+--success:#10b981;
+--danger:#f43f5e;
+}
 
-        .main-content { flex: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
-        
-        .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .stat-box { background: var(--card-dark); padding: 15px 20px; border-radius: 16px; border: 1px solid #334155; }
-        .stat-val { font-size: 24px; font-weight: 700; display: block; }
-        .stat-label { color: var(--text-dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+body{
+font-family:'Plus Jakarta Sans',sans-serif;
+background:var(--bg);
+color:var(--text);
+margin:0;
+display:flex;
+height:100vh;
+}
 
-        .work-grid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px; min-height: 0; }
-        .glass-card { background: var(--card-dark); border-radius: 20px; border: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; }
-        
-        .table-container { overflow-x: auto; width: 100%; }
-        .table-wrap { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 500px; }
-        .table-wrap th { text-align: left; padding: 10px; color: var(--text-dim); font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #334155; position: sticky; top: 0; background: var(--card-dark); }
-        .table-wrap td { padding: 12px 10px; border-bottom: 1px solid #334155; }
-        
-        .user-clickable { color: var(--accent); cursor: pointer; font-weight: 700; }
-        .edit-input { background: #0f172a; border: 1px solid #334155; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; width: 80px; }
-        .edit-select { background: #0f172a; border: 1px solid #334155; color: white; padding: 3px; border-radius: 6px; font-size: 11px; }
+.sidebar{
+width:230px;
+background:#020617;
+border-right:1px solid #334155;
+padding:20px;
+display:flex;
+flex-direction:column;
+}
 
-        #log-list { overflow-y: auto; max-height: 400px; }
-        .log-v-item { border-left: 2px solid var(--accent); padding: 0 0 12px 15px; margin-left: 5px; position: relative; }
-        .log-v-item::before { content: ''; position: absolute; left: -5px; top: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.logo{
+font-weight:800;
+color:var(--accent);
+margin-bottom:30px;
+}
 
-        .detail-panel { position: fixed; right: -100%; top: 0; width: 100%; max-width: 380px; height: 100vh; background: #020617; border-left: 1px solid #334155; z-index: 2000; transition: 0.4s; padding: 30px; box-sizing: border-box; }
-        .detail-panel.active { right: 0; }
-        .close-btn { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 24px; color: var(--text-dim); }
+.nav a{
+display:flex;
+gap:10px;
+padding:10px;
+border-radius:8px;
+text-decoration:none;
+color:var(--dim);
+margin-bottom:5px;
+}
 
-        .form-dark input, .form-dark select { background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 10px; width: 100%; margin-bottom: 10px; font-size: 13px; box-sizing: border-box; }
-        .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer; }
-        
-        .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 4px; }
-        .online { background: var(--success); box-shadow: 0 0 5px var(--success); }
-        .offline { background: #475569; }
-        .logout-btn { color: var(--danger) !important; margin-top: auto; border-top: 1px solid #334155; padding-top: 15px !important; }
+.nav a:hover{
+background:rgba(255,255,255,0.05);
+color:white;
+}
 
-        @media (max-width: 768px) {
-            body { flex-direction: column; overflow-y: auto; height: auto; }
-            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #334155; height: auto; }
-            .main-content { padding: 15px; overflow-y: visible; }
-            .stats-row { grid-template-columns: 1fr; }
-            .work-grid { grid-template-columns: 1fr; }
-            .table-wrap thead { display: none; }
-            .table-wrap, .table-wrap tbody, .table-wrap tr, .table-wrap td { display: block; width: 100%; }
-            .table-wrap tr { margin-bottom: 15px; background: rgba(255,255,255,0.02); border: 1px solid #334155; border-radius: 12px; padding: 10px; box-sizing: border-box; }
-            .table-wrap td { border: none; padding: 8px 5px; display: flex; justify-content: space-between; align-items: center; }
-            .table-wrap td::before { content: attr(data-label); font-weight: 600; color: var(--text-dim); font-size: 11px; }
-        }
-    </style>
+.main{
+flex:1;
+padding:25px;
+overflow:auto;
+}
+
+.stats{
+display:grid;
+grid-template-columns:repeat(4,1fr);
+gap:15px;
+margin-bottom:20px;
+}
+
+.card{
+background:var(--card);
+padding:18px;
+border-radius:16px;
+border:1px solid #334155;
+}
+
+.stat-val{
+font-size:26px;
+font-weight:700;
+}
+
+.stat-label{
+font-size:11px;
+color:var(--dim);
+text-transform:uppercase;
+}
+
+.table{
+width:100%;
+border-collapse:collapse;
+margin-top:10px;
+}
+
+.table th{
+text-align:left;
+font-size:11px;
+color:var(--dim);
+border-bottom:1px solid #334155;
+padding:10px;
+}
+
+.table td{
+padding:12px 10px;
+border-bottom:1px solid #334155;
+font-size:13px;
+}
+
+.status-dot{
+width:8px;
+height:8px;
+border-radius:50%;
+display:inline-block;
+margin-right:6px;
+}
+
+.online{
+background:var(--success);
+box-shadow:0 0 6px var(--success);
+}
+
+.offline{
+background:#475569;
+}
+
+.edit-input{
+background:#0f172a;
+border:1px solid #334155;
+color:white;
+padding:5px 8px;
+border-radius:6px;
+width:80px;
+}
+
+select{
+background:#0f172a;
+border:1px solid #334155;
+color:white;
+border-radius:6px;
+padding:4px;
+}
+
+.logbox{
+max-height:350px;
+overflow:auto;
+margin-top:10px;
+}
+
+.log{
+border-left:2px solid var(--accent);
+padding-left:10px;
+margin-bottom:10px;
+font-size:12px;
+}
+
+</style>
 </head>
+
 <body>
 
-    <aside class="sidebar">
-        <div class="logo-area"><i class="fa-solid fa-shield-halved"></i> SMCee ADMIN</div>
-        <nav style="display: flex; flex-direction: column; gap: 5px;">
-            <a href="index.html" class="nav-link"><i class="fa-solid fa-map-location-dot"></i> Volver al Mapa</a>
-            <a href="#" class="nav-link active"><i class="fa-solid fa-users-gear"></i> Usuarios</a>
-            <a href="javascript:location.reload()" class="nav-link"><i class="fa-solid fa-rotate"></i> Refresh</a>
-            
-            <div class="sidebar-sep">
-                <div class="sidebar-form">
-                    <h4>Nuevo Usuario</h4>
-                    <div class="form-dark">
-                        <input type="text" id="new-user" placeholder="Usuario">
-                        <input type="text" id="new-pass" placeholder="Contraseña">
-                        <select id="new-rol">
-                            <option value="user">Operador</option>
-                            <option value="admin">Administrador</option>
-                        </select>
-                        <button class="btn-primary" onclick="crearUsuario()">VINCULAR</button>
-                    </div>
-                </div>
-            </div>
+<div class="sidebar">
+<div class="logo"><i class="fa-solid fa-shield-halved"></i> ADMIN</div>
 
-            <a href="#" class="nav-link logout-btn" onclick="cerrarSesion()">
-                <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
-            </a>
-        </nav>
-    </aside>
+<div class="nav">
+<a href="index.html"><i class="fa-solid fa-map"></i> Volver al mapa</a>
+<a href="javascript:location.reload()"><i class="fa-solid fa-rotate"></i> Actualizar</a>
+</div>
+</div>
 
-    <main class="main-content">
-        <div class="stats-row">
-            <div class="stat-box"><span class="stat-label">Cámaras Totales</span><span class="stat-val" id="stat-cameras">-</span></div>
-            <div class="stat-box"><span class="stat-label">Usuarios</span><span class="stat-val" id="stat-users">-</span></div>
-            <div class="stat-box"><span class="stat-label">Logs Hoy</span><span class="stat-val" id="stat-logs">-</span></div>
-        </div>
+<div class="main">
 
-        <div class="work-grid">
-            <div class="glass-card">
-                <h3 style="font-size:16px; margin-bottom:15px">Gestión de Accesos</h3>
-                <div class="table-container">
-                    <table class="table-wrap">
-                        <thead>
-                            <tr>
-                                <th>Operador</th>
-                                <th>Conexión</th>
-                                <th>Rol</th>
-                                <th>Clave</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="lista-usuarios"></tbody>
-                    </table>
-                </div>
-            </div>
+<div class="stats">
+<div class="card">
+<div class="stat-label">Cámaras</div>
+<div class="stat-val" id="stat-cams">-</div>
+</div>
 
-            <div class="glass-card">
-                <h4 style="margin:0 0 15px 0; font-size:14px">Auditoría Reciente</h4>
-                <div id="log-list"></div>
-            </div>
-        </div>
-    </main>
+<div class="card">
+<div class="stat-label">Usuarios</div>
+<div class="stat-val" id="stat-users">-</div>
+</div>
 
-    <div id="detail-panel" class="detail-panel">
-        <i class="fa-solid fa-xmark close-btn" onclick="toggleDetail()"></i>
-        <h3 id="detail-user-name" style="color:var(--accent); margin-bottom:5px;">-</h3>
-        <p style="font-size:12px; color:var(--text-dim); margin-bottom:20px;">Cámaras registradas en el mapa</p>
-        <div id="detail-content" style="display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 80vh;"></div>
-    </div>
+<div class="card">
+<div class="stat-label">Usuarios Online</div>
+<div class="stat-val" id="stat-online">-</div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const sessionData = JSON.parse(localStorage.getItem('user_session'));
-        if (!sessionData || sessionData.rol !== 'admin') {
-            window.location.replace('login.html');
-        }
+<div class="card">
+<div class="stat-label">Logs</div>
+<div class="stat-val" id="stat-logs">-</div>
+</div>
+</div>
 
-        const _client = supabase.createClient('https://ubdlfcjcgdnzqwjvwsmn.supabase.co', 'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu');
+<div class="card">
+<h3>Usuarios</h3>
+<table class="table">
+<thead>
+<tr>
+<th>Usuario</th>
+<th>Estado</th>
+<th>Actividad</th>
+<th>Cámaras</th>
+<th>Rol</th>
+<th>Clave</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="tabla-users"></tbody>
+</table>
+</div>
 
-        async function cargarData() {
-            try {
-                const { count: cC } = await _client.from('cameras').select('*', { count: 'exact', head: true });
-                const { count: uC } = await _client.from('usuarios').select('*', { count: 'exact', head: true });
-                const { count: lC } = await _client.from('logs_actividad').select('*', { count: 'exact', head: true });
-                
-                document.getElementById('stat-cameras').innerText = cC || 0;
-                document.getElementById('stat-users').innerText = uC || 0;
-                document.getElementById('stat-logs').innerText = lC || 0;
+<div class="card" style="margin-top:20px;">
+<h3>Actividad reciente</h3>
+<div class="logbox" id="logs"></div>
+</div>
 
-                const { data: users } = await _client.from('usuarios').select('*').order('usuario');
-                const tbody = document.getElementById('lista-usuarios');
-                tbody.innerHTML = '';
-                
-                const ahora = new Date();
-                users?.forEach(u => {
-                    // Lógica de validación: Usamos 'last_login' e 'is_online' de tu DB
-                    const ultimaVez = u.last_login ? new Date(u.last_login) : null;
-                    const estaEnLinea = u.is_online === true || (ultimaVez && (ahora - ultimaVez) < 120000);
-                    
-                    const statusClass = estaEnLinea ? 'online' : 'offline';
-                    const statusText = estaEnLinea ? 'En línea' : (u.last_login ? `Hoy ${ultimaVez.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : 'Sin registros');
+</div>
 
-                    tbody.innerHTML += `
-                        <tr>
-                            <td data-label="Operador" class="user-clickable" onclick="verCargasUsuario('${u.usuario}')">
-                                <i class="fa-solid fa-user" style="font-size:10px; margin-right:5px"></i>${u.usuario}
-                            </td>
-                            <td data-label="Estado">
-                                <span class="status-dot ${statusClass}"></span>
-                                <span style="font-size:10px; color:var(--text-dim)">${statusText}</span>
-                            </td>
-                            <td data-label="Rol">
-                                <select class="edit-select" onchange="updateUser('${u.id}', 'rol', this.value)">
-                                    <option value="user" ${u.rol==='user'?'selected':''}>OPERADOR</option>
-                                    <option value="admin" ${u.rol==='admin'?'selected':''}>ADMIN</option>
-                                </select>
-                            </td>
-                            <td data-label="Pass"><input type="text" class="edit-input" value="${u.clave}" onchange="updateUser('${u.id}', 'clave', this.value)"></td>
-                            <td style="text-align:right"><i class="fa-solid fa-trash" style="color:var(--danger); cursor:pointer; font-size:16px" onclick="eliminarUsuario('${u.id}', '${u.usuario}')"></i></td>
-                        </tr>`;
-                });
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-                const { data: logs } = await _client.from('logs_actividad').select('*').order('fecha', {ascending: false}).limit(15);
-                const lContainer = document.getElementById('log-list');
-                lContainer.innerHTML = '';
-                logs?.forEach(l => {
-                    lContainer.innerHTML += `
-                        <div class="log-v-item">
-                            <div style="font-weight:700; font-size:12px;">${l.usuario} <span style="color:var(--accent); font-size:10px">${l.accion}</span></div>
-                            <div style="font-size:10px; color:var(--text-dim)">${l.detalle}</div>
-                            <span style="font-size:9px; color:var(--text-dim)">${new Date(l.fecha).toLocaleTimeString()}</span>
-                        </div>`;
-                });
-            } catch (e) { console.error("Error:", e); }
-        }
+<script>
 
-        async function updateUser(id, campo, valor) {
-            const upd = {}; upd[campo] = valor;
-            await _client.from('usuarios').update(upd).eq('id', id);
-        }
+const supabaseClient = supabase.createClient(
+'https://ubdlfcjcgdnzqwjvwsmn.supabase.co',
+'sb_publishable_S1a63j542PSx9Ba0z93zog_8i76qTZu'
+);
 
-        async function verCargasUsuario(userName) {
-            const cleanName = userName.trim();
-            document.getElementById('detail-user-name').innerText = cleanName;
-            const container = document.getElementById('detail-content');
-            container.innerHTML = '<p style="font-size:12px; color:var(--accent);">Filtrando mapa...</p>';
-            toggleDetail(true);
+function tiempoRelativo(fecha){
 
-            const { data: cams, error } = await _client.from('cameras').select('*').eq('usuario', cleanName);
-            
-            if (error) {
-                container.innerHTML = `<p style="color:var(--danger); font-size:12px;">Error: ${error.message}</p>`;
-                return;
-            }
+if(!fecha) return "Sin actividad";
 
-            if(!cams || cams.length === 0) {
-                container.innerHTML = `<p style="font-size:12px; color:var(--text-dim);">"${cleanName}" aún no ha creado cámaras.</p>`;
-            } else {
-                container.innerHTML = cams.map(c => `
-                    <div style="background:#1a2233; padding:12px; border-radius:10px; border:1px solid #334155;">
-                        <div style="font-weight:700; font-size:13px; color:var(--accent);">${c['LUGAR / TITULAR'] || 'Sin Nombre'}</div>
-                        <div style="font-size:11px; color:var(--text-dim); margin-top:5px;">
-                            <i class="fa-solid fa-location-dot" style="margin-right:5px"></i>${c.DIRECCION || 'Sin dirección'}
-                        </div>
-                    </div>
-                `).join('');
-            }
-        }
+const diff = (new Date() - new Date(fecha))/1000;
 
-        function toggleDetail(show = false) {
-            document.getElementById('detail-panel').classList.toggle('active', show);
-        }
+if(diff<60) return "Hace segundos";
+if(diff<3600) return "Hace "+Math.floor(diff/60)+" min";
+if(diff<86400) return "Hace "+Math.floor(diff/3600)+" h";
 
-        async function crearUsuario() {
-            const u = document.getElementById('new-user').value.trim();
-            const p = document.getElementById('new-pass').value.trim();
-            const r = document.getElementById('new-rol').value;
-            if(!u || !p) return alert("Faltan datos");
-            await _client.from('usuarios').insert([{ usuario: u, clave: p, rol: r, is_online: false }]);
-            document.getElementById('new-user').value = '';
-            document.getElementById('new-pass').value = '';
-            cargarData();
-        }
+return new Date(fecha).toLocaleDateString();
 
-        async function eliminarUsuario(id, nom) {
-            if(confirm(`¿Eliminar acceso de ${nom}?`)) {
-                await _client.from('usuarios').delete().eq('id', id);
-                cargarData();
-            }
-        }
+}
 
-        function cerrarSesion() {
-            localStorage.removeItem('user_session');
-            window.location.replace('login.html');
-        }
+async function cargar(){
 
-        cargarData();
-        setInterval(cargarData, 20000);
-    </script>
+const ahora = new Date();
+
+const {data:users} = await supabaseClient.from('usuarios').select('*').order('usuario');
+
+const {count:cams} = await supabaseClient.from('cameras').select('*',{count:'exact',head:true});
+const {count:logs} = await supabaseClient.from('logs_actividad').select('*',{count:'exact',head:true});
+
+document.getElementById("stat-cams").innerText=cams||0;
+document.getElementById("stat-users").innerText=users.length;
+document.getElementById("stat-logs").innerText=logs||0;
+
+let onlineCount=0;
+
+const tbody=document.getElementById("tabla-users");
+tbody.innerHTML="";
+
+for(const u of users){
+
+let ultima = u.last_login ? new Date(u.last_login) : null;
+let online = ultima && (ahora-ultima)<70000;
+
+if(online) onlineCount++;
+
+const {count:userCams} = await supabaseClient
+.from('cameras')
+.select('*',{count:'exact',head:true})
+.eq('usuario',u.usuario);
+
+tbody.innerHTML+=`
+<tr>
+<td>${u.usuario}</td>
+
+<td>
+<span class="status-dot ${online?'online':'offline'}"></span>
+${online?'En línea':'Offline'}
+</td>
+
+<td>${tiempoRelativo(u.last_login)}</td>
+
+<td>${userCams||0}</td>
+
+<td>
+<select onchange="updateUser('${u.id}','rol',this.value)">
+<option value="user" ${u.rol==='user'?'selected':''}>OPERADOR</option>
+<option value="admin" ${u.rol==='admin'?'selected':''}>ADMIN</option>
+</select>
+</td>
+
+<td>
+<input class="edit-input" value="${u.clave}" onchange="updateUser('${u.id}','clave',this.value)">
+</td>
+
+<td>
+<i class="fa-solid fa-trash" style="color:#f43f5e;cursor:pointer"
+onclick="eliminar('${u.id}','${u.usuario}')"></i>
+</td>
+
+</tr>
+`;
+
+}
+
+document.getElementById("stat-online").innerText=onlineCount;
+
+const {data:logData} = await supabaseClient
+.from('logs_actividad')
+.select('*')
+.order('fecha',{ascending:false})
+.limit(20);
+
+const logbox=document.getElementById("logs");
+logbox.innerHTML="";
+
+logData.forEach(l=>{
+
+logbox.innerHTML+=`
+<div class="log">
+<b>${l.usuario}</b> ${l.accion}<br>
+<span style="color:#94a3b8">${l.detalle}</span>
+</div>
+`;
+
+});
+
+}
+
+async function updateUser(id,campo,valor){
+
+let obj={};
+obj[campo]=valor;
+
+await supabaseClient
+.from('usuarios')
+.update(obj)
+.eq('id',id);
+
+}
+
+async function eliminar(id,nom){
+
+if(confirm("Eliminar usuario "+nom+" ?")){
+
+await supabaseClient
+.from('usuarios')
+.delete()
+.eq('id',id);
+
+cargar();
+
+}
+
+}
+
+cargar();
+setInterval(cargar,10000);
+
+</script>
+
 </body>
 </html>

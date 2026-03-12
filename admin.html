@@ -167,21 +167,31 @@
                 const tbody = document.getElementById('lista-usuarios');
                 tbody.innerHTML = '';
                 
-                const now = new Date();
                 users?.forEach(u => {
-                    const lastSeen = u.last_seen ? new Date(u.last_seen) : null;
-                    const isOnline = lastSeen && (now - lastSeen) < 120000; // 2 min threshold
-                    const statusClass = isOnline ? 'online' : 'offline';
-                    const statusText = isOnline ? 'En línea' : (lastSeen ? 'Ult: ' + lastSeen.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Sin datos');
+                    let estadoHTML = '';
+                    if (u.is_online === true) {
+                        estadoHTML = `
+                            <span class="status-dot online"></span>
+                            <span style="font-size:10px; color:var(--success)">En línea</span>
+                        `;
+                    } else {
+                        const fecha = u.last_login 
+                            ? new Date(u.last_login).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' }) 
+                            : 'Sin registros';
+                        
+                        estadoHTML = `
+                            <span class="status-dot offline"></span>
+                            <span style="font-size:10px; color:var(--text-dim)">${fecha}</span>
+                        `;
+                    }
 
                     tbody.innerHTML += `
                         <tr>
                             <td data-label="Operador" class="user-clickable" onclick="verCargasUsuario('${u.usuario}')">
                                 <i class="fa-solid fa-user" style="font-size:10px; margin-right:5px"></i>${u.usuario}
                             </td>
-                            <td data-label="Estado">
-                                <span class="status-dot ${statusClass}"></span>
-                                <span style="font-size:10px; color:var(--text-dim)">${statusText}</span>
+                            <td data-label="Conexión">
+                                ${estadoHTML}
                             </td>
                             <td data-label="Rol">
                                 <select class="edit-select" onchange="updateUser('${u.id}', 'rol', this.value)">
@@ -208,6 +218,7 @@
             } catch (e) { console.error("Error:", e); }
         }
 
+        // ... resto de funciones (updateUser, verCargasUsuario, etc) ...
         async function updateUser(id, campo, valor) {
             const upd = {}; upd[campo] = valor;
             await _client.from('usuarios').update(upd).eq('id', id);

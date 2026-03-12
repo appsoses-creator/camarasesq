@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PANEL DE CONTROL</title>
+<title>Panel V4</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -67,7 +67,7 @@ overflow:auto;
 
 .stats{
 display:grid;
-grid-template-columns:repeat(4,1fr);
+grid-template-columns:repeat(6,1fr);
 gap:15px;
 margin-bottom:20px;
 }
@@ -110,14 +110,6 @@ border-bottom:1px solid #334155;
 font-size:13px;
 }
 
-tr.user-row{
-cursor:pointer;
-}
-
-tr.user-row:hover{
-background:rgba(255,255,255,0.03);
-}
-
 .status-dot{
 width:10px;
 height:10px;
@@ -136,13 +128,14 @@ background:var(--danger);
 box-shadow:0 0 6px var(--danger);
 }
 
-.edit-input{
-background:#0f172a;
-border:1px solid #334155;
-color:white;
-padding:5px 8px;
-border-radius:6px;
-width:80px;
+.username{
+cursor:pointer;
+color:#60a5fa;
+font-weight:600;
+}
+
+.username:hover{
+text-decoration:underline;
 }
 
 select{
@@ -164,16 +157,6 @@ border-left:2px solid var(--accent);
 padding-left:10px;
 margin-bottom:10px;
 font-size:12px;
-}
-
-.search{
-margin-bottom:10px;
-padding:8px;
-width:250px;
-border-radius:8px;
-border:1px solid #334155;
-background:#020617;
-color:white;
 }
 
 .modal{
@@ -220,6 +203,7 @@ color:#94a3b8;
 <div class="main">
 
 <div class="stats">
+
 <div class="card">
 <div class="stat-label">Cámaras</div>
 <div class="stat-val" id="stat-cams">-</div>
@@ -231,7 +215,7 @@ color:#94a3b8;
 </div>
 
 <div class="card">
-<div class="stat-label">Usuarios Online</div>
+<div class="stat-label">Online</div>
 <div class="stat-val" id="stat-online">-</div>
 </div>
 
@@ -239,12 +223,21 @@ color:#94a3b8;
 <div class="stat-label">Logs</div>
 <div class="stat-val" id="stat-logs">-</div>
 </div>
+
+<div class="card">
+<div class="stat-label">Cámaras creadas hoy</div>
+<div class="stat-val" id="stat-creadas">-</div>
+</div>
+
+<div class="card">
+<div class="stat-label">Ediciones hoy</div>
+<div class="stat-val" id="stat-edits">-</div>
+</div>
+
 </div>
 
 <div class="card">
 <h3>Usuarios</h3>
-
-<input class="search" id="buscarUsuario" placeholder="Buscar usuario..." onkeyup="filtrarUsuarios()">
 
 <table class="table">
 <thead>
@@ -252,9 +245,8 @@ color:#94a3b8;
 <th>Usuario</th>
 <th>Estado</th>
 <th>Última conexión</th>
-<th>Cámaras</th>
+<th>Cámaras creadas</th>
 <th>Rol</th>
-<th>Clave</th>
 <th></th>
 </tr>
 </thead>
@@ -272,7 +264,7 @@ color:#94a3b8;
 <div class="modal" id="modalUser">
 <div class="modal-content">
 <span class="close" onclick="cerrarModal()"><i class="fa-solid fa-xmark"></i></span>
-<h3 id="modalTitle">Actividad del usuario</h3>
+<h3 id="modalTitle">Actividad</h3>
 <div id="modalBody"></div>
 </div>
 </div>
@@ -322,8 +314,9 @@ const {count:userCams} = await supabaseClient
 .eq('usuario',u.usuario);
 
 tbody.innerHTML+=`
-<tr class="user-row" onclick="verUsuario('${u.usuario}')">
-<td>${u.usuario}</td>
+<tr>
+
+<td class="username" onclick="verUsuario('${u.usuario}')">${u.usuario}</td>
 
 <td>
 <span class="status-dot ${online?'online':'offline'}"></span>
@@ -335,17 +328,13 @@ ${online?'En línea':'Fuera de línea'}
 <td>${userCams||0}</td>
 
 <td>
-<select onchange="updateUser('${u.id}','rol',this.value)">
+<select onchange="cambiarRol('${u.id}',this.value)">
 <option value="user" ${u.rol==='user'?'selected':''}>OPERADOR</option>
 <option value="admin" ${u.rol==='admin'?'selected':''}>ADMIN</option>
 </select>
 </td>
 
 <td>
-<input class="edit-input" value="${u.clave}" onchange="updateUser('${u.id}','clave',this.value)">
-</td>
-
-<td onclick="event.stopPropagation()">
 <i class="fa-solid fa-trash" style="color:#f43f5e;cursor:pointer"
 onclick="eliminar('${u.id}','${u.usuario}')"></i>
 </td>
@@ -357,7 +346,14 @@ onclick="eliminar('${u.id}','${u.usuario}')"></i>
 
 document.getElementById("stat-online").innerText=onlineCount;
 
-const {data:logData} = await supabaseClient
+cargarEstadisticas();
+cargarLogs();
+
+}
+
+async function cargarLogs(){
+
+const {data} = await supabaseClient
 .from('logs_actividad')
 .select('*')
 .order('fecha',{ascending:false})
@@ -366,7 +362,7 @@ const {data:logData} = await supabaseClient
 const logbox=document.getElementById("logs");
 logbox.innerHTML="";
 
-logData.forEach(l=>{
+data.forEach(l=>{
 
 logbox.innerHTML+=`
 <div class="log">
@@ -376,6 +372,38 @@ logbox.innerHTML+=`
 `;
 
 });
+
+}
+
+async function cargarEstadisticas(){
+
+let hoy = new Date().toISOString().split('T')[0];
+
+const {count:creadas} = await supabaseClient
+.from('logs_actividad')
+.select('*',{count:'exact',head:true})
+.ilike('accion','%crear%')
+.gte('fecha',hoy);
+
+const {count:edits} = await supabaseClient
+.from('logs_actividad')
+.select('*',{count:'exact',head:true})
+.ilike('accion','%editar%')
+.gte('fecha',hoy);
+
+document.getElementById("stat-creadas").innerText=creadas||0;
+document.getElementById("stat-edits").innerText=edits||0;
+
+}
+
+async function cambiarRol(id,rol){
+
+if(!confirm("¿Seguro que querés cambiar el rol del usuario?")) return;
+
+await supabaseClient
+.from('usuarios')
+.update({rol:rol})
+.eq('id',id);
 
 }
 
@@ -419,18 +447,6 @@ function cerrarModal(){
 document.getElementById("modalUser").style.display="none";
 }
 
-async function updateUser(id,campo,valor){
-
-let obj={};
-obj[campo]=valor;
-
-await supabaseClient
-.from('usuarios')
-.update(obj)
-.eq('id',id);
-
-}
-
 async function eliminar(id,nom){
 
 if(confirm("Eliminar usuario "+nom+" ?")){
@@ -443,21 +459,6 @@ await supabaseClient
 cargar();
 
 }
-
-}
-
-function filtrarUsuarios(){
-
-let filtro=document.getElementById("buscarUsuario").value.toLowerCase();
-let filas=document.querySelectorAll("#tabla-users tr");
-
-filas.forEach(f=>{
-
-let user=f.children[0].innerText.toLowerCase();
-
-f.style.display=user.includes(filtro)?"":"none";
-
-});
 
 }
 

@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel Admin Mejorado</title>
+<title>PANEL DE CONTROL</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -176,8 +176,6 @@ background:#020617;
 color:white;
 }
 
-/* Modal */
-
 .modal{
 position:fixed;
 top:0;
@@ -200,16 +198,11 @@ overflow:auto;
 border:1px solid #334155;
 }
 
-.modal h3{
-margin-top:0;
-}
-
 .close{
 float:right;
 cursor:pointer;
 color:#94a3b8;
 }
-
 </style>
 </head>
 
@@ -388,20 +381,19 @@ logbox.innerHTML+=`
 
 async function verUsuario(usuario){
 
-document.getElementById("modalTitle").innerText="Cámaras modificadas por "+usuario;
+document.getElementById("modalTitle").innerText="Actividad de "+usuario;
 
 const {data} = await supabaseClient
 .from('logs_actividad')
 .select('*')
 .eq('usuario',usuario)
-.ilike('detalle','%camara%')
 .order('fecha',{ascending:false})
-.limit(30);
+.limit(50);
 
 let html="";
 
 if(!data || data.length===0){
-html="No hay registros de cámaras.";
+html="No hay registros.";
 }else{
 
 data.forEach(l=>{

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE 4</title>
+    <title>DPIE 3</title>
     
     <script>
         (function() {
@@ -512,17 +512,56 @@
             document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('selected'));
             elemento.classList.add('selected');
         }
+async function enviar() {
+    const id = document.getElementById('edit-id').value;
+    const tipo = document.getElementById('t').value;
+    
+    if (!tipo) {
+        alert("DEBES SELECCIONAR EL TIPO DE CÁMARA PARA CONTINUAR");
+        return;
+    }
 
-        async function enviar() {
-            const id = document.getElementById('edit-id').value;
-            const tipo = document.getElementById('t').value;
-            
-            // Validación: Obligatorio elegir tipo
-            if (!tipo) {
-                alert("DEBES SELECCIONAR EL TIPO DE CÁMARA PARA CONTINUAR");
-                return;
-            }
+    const userSession = JSON.parse(localStorage.getItem('user_session'));
+    
+    // Construcción del objeto con la corrección de 'creado_por'
+    const cam = { 
+        "DIRECCION": document.getElementById('d').value, 
+        "UBICACION": document.getElementById('u').value,
+        "LUGAR / TITULAR": document.getElementById('n').value,
+        "TIPO": tipo,
+        "ciudad": document.getElementById('ciudad_select').value,
+        "telefono": document.getElementById('tel').value,
+        "sistema": document.getElementById('sis').value,
+        "clave": document.getElementById('pas').value,
+        "dias_almacenamiento": document.getElementById('alm').value ? parseInt(document.getElementById('alm').value) : null,
+        "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`,
+        "creado_por": userSession.usuario // ¡Ahora sí guardará quién creó la cámara!
+    };
+    
+    const btn = document.getElementById('btn-submit-camera');
+    btn.disabled = true; 
+    btn.innerText = "Guardando...";
+    
+    // Insertar o Actualizar
+    let res = id ? await _client.from('cameras').update(cam).eq('id', id) : await _client.from('cameras').insert([cam]);
+    
+    if (!res.error) { 
+        // Actualizamos estado de conexión al realizar acción
+        await _client.from('usuarios').update({ is_online: true, last_login: new Date().toISOString() }).eq('usuario', userSession.usuario);
+        
+        await registrarLog(userSession.usuario, id ? 'EDITO' : 'CREO', cam.DIRECCION);
+        cerrarTodo(); 
+        load(); 
+    } else {
+        alert("Error: " + res.error.message);
+    }
+    
+    btn.disabled = false; 
+    btn.innerText = "Guardar en Base de Datos";
+}
 
+
+        
             const userSession = JSON.parse(localStorage.getItem('user_session'));
             const cam = { 
                 "DIRECCION": document.getElementById('d').value, 

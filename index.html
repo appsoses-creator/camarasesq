@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE 24</title>
+    <title>DPIE 224</title>
     
     <script>
         (function() {
@@ -517,7 +517,6 @@
     const id = document.getElementById('edit-id').value;
     const tipo = document.getElementById('t').value;
     
-    // Validación: Obligatorio elegir tipo
     if (!tipo) {
         alert("DEBES SELECCIONAR EL TIPO DE CÁMARA PARA CONTINUAR");
         return;
@@ -535,8 +534,8 @@
         "sistema": document.getElementById('sis').value,
         "clave": document.getElementById('pas').value,
         "dias_almacenamiento": document.getElementById('alm').value ? parseInt(document.getElementById('alm').value) : null,
-        "otros_datos": `User DVR: ${document.getElementById('usu').value} | ${document.getElementById('ot').value}`,
-        "creado_por": userSession.usuario 
+        "otros_datos": "User DVR: " + document.getElementById('usu').value + " | " + document.getElementById('ot').value,
+        "creado_por": userSession ? userSession.usuario : "admin"
     };
     
     const btn = document.getElementById('btn-submit-camera');
@@ -544,7 +543,7 @@
     btn.innerText = "Guardando...";
     
     let res;
-    if (id) {
+    if (id && id !== "") {
         res = await _client.from('cameras').update(cam).eq('id', id);
     } else {
         res = await _client.from('cameras').insert([cam]);
@@ -555,8 +554,7 @@
         cerrarTodo(); 
         load(); 
     } else {
-        console.error("Error Supabase:", res.error);
-        alert("Error: " + res.error.message);
+        alert("Error al guardar: " + res.error.message);
     }
     
     btn.disabled = false; 

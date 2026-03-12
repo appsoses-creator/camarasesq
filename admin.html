@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SMC - Admin Panel</title>
+    <title>Panel Control</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -163,26 +163,35 @@
                 document.getElementById('stat-users').innerText = uC || 0;
                 document.getElementById('stat-logs').innerText = lC || 0;
 
-                const { data: users } = await _client.from('usuarios').select('*').order('usuario');
+                // Modificación: Traer relación con tabla de actividad
+                const { data: users } = await _client
+                    .from('usuarios')
+                    .select('id, usuario, is_online, rol, clave, resumen_actividad_usuarios(ultima_actividad)')
+                    .order('usuario');
+
                 const tbody = document.getElementById('lista-usuarios');
                 tbody.innerHTML = '';
                 
+                const ahora = new Date();
+
                 users?.forEach(u => {
-                    let estadoHTML = '';
-                    if (u.is_online === true) {
-                        estadoHTML = `
-                            <span class="status-dot online"></span>
-                            <span style="font-size:10px; color:var(--success)">En línea</span>
-                        `;
+                    // Lógica: Está online si la DB dice TRUE Y tuvo actividad en < 5 min
+                    const ultimaActividad = u.resumen_actividad_usuarios && u.resumen_actividad_usuarios.length > 0 
+                                            ? new Date(u.resumen_actividad_usuarios[0].ultima_actividad) 
+                                            : null;
+                    
+                    const diferenciaMinutos = ultimaActividad ? (ahora - ultimaActividad) / 60000 : 9999;
+                    const estaRealmenteEnLinea = u.is_online === true && diferenciaMinutos < 5;
+
+                    const statusClass = estaRealmenteEnLinea ? 'online' : 'offline';
+                    
+                    let statusText = '';
+                    if (estaRealmenteEnLinea) {
+                        statusText = 'En línea';
                     } else {
-                        const fecha = u.last_login 
-                            ? new Date(u.last_login).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit' }) 
+                        statusText = ultimaActividad 
+                            ? 'Ult: ' + ultimaActividad.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) 
                             : 'Sin registros';
-                        
-                        estadoHTML = `
-                            <span class="status-dot offline"></span>
-                            <span style="font-size:10px; color:var(--text-dim)">${fecha}</span>
-                        `;
                     }
 
                     tbody.innerHTML += `
@@ -190,8 +199,9 @@
                             <td data-label="Operador" class="user-clickable" onclick="verCargasUsuario('${u.usuario}')">
                                 <i class="fa-solid fa-user" style="font-size:10px; margin-right:5px"></i>${u.usuario}
                             </td>
-                            <td data-label="Conexión">
-                                ${estadoHTML}
+                            <td data-label="Estado">
+                                <span class="status-dot ${statusClass}"></span>
+                                <span style="font-size:10px; color:var(--text-dim)">${statusText}</span>
                             </td>
                             <td data-label="Rol">
                                 <select class="edit-select" onchange="updateUser('${u.id}', 'rol', this.value)">
@@ -218,7 +228,6 @@
             } catch (e) { console.error("Error:", e); }
         }
 
-        // ... resto de funciones (updateUser, verCargasUsuario, etc) ...
         async function updateUser(id, campo, valor) {
             const upd = {}; upd[campo] = valor;
             await _client.from('usuarios').update(upd).eq('id', id);

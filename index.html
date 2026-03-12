@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DPIE 4</title>
+    <title>DPIE cam</title>
     
     <script>
         (function() {
@@ -728,5 +728,40 @@
 
         load();
     </script>
+
+<script>
+async function actualizarActividad(){
+    try{
+        const session = JSON.parse(localStorage.getItem('user_session'));
+        if(!session) return;
+
+        await _client
+            .from('usuarios')
+            .update({
+                last_login: new Date().toISOString(),
+                is_online: true
+            })
+            .eq('usuario', session.usuario);
+    }catch(e){
+        console.log("Actividad error", e);
+    }
+}
+
+setInterval(actualizarActividad,30000);
+actualizarActividad();
+
+window.addEventListener("beforeunload", async () => {
+    try{
+        const session = JSON.parse(localStorage.getItem('user_session'));
+        if(!session) return;
+
+        await _client
+            .from('usuarios')
+            .update({ is_online:false })
+            .eq('usuario', session.usuario);
+    }catch(e){}
+});
+</script>
+
 </body>
 </html>

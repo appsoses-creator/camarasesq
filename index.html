@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Camaras DPIEsquel</title>
+    <title>Camaras DPI Esquel</title>
     
     <script>
         (function() {
@@ -404,7 +404,14 @@
         <button class="btn-save" id="btn-submit-camera" onclick="enviar()">Guardar en Base de Datos</button>
     </div>
 
-    <div id="map"></div>
+    
+<button id="btn-ubicacion" style="position:fixed; bottom:30px; left:30px; z-index:1200;
+background:#2563eb; color:white; border:none; padding:12px 16px; border-radius:12px;
+font-weight:700; cursor:pointer; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+📍 Mi ubicación
+</button>
+
+<div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -760,6 +767,71 @@ window.addEventListener("beforeunload", async () => {
             .update({ is_online:false })
             .eq('usuario', session.usuario);
     }catch(e){}
+});
+</script>
+
+
+<script>
+// ---- CAPAS DE MAPA EXTRA ----
+const topo = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+    maxZoom: 17,
+    attribution: '© OpenTopoMap'
+});
+
+const dark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; CARTO'
+});
+
+// Reemplazar control de capas con más vistas
+const baseMaps = {
+    "Calles": osm,
+    "Satélite": satellite,
+    "Topográfico": topo,
+    "Modo Oscuro": dark
+};
+
+L.control.layers(baseMaps, null, { position: 'bottomright' }).addTo(map);
+
+// ---- GEOLOCALIZACIÓN ----
+let marcadorUsuario = null;
+let circuloUsuario = null;
+
+document.getElementById("btn-ubicacion").addEventListener("click", function(){
+
+    if(!navigator.geolocation){
+        alert("Tu navegador no soporta geolocalización");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(function(pos){
+
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        const coords = [lat,lng];
+
+        if(marcadorUsuario){
+            map.removeLayer(marcadorUsuario);
+            map.removeLayer(circuloUsuario);
+        }
+
+        marcadorUsuario = L.marker(coords).addTo(map)
+            .bindPopup("📍 Estás aquí")
+            .openPopup();
+
+        circuloUsuario = L.circle(coords, {
+            radius: pos.coords.accuracy,
+            color:"#2563eb",
+            fillColor:"#2563eb",
+            fillOpacity:0.15
+        }).addTo(map);
+
+        map.flyTo(coords,17);
+
+    }, function(){
+        alert("No se pudo obtener tu ubicación");
+    });
+
 });
 </script>
 

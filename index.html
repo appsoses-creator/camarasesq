@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Camaras DPIE</title>
-    <!-- App Icons for mobile shortcut -->
+    <title>Camaras DPI</title>
+    <!-- PWA config -->
     <link rel="icon" type="image/png" href="https://ubdlfcjcgdnzqwjvwsmn.supabase.co/storage/v1/object/public/logos/dpie.png">
     <link rel="apple-touch-icon" href="https://ubdlfcjcgdnzqwjvwsmn.supabase.co/storage/v1/object/public/logos/dpie.png">
+    <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
 
     
     <script>
@@ -839,6 +841,15 @@ window.addEventListener("load", function(){
     });
 
 });
+</script>
+
+
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log('Service Worker registrado'))
+    .catch(err => console.log('SW error', err));
+}
 </script>
 
 </body>
